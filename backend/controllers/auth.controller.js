@@ -1,0 +1,714 @@
+const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const axios = require('axios'); 
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const { 
+  sendRegistrationEmail, 
+  transporter,
+  sendPasswordResetEmail,  // Tambahkan ini
+  sendPasswordResetConfirmation  // Tambahkan ini jika diperlukan
+} = require('../services/emailService');
+const crypto = require('crypto');
+
+exports.googleAuth = async (req, res) => {
+  try {
+    const { token: googleToken } = req.body;
+    
+    if (!googleToken) return res.status(400).json({ error: 'Token required' });
+
+    // Verifikasi token Google
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const { given_name, family_name, email, sub } = ticket.getPayload();
+    const username = email.split('@')[0];
+    const name = `${given_name} ${family_name}`;
+
+    // 1. Cek user existing
+    const [existingUser] = await db.query(
+      'SELECT * FROM users WHERE email = ?', 
+      [email]
+    );
+
+    if (existingUser.length > 0) {
+      const jwtToken = generateToken(existingUser[0]);
+      return res.json({ 
+        token: jwtToken, 
+        user: existingUser[0] 
+      });
+    }
+
+    // 2. Insert user baru DENGAN provider='google'
+    await db.query(
+      `INSERT INTO users 
+      (name, username, email, password, role, created_at, provider) 
+      VALUES (?, ?, ?, ?, 'user', NOW(), 'google')`,
+      [name, username, email, sub] // sub (Google ID) sebagai password
+    );
+
+    // 3. Debugging: Log hasil query
+    console.log(`User ${email} berhasil didaftarkan via Google`);
+
+    // 4. Ambil data user baru
+    const [newUser] = await db.query(
+      'SELECT * FROM users WHERE email = ?', 
+      [email]
+    );
+
+    if (!newUser.length) {
+      throw new Error('Gagal mengambil user setelah pendaftaran');
+    }
+
+    // 5. Kirim response
+    const jwtToken = generateToken(newUser[0]);
+    res.json({ 
+      token: jwtToken,
+      user: {
+        id: newUser[0].id,
+        name: newUser[0].name,
+        email: newUser[0].email,
+        role: newUser[0].role,
+        provider: newUser[0].provider // Pastikan ini ada di response
+      }
+    });
+
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(500).json({ 
+      error: 'Authentication failed',
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};
+
+// Fungsi pembantu untuk generate token
+function generateToken(user) {
+  return jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+}
+
+
+exports.registerUser = async (req, res) => {
+  const { 
+    name, 
+    username, 
+    email, 
+    password, 
+    password_confirmation, // New field
+    whatsapp_number = null, 
+    usdt_network = 'TRC20',
+    usdt_address = null,
+    acceptTerms,
+    hCaptchaToken,
+    referral_code = null
+  } = req.body;
+
+  // Enhanced input validation with referral code check
+  const validation = validateRegistrationInput({
+    ...req.body,
+    password_confirmation // Include in validation
+  });
+
+  if (!validation.valid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: validation.errors,
+      code: 'VALIDATION_ERROR'
+    });
+  }
+
+    // Additional password confirmation check
+  if (password !== password_confirmation) {
+    return res.status(400).json({
+      error: 'Password confirmation does not match',
+      code: 'PASSWORD_MISMATCH',
+      field: 'password_confirmation'
+    });
+  }
+
+
+  try {
+    // hCaptcha verification with better error handling
+    const captchaVerification = await verifyHCaptcha(hCaptchaToken);
+    if (!captchaVerification.success) {
+      return res.status(400).json({
+        error: captchaVerification.error || 'Captcha verification failed',
+        code: captchaVerification.code || 'INVALID_CAPTCHA',
+        details: process.env.NODE_ENV === 'development' ? captchaVerification : undefined
+      });
+    }
+
+    // Check referral code validity if provided
+    let referrer_id = null;
+    if (referral_code) {
+      const [referrer] = await db.query(
+        'SELECT id FROM users WHERE referral_code = ?', 
+        [referral_code]
+      );
+      
+      if (!referrer.length) {
+        return res.status(400).json({ 
+          error: 'Invalid referral code',
+          code: 'INVALID_REFERRAL' 
+        });
+      }
+      referrer_id = referrer[0].id;
+    }
+
+    // User registration with referral tracking
+const registrationResult = await registerNewUser({
+      name, 
+      username, 
+      email, 
+      password, // Only store the main password
+      whatsapp_number, 
+      usdt_network: usdt_address ? usdt_network : null,
+      usdt_address: usdt_address || null,
+      referrer_id
+    });
+
+    // Record referral if valid code was provided
+    if (referrer_id) {
+      try {
+        await db.query(
+          'INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)',
+          [referrer_id, registrationResult.userId]
+        );
+        
+        // Add commission to referrer
+        await db.query(
+          'INSERT INTO commissions (user_id, amount) VALUES (?, ?)',
+          [referrer_id, 0.5] // $0.5 commission per referral
+        );
+
+        registrationResult.referral = {
+          referrer_id,
+          commission_added: 0.5
+        };
+      } catch (err) {
+        console.error('Failed to record referral:', err);
+        // Don't fail registration if referral recording fails
+        registrationResult.referral_error = err.message;
+      }
+    }
+
+    // Email notification
+    try {
+      await sendRegistrationEmail(email, name);
+      registrationResult.emailSent = true;
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      registrationResult.emailSent = false;
+      registrationResult.emailError = emailError.message;
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      ...registrationResult,
+      captchaVerification: {
+        success: true,
+        hostname: captchaVerification.hostname
+      }
+    });
+
+  } catch (err) {
+    console.error('Registration error:', {
+      error: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(500).json({
+      error: 'Registration failed',
+      code: 'REGISTRATION_ERROR',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+
+// Enhanced hCaptcha Verification with better error handling
+async function verifyHCaptcha(token) {
+  // Skip verification in development if using test token
+  if (process.env.NODE_ENV !== 'production' && token === "10000000-ffff-ffff-ffff-000000000001") {
+    console.warn('[DEV] Bypassing hCaptcha verification');
+    return { 
+      success: true, 
+      isTest: true,
+      hostname: 'localhost'
+    };
+  }
+
+  try {
+    const response = await axios.post(
+      'https://hcaptcha.com/siteverify',
+      new URLSearchParams({
+        secret: process.env.HCAPTCHA_SECRET,
+        response: token
+      }),
+      { 
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+
+    if (!response.data?.success) {
+      console.error('hCaptcha verification failed:', response.data);
+      return {
+        success: false,
+        errorCodes: response.data['error-codes'] || [],
+        code: 'HCAPTCHA_VERIFICATION_FAILED'
+      };
+    }
+
+    return {
+      success: true,
+      hostname: response.data.hostname
+    };
+
+  } catch (err) {
+    console.error('hCaptcha API Error:', {
+      message: err.message,
+      code: err.code,
+      status: err.response?.status,
+      data: err.response?.data
+    });
+    return {
+      success: false,
+      error: err.message,
+      code: 'HCAPTCHA_API_ERROR'
+    };
+  }
+}
+
+// Helper functions
+function validateRegistrationInput(data) {
+  const errors = {};
+  const requiredFields = [
+    'name', 
+    'username', 
+    'email', 
+    'password', 
+    'password_confirmation',
+    'acceptTerms', 
+    'hCaptchaToken'
+  ];
+
+  // Validasi field required
+  requiredFields.forEach(field => {
+    if (!data[field]) {
+      errors[field] = `${field.replace('_', ' ')} is required`;
+    }
+  });
+
+  // Validasi email
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    errors.email = 'Invalid email format';
+  }
+
+  // Validasi username
+  if (data.username) {
+    if (data.username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
+      errors.username = 'Username can only contain letters, numbers, and underscores';
+    }
+  }
+
+  // Validasi password
+  if (data.password) {
+    if (data.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    } else if (!/[A-Z]/.test(data.password)) {
+      errors.password = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(data.password)) {
+      errors.password = 'Password must contain at least one lowercase letter';
+    } else if (!/[0-9]/.test(data.password)) {
+      errors.password = 'Password must contain at least one number';
+    }
+  }
+
+  // Validasi konfirmasi password
+  if (data.password && data.password_confirmation) {
+    if (data.password !== data.password_confirmation) {
+      errors.password_confirmation = 'Passwords do not match';
+    }
+  }
+
+  // Validasi nomor WhatsApp (jika diisi)
+  if (data.whatsapp_number && !/^\+?[\d\s-]{10,}$/.test(data.whatsapp_number)) {
+    errors.whatsapp_number = 'Please enter a valid WhatsApp number';
+  }
+
+  // Validasi alamat USDT (jika diisi)
+  if (data.usdt_address && data.usdt_address.length < 10) {
+    errors.usdt_address = 'USDT address must be at least 10 characters';
+  }
+
+  // Validasi terms and conditions
+  if (data.acceptTerms !== true) {
+    errors.acceptTerms = 'You must accept the terms and conditions';
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors
+  };
+}
+
+
+// Updated registerNewUser function
+async function registerNewUser(userData) {
+  const [existingUser] = await db.query(
+    `SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1`, 
+    [userData.username, userData.email]
+  );
+  
+  if (existingUser.length > 0) {
+    throw new Error('Username or email already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(userData.password, 12);
+  const referralCode = generateReferralCode(userData.username);
+  
+  const [result] = await db.query(
+    `INSERT INTO users 
+     (name, username, email, password, whatsapp_number, 
+      usdt_network, usdt_address, referral_code, referred_by,
+      role, created_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'user', NOW())`,
+    [
+      userData.name,
+      userData.username,
+      userData.email,
+      hashedPassword,
+      userData.whatsapp_number,
+      userData.usdt_network,
+      userData.usdt_address,
+      referralCode,
+      userData.referrer_id || null,
+    ]
+  );
+
+  return {
+    userId: result.insertId,
+    username: userData.username,
+    email: userData.email,
+    referralCode // Return the generated referral code
+  };
+}
+
+
+// Helper function to generate referral code
+function generateReferralCode(username) {
+  const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${username.substring(0, 4)}${randomPart}`.toUpperCase();
+}
+
+// Updated validateRegistrationInput
+function validateRegistrationInput(data) {
+  const errors = [];
+  const requiredFields = ['name', 'username', 'email', 'password', 'acceptTerms', 'hCaptchaToken'];
+  
+  requiredFields.forEach(field => {
+    if (!data[field]) {
+      errors.push(`${field} is required`);
+    }
+  });
+
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    errors.push('Invalid email format');
+  }
+
+  if (data.password && data.password.length < 8) {
+    errors.push('Password must be at least 8 characters');
+  }
+
+  if (data.referral_code && !/^[A-Z0-9]{8,12}$/.test(data.referral_code)) {
+    errors.push('Referral code must be 8-12 alphanumeric characters');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+exports.loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const [rows] = await db.query(`SELECT * FROM users WHERE email = ?`, [email]);
+    const user = rows[0];
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Handle Google-registered users attempting password login
+    if (user.provider === 'google' && password) {
+      return res.status(400).json({ 
+        error: 'This account uses Google login. Please sign in with Google.' 
+      });
+    }
+
+    // Handle password login
+    if (user.provider === 'local') {
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate token for both methods
+    const token = generateToken(user);
+    res.json({ 
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        provider: user.provider
+      }
+    });
+
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+// Add this to your auth.controller.js
+
+exports.forgotPassword = async (req, res) => {
+  const { email, hCaptchaToken } = req.body;
+  
+  try {
+    // Verify hCaptcha
+    const hCaptchaValid = await verifyHCaptcha(hCaptchaToken);
+    if (!hCaptchaValid) {
+      return res.status(400).json({ 
+        error: 'Captcha verification failed',
+        code: 'INVALID_CAPTCHA'
+      });
+    }
+
+    const [user] = await db.query('SELECT * FROM users WHERE email = ? AND provider = "local"', [email]);
+    if (!user.length) {
+      return res.status(404).json({ 
+        error: 'Email not found',
+        code: 'EMAIL_NOT_FOUND'
+      });
+    }
+
+    // Generate token with crypto
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    
+    await db.query(
+      'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
+      [resetToken, resetExpires, user[0].id]
+    );
+
+    // Send email with reset link
+    try {
+      await sendPasswordResetEmail(email, resetToken);
+      res.json({ 
+        success: true,
+        message: 'Password reset instructions sent to your email',
+        code: 'RESET_EMAIL_SENT',
+        resetToken: resetToken, // Sertakan token dalam response
+        expiresAt: resetExpires // Sertakan waktu kedaluwarsa
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      res.status(500).json({
+        error: 'Failed to send reset email',
+        code: 'EMAIL_SEND_FAILURE',
+        resetToken: resetToken, // Tetap kembalikan token meski email gagal
+        expiresAt: resetExpires
+      });
+    }
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ 
+      error: 'Password reset failed',
+      code: 'RESET_FAILED',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { token, newPassword, hCaptchaToken } = req.body;
+  
+  try {
+    // Input validation
+    if (!token || !newPassword || !hCaptchaToken) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        code: 'MISSING_FIELDS',
+        required: ['token', 'newPassword', 'hCaptchaToken']
+      });
+    }
+
+    // Verify hCaptcha
+    const hCaptchaValid = await verifyHCaptcha(hCaptchaToken);
+    if (!hCaptchaValid.success) {
+      return res.status(400).json({ 
+        error: 'Captcha verification failed',
+        code: 'INVALID_CAPTCHA',
+        details: hCaptchaValid
+      });
+    }
+
+    // Check password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        error: 'Password must be at least 8 characters',
+        code: 'WEAK_PASSWORD'
+      });
+    }
+
+    // Check token validity
+    const [user] = await db.query(
+      'SELECT * FROM users WHERE reset_token = ? AND reset_expires > NOW()',
+      [token]
+    );
+    
+    if (!user.length) {
+      return res.status(400).json({ 
+        error: 'Invalid or expired token',
+        code: 'INVALID_TOKEN'
+      });
+    }
+
+    // Update password
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query(
+      'UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?',
+      [hashed, user[0].id]
+    );
+
+    // Send confirmation email
+    try {
+      await sendPasswordResetConfirmation(user[0].email);
+    } catch (emailError) {
+      console.error('Confirmation email failed:', emailError);
+      // Don't fail the request if confirmation email fails
+    }
+
+    res.json({ 
+      success: true,
+      message: 'Password updated successfully',
+      code: 'PASSWORD_UPDATED',
+      email: user[0].email // Sertakan email yang direset
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ 
+      error: 'Password reset failed',
+      code: 'RESET_FAILED',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Add this new function to emailService.js
+// async function sendPasswordResetConfirmation(email) {
+//   try {
+//     const mailOptions = {
+//       from: process.env.EMAIL_FROM,
+//       to: email,
+//       subject: 'Your Password Has Been Reset',
+//       html: `
+//         <div style="font-family: Arial, sans-serif;">
+//           <h2>Password Reset Confirmation</h2>
+//           <p>Your password has been successfully reset.</p>
+//           <p>If you didn't initiate this change, please contact support immediately.</p>
+//         </div>
+//       `,
+//       text: `Your password has been successfully reset. If you didn't initiate this change, please contact support immediately.`
+//     };
+
+//     await transporter.sendMail(mailOptions);
+//     console.log(`Password reset confirmation sent to ${email}`);
+//   } catch (error) {
+//     console.error('Confirmation email failed:', error);
+//     throw error;
+//   }
+// }
+
+
+exports.getResetToken = async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        if (!email) {
+            return res.status(400).json({
+                error: 'Email parameter is required',
+                code: 'EMAIL_REQUIRED'
+            });
+        }
+
+        // Pertama cek apakah kolom ada
+        const [columns] = await db.query(`
+            SELECT COLUMN_NAME 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = 'users' 
+            AND COLUMN_NAME IN ('reset_token', 'reset_expires')
+        `);
+
+        if (columns.length < 2) {
+            return res.status(501).json({
+                error: 'Reset functionality not configured',
+                code: 'MISSING_COLUMNS',
+                required_columns: ['reset_token', 'reset_expires'],
+                existing_columns: columns.map(c => c.COLUMN_NAME)
+            });
+        }
+
+        const [user] = await db.query(
+            'SELECT reset_token, reset_expires FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (!user.length) {
+            return res.status(404).json({
+                error: 'User not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
+        res.json({
+            success: true,
+            email: email,
+            reset_token: user[0].reset_token,
+            reset_expires: user[0].reset_expires,
+            is_valid: user[0].reset_expires && new Date(user[0].reset_expires) > new Date()
+        });
+
+    } catch (err) {
+        console.error('Debug getResetToken error:', err);
+        
+        if (err.code === 'ER_BAD_FIELD_ERROR') {
+            return res.status(501).json({
+                error: 'Database columns missing',
+                code: 'DB_SCHEMA_ERROR',
+                message: 'The required columns (reset_token, reset_expires) are missing in users table',
+                solution: 'Run database migration to add these columns'
+            });
+        }
+
+        res.status(500).json({
+            error: 'Internal server error',
+            code: 'INTERNAL_ERROR',
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+};

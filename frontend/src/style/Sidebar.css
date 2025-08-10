@@ -1,0 +1,198 @@
+/* Sidebar base styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background: #2c3e50;
+  transition: all 0.3s ease;
+  z-index: 1001; /* Lebih tinggi dari header dan konten */
+  transform: translateX(-100%);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+
+.sidebar.collapsed .menu li a {
+  justify-content: center;
+  padding: 15px 0;
+}
+
+.sidebar.collapsed .icon {
+  margin-right: 0;
+  font-size: 1.5em;
+}
+
+.toggle-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: none;
+  border: none;
+  color: #ecf0f1;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1001;
+  padding: 5px;
+}
+
+.sidebar.collapsed .toggle-btn {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+
+.sidebar.collapsed {
+  width: 80px;
+  transform: translateX(0);
+}
+
+/* Animasi konten utama */
+.main-content {
+  transition: margin-left 0.3s ease, width 0.3s ease;
+  width: 100%;
+  margin-left: 80px; /* Sesuaikan dengan lebar sidebar collapsed */
+}
+
+.sidebar:not(.collapsed) ~ .main-content {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+}
+
+
+/* Menu styles */
+.menu {
+  list-style: none;
+  padding: 20px 0;
+  margin: 0;
+}
+
+.menu li a {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: #ecf0f1;
+  text-decoration: none;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.menu li a:hover,
+.menu li a.active {
+  background: #34495e;
+  color: #fff;
+}
+
+.icon {
+  margin-right: 10px;
+  font-size: 1.2em;
+  transition: margin 0.3s;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #ecf0f1;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Overlay untuk mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000; /* Di bawah sidebar tapi di atas konten */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+.sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    z-index: 1001;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .sidebar.collapsed {
+    width: 250px;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar {
+    transform: translateX(0);
+    width: 80px;
+    z-index: 100;
+  }
+  
+  
+  .sidebar.open {
+    width: 250px;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+ .sidebar:not(.collapsed) {
+    width: 280px;
+  }
+  
+  .main-content {
+    margin-left: 80px;
+    transition: margin-left 0.3s ease;
+    width: calc(100% - 80px);
+  }
+  
+  .sidebar:not(.collapsed) ~ .main-content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+  }
+}

@@ -1,0 +1,37 @@
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1001;
+}
+
+.hamburger-line {
+  width: 25px;
+  height: 3px;
+  background: #333;
+  margin: 5px 0;
+  transition: all 0.3s ease;
+}
+
+.hamburger-line.open:nth-child(1) {
+  transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.hamburger-line.open:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-line.open:nth-child(3) {
+  transform: rotate(45deg) translate(-5px, -6px);
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+  }
+}

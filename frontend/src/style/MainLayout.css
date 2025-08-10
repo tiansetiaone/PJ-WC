@@ -1,0 +1,42 @@
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1; /* Pastikan di bawah sidebar */
+}
+
+.page-content {
+  padding: 20px;
+  background-color: #f9fafb;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.hamburger {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+}

@@ -1,0 +1,480 @@
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Martin Tao",
+  "username": "mtn3",
+  "email": "martin20@examples.com",
+  "password": "password123",
+  "whatsapp_number": "628523456775",
+  "usdt_address": "TX1234567890USDTB"
+}
+
+####
+curl -X POST 'http://localhost:5000/api/auth/register' \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Andi",
+    "username": "andi",
+    "email": "andi05@example.com",
+    "password": "Pass1233",
+    "referral_code": "JOHNIG6D",
+    "acceptTerms": true,
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+  }'
+
+####USDTTRC20
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "Otan",
+  "username": "Otan10",
+  "email": "Otan10@example.com",
+  "password": "password123",
+  "whatsapp_number": "6281233546789",
+  "usdt_network": "BEP20",
+  "usdt_address": "0x742d35Cdc6634C0532r925a3b84ss75tggt4e4438f44e",
+  "referral_code": "",
+  "acceptTerms": true,
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+####
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "user2@example.com",
+  "password": "password123",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####
+curl -X GET 'http://localhost:5000/api/profile/4' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM4ODYwODQsImV4cCI6MTc1Mzg4OTY4NH0.SzyaDyS7cykv1nZ7OqG-aJbqJ8mFvKlVZdyE1ibFyPQ"
+
+####
+curl -X PUT 'http://localhost:5000/api/profile/4' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM4ODYwODQsImV4cCI6MTc1Mzg4OTY4NH0.SzyaDyS7cykv1nZ7OqG-aJbqJ8mFvKlVZdyE1ibFyPQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Updated",
+    "whatsapp_number": "+628123456789"
+  }'
+
+####
+curl -X PUT 'http://localhost:5000/api/profile/2' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzODg2MzA5LCJleHAiOjE3NTM4ODk5MDl9.RMkk0mM0Y3WHQK1Aygh2mFR4B7aBlnyzOteTXXvLQJo" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role": "admin",
+    "is_active": 1
+  }'
+
+####
+curl -X DELETE 'http://localhost:5000/api/profile/1' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM4ODYzOTAsImV4cCI6MTc1Mzg4OTk5MH0.lFN0RB02Y3nTZr0SUDnFKt0N1ZX_BnjDnwfK__UiFnk"
+
+####
+curl -X PUT http://localhost:5000/api/admin/users/2 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzMDA0ODUyLCJleHAiOjE3NTMwOTEyNTJ9.xBYviPsgzhBwaONDMGzYbIE82DUxRxpjIM2BT0u9t18" \
+-d '{
+  "name": "User One Updated",
+  "whatsapp_number": "628123456700",
+  "usdt_address": "TXNEWADDRESS999"
+}'
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTQ3MzEzMDMsImV4cCI6MTc1NDczNDkwM30.7BIy_yglmEuclu1lb3PeAuLlpTGaqdSeJiytCtpWh10" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "Promo Juli 2025",
+    "campaign_date": "2023-07-30",
+    "message": "Diskon spesial 200% untuk produk pilihan!",
+    "campaign_type": "whatsapp",
+    "image_url": "https://examples.com/promo.jpg"
+  }'
+
+####
+curl -X GET 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0ODIwMjM2LCJleHAiOjE3NTQ4MjM4MzZ9.l8_2IXXnvVvdEAwQaffAn-FE3SBb5qYNEq540QiDSec"
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDY0MjEzLCJleHAiOjE3NTQ0Njc4MTN9.pg8LpoqUGcN4YEs4rlt15pa0nnRz6WIrZt9HacM25WY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "Promo Agustus 2025",
+    "campaign_date": "2025-08-15",
+    "message": "Diskon spesial 50% untuk produk pilihan!",
+    "campaign_type": "whatsapp",
+    "image_url": "https://example.com/promo-august.jpg"
+  }'
+
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDY3MjIzLCJleHAiOjE3NTQ0NzA4MjN9.oDBKkwvBggpR4ki651aQhH6lbg4VAVPPQHX9HX8NWRw" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "Promo Tanpa Gambar",
+    "campaign_date": "2025-08-20",
+    "message": "Ini campaign WhatsApp tanpa gambar",
+    "campaign_type": "whatsapp"
+  }'
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTQ3MzEzMDMsImV4cCI6MTc1NDczNDkwM30.7BIy_yglmEuclu1lb3PeAuLlpTGaqdSeJiytCtpWh10" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "SMS Blast Promo",
+    "campaign_date": "2025-08-25",
+    "message": "Diskon 20% untuk semua produk! Kode: SMS20",
+    "campaign_type": "sms"
+  }'  
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns/10/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDY3MjIzLCJleHAiOjE3NTQ0NzA4MjN9.oDBKkwvBggpR4ki651aQhH6lbg4VAVPPQHX9HX8NWRw" \
+  -F "numbersFile=@./path/to/numbers.txt"
+
+####
+curl -v -X POST 'http://localhost:5000/api/campaigns/14/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDYzNzE3LCJleHAiOjE3NTQ0NjczMTd9.hB1RvTctyvHJ7h-ypJbyH49j4aLd55hYXtTPgeDv6kE" \
+  -H "Content-Type: multipart/form-data" \
+  -F "numbersFile=@./uploads/numbers.txt"
+
+####
+curl -X GET 'http://localhost:5000/api/campaigns/14/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDYxNDcxLCJleHAiOjE3NTQ0NjUwNzF9.ThpNysDVc7WeY8K9B6yGmChT7xNjJEwa7rOezGcGSqo"
+
+####
+curl -X GET 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDYxNDcxLCJleHAiOjE3NTQ0NjUwNzF9.ThpNysDVc7WeY8K9B6yGmChT7xNjJEwa7rOezGcGSqo"
+
+####
+curl -v -X POST 'http://localhost:5000/api/campaigns/10/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDY3MjIzLCJleHAiOjE3NTQ0NzA4MjN9.oDBKkwvBggpR4ki651aQhH6lbg4VAVPPQHX9HX8NWRw" \
+  -F "numbersFile=@test.txt"
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns/10/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDY1OTY5LCJleHAiOjE3NTQ0Njk1Njl9.PLU1sXiZ9Viti2_nWCd0yG35S9wNatX3SSe3xvswtWI" \
+  -F "numbersFile=@<(echo -e '081234567890\n081234567891')"
+
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDA4MzMyLCJleHAiOjE3NTQ0MTE5MzJ9.B-jCRUcWWg2zxWmC0dnWFlvARvzjYZo0EC4O64WXq6w" \
+  -H "Content-Type: multipart/form-data" \
+  -F "campaign_name=Promo SMS Agustus" \
+  -F "campaign_date=2025-08-01" \
+  -F "message=Diskon spesial via SMS!" \
+  -F "campaign_type=sms" \
+  -F "numbersFile=@/path/to/numbers.txt"
+
+####
+curl -v -X POST 'http://localhost:5000/api/campaigns/10/numbers' \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "numbersFile=@test_numbers.txt"
+
+
+####
+curl -X GET 'http://localhost:5000/api/campaigns/3/numbers' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM4OTIyOTksImV4cCI6MTc1Mzg5NTg5OX0.PvMCDzbychD8h1s1UQgysQ4Z1IF8L9yeZ6t09oeMYXY"
+
+  
+####
+curl -X POST 'http://localhost:5000/api/campaigns' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDU2Mzc1LCJleHAiOjE3NTQwNTk5NzV9.HJV9NT7rrODG2ZOj8237p7jtVFudjCgsXGH7UsZLjmI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "SMS Blast Produk Baru",
+    "campaign_date": "2023-08-01",
+    "message": "kami sudah tersedia! Kunjungi store kami.",
+    "campaign_type": "sms"
+  }'
+
+####
+POST http://localhost:5000/api/campaigns
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDU2Mzc1LCJleHAiOjE3NTQwNTk5NzV9.HJV9NT7rrODG2ZOj8237p7jtVFudjCgsXGH7UsZLjmI
+Content-Type: application/json
+
+{
+  "campaign_name": "Promo Makanan",
+  "message": "Yuk beli borong sekarang!",
+  "profile_picture": "profile1.jpg",
+  "image_url": "promo.jpg"
+}
+
+####
+GET http://localhost:5000/api/campaigns
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDEyMzQwLCJleHAiOjE3NTQ0MTU5NDB9.V2C6-euRENT924R9W-DUgPgi8-PhhsOY0bzhn2sOCk8
+
+
+####
+curl -X GET http://localhost:5000/api/admin/campaigns \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzMDA0NTIwLCJleHAiOjE3NTMwOTA5MjB9.I-w-DaJJiFe2Ev2EMLY7Gq7QnY7f5DGW7PvtHWKPsVM"
+
+
+
+####
+GET http://localhost:5000/api/deposits
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDU3MDQ5LCJleHAiOjE3NTQwNjA2NDl9.ZGblDQ8hmNQxhzfdGSwSyfeWsC6b-ixyyxufV10L6xo
+Content-Type: application/json
+
+
+####
+curl -X POST http://localhost:5000/api/admin/deposits/3/approve \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzMDIwNzk2LCJleHAiOjE3NTMxMDcxOTZ9.VDnlPZ9Zv0URzwXRJk2f3s6aWqbeXP5TBD5VDnZMn78"
+
+
+####
+GET http://localhost:5000/api/referrals
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6InVzZXIiLCJpYXQiOjE3NTMwMTk5NTksImV4cCI6MTc1MzEwNjM1OX0.qb-XXU-nOEjkMP8Uk-_3K-ORF-4ZRQxdp66uuN2FJro
+
+####
+curl -X GET 'http://localhost:5000/api/notifications' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzODg0NTE0LCJleHAiOjE3NTM4ODgxMTR9.ydlusY17yTezdG2yGQw7jYIc4bdA5k4Icj46i4K_WbE" \
+  -H "Content-Type: application/json"
+
+####
+curl -X POST 'http://localhost:5000/api/notifications' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM4ODQ1NzYsImV4cCI6MTc1Mzg4ODE3Nn0.AjnfwDjA4vmrFrDpFXx3jYokenrs3R0C0TVXSw0wra0" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "New Feature Update",
+    "content": "Fitur referral bonus telah ditambahkan",
+    "user_scope": "user"
+  }'
+
+
+
+####
+POST http://localhost:5000/api/support
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6InVzZXIiLCJpYXQiOjE3NTMwMTk5NTksImV4cCI6MTc1MzEwNjM1OX0.qb-XXU-nOEjkMP8Uk-_3K-ORF-4ZRQxdp66uuN2FJro
+Content-Type: application/json
+
+{
+  "subject": "Masalah saldo",
+  "message": "Kenapa saldo saya belum bertambah?"
+}
+
+
+####
+curl -X POST http://localhost:5000/api/admin/support-tickets/1/respond \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzUzMDIwNzk2LCJleHAiOjE3NTMxMDcxOTZ9.VDnlPZ9Zv0URzwXRJk2f3s6aWqbeXP5TBD5VDnZMn78" \
+-d '{ "response": "Saldo Anda sudah diproses, silakan cek kembali." }'
+
+
+####
+@host = http://localhost:5000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTI5OTkxMzMsImV4cCI6MTc1MzA4NTUzM30.0btQ4DVljcms4Vo8_CcRODyxFzx43nXXaAWRR197_Sw
+
+### Kamu bisa pakai seperti ini:
+GET {{host}}/api/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTI5OTkxMzMsImV4cCI6MTc1MzA4NTUzM30.0btQ4DVljcms4Vo8_CcRODyxFzx43nXXaAWRR197_Sw
+
+
+####
+curl -X POST 'http://localhost:5000/api/auth/google' \
+-H "Content-Type: application/json" \
+-d '{
+  "token": "PASTE_GOOGLE_ID_TOKEN_DISINI"
+}'
+
+####
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "Test User",
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "Test123!",
+  "whatsapp_number": "+628123456789",
+  "usdt_address": "TAbc123...",
+  "acceptTerms": true,
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "Test sUser",
+  "username": "testduser",
+  "email": "teeest@example.com",
+  "password": "Tests12345!",
+  "whatsapp_number": "+6288123456789",
+  "usdt_address": "TAbc123...",
+  "acceptTerms": true,
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+####
+curl -X POST http://localhost:5000/api/auth/forgot-password \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "Tith34@example.com",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+####
+# Dapatkan token dari database terlebih dahulu
+curl -X GET "http://localhost:5000/api/auth/get-reset-token?email=tiansetiawan.1331@gmail.com" | jq
+
+
+####
+curl -X POST http://localhost:5000/api/auth/forgot-password \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "tiansetiawan.1331@gmail.com",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####
+# Cek langsung di database
+curl -X GET "http://localhost:5000/api/debug/get-user?email=tianahmad13.ta@gmail.com"
+
+
+
+####
+curl -X POST http://localhost:5000/api/auth/reset-password \
+-H "Content-Type: application/json" \
+-d '{
+  "token": "f2c39de44ecbe2bd65f8be8fdf234279d494a6cf",
+  "newPassword": "12345678!",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####
+curl -X POST \
+  http://localhost:5000/api/deposits/generate-address \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDcwNjEyLCJleHAiOjE3NTQ0NzQyMTJ9.ObLd_rPemyx_bEm1nZYC5A7CCzDGRuPR7FFl1EysIMA" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "network": "TRC20",
+    "amount": 100
+  }'
+
+
+####
+curl -X POST http://localhost:5000/api/deposits/submit-evidence \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDcwNjEyLCJleHAiOjE3NTQ0NzQyMTJ9.ObLd_rPemyx_bEm1nZYC5A7CCzDGRuPR7FFl1EysIMA" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deposit_id": 9,
+    "tx_hash": "0x123abc456def789ghi012jkl345mno678pqr901stu234vwx567yz0"
+  }'
+
+####
+curl -X GET \
+  "http://localhost:5000/api/deposits?status=approve&limit=10&page=1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDcwNjEyLCJleHAiOjE3NTQ0NzQyMTJ9.ObLd_rPemyx_bEm1nZYC5A7CCzDGRuPR7FFl1EysIMA"
+
+####
+curl -X GET "http://localhost:5000/api/deposits" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM5ODAwMjgsImV4cCI6MTc1Mzk4MzYyOH0.-9vk7UZyUdlzgypSAOrgTepp9yW-T4ixbHpno8nIlFI"
+
+
+####
+curl -X GET "http://localhost:5000/api/deposits?limit=1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDcwNjEyLCJleHAiOjE3NTQ0NzQyMTJ9.ObLd_rPemyx_bEm1nZYC5A7CCzDGRuPR7FFl1EysIMA"
+
+####
+curl -X GET "http://localhost:5000/api/deposits?status=approved&network=TRC20&limit=5&page=2" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0NDcwNjEyLCJleHAiOjE3NTQ0NzQyMTJ9.ObLd_rPemyx_bEm1nZYC5A7CCzDGRuPR7FFl1EysIMA"
+
+####ADMINDEPOSIT
+curl -X GET \
+  "http://localhost:5000/api/deposits/admin/requests?status=checking&search=John" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDcxMTE1LCJleHAiOjE3NTQ0NzQ3MTV9.enBVrx6hRZeN5Q2H58Nmd-HZFosstRwWAuz8J6LUAmQ"
+
+####
+curl -X POST \
+  http://localhost:5000/api/deposits/admin/process \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0NDcxMTE1LCJleHAiOjE3NTQ0NzQ3MTV9.enBVrx6hRZeN5Q2H58Nmd-HZFosstRwWAuz8J6LUAmQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deposit_id": 5,
+    "action": "approve"
+  }'
+
+####
+curl -X POST http://localhost:5000/api/deposits/generate-address \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDU3MjI4LCJleHAiOjE3NTQwNjA4Mjh9.emTLlIRyUUC82_MUtTd40DIMFMwyszw_wOwZqhVpjm4" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "network": "ERC20",
+    "amount": 10.00
+  }'
+
+
+####
+curl -X POST http://localhost:5000/api/deposits/generate-address \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6InVzZXIiLCJpYXQiOjE3NTM5ODAwMjgsImV4cCI6MTc1Mzk4MzYyOH0.-9vk7UZyUdlzgypSAOrgTepp9yW-T4ixbHpno8nIlFI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "network": "BTC",
+    "amount": 20.00
+  }'
+
+
+####
+curl -X GET 'http://localhost:5000/api/referrals' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDM0OTkwLCJleHAiOjE3NTQwMzg1OTB9.feR_lqxzk8nJIRhec3o6Szp-154WnVB-Velbs2IlZYY"
+
+####
+# Cek saldo terlebih dahulu
+curl -X GET 'http://localhost:5000/api/referrals/balance' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTcsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDM0OTkwLCJleHAiOjE3NTQwMzg1OTB9.feR_lqxzk8nJIRhec3o6Szp-154WnVB-Velbs2IlZYY"
+
+
+####
+# Lakukan konversi
+curl -X POST 'http://localhost:5000/api/referrals/convert' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDU3NzE0LCJleHAiOjE3NTQwNjEzMTR9.xFPpfeOvRZe2wlS2IxDMWetpsfUUZmrksQO48D3vWcE" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 20}'
+
+####
+curl -X GET 'http://localhost:5000/api/referrals/all' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDM0ODYyLCJleHAiOjE3NTQwMzg0NjJ9.V4Z9Kcm73j5iuCH9qgST86ZbYKgCOTT_gIlWeT8-3mo"
+
+####
+curl -X POST 'http://localhost:5000/api/referrals/admin/roles' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDU3NzE0LCJleHAiOjE3NTQwNjEzMTR9.xFPpfeOvRZe2wlS2IxDMWetpsfUUZmrksQO48D3vWcE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_name": "premium",
+    "commission_rate": 15.5,
+    "min_conversion": 5.00
+  }'
+
+####
+curl -X GET 'http://localhost:5000/api/referrals/admin/roles' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDMxNTgzLCJleHAiOjE3NTQwMzUxODN9.jUGjkMB54LLHNj2AJp_SaqNy1GUyZ8WebmxZVRNdAvA"
+
+####
+curl -X POST 'http://localhost:5000/api/support' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU0MDU4NDQ0LCJleHAiOjE3NTQwNjIwNDR9.jPEtombSxDlZHGb7ltkArlBHXNgZ4-Rr-22SeO0_ahw" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "Test Email Template",
+    "message": "Checking the new email"
+  }'
+
+####
+  curl -X POST 'http://localhost:5000/api/support/4/respond' \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU0MDQxMDU0LCJleHAiOjE3NTQwNDQ2NTR9.BX36t5oXnirYG8K-kLdCWn13K0ooG4_EEBVjMtiIZAM" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "response": "This is a test response using the new template",
+    "via": "email"
+  }'

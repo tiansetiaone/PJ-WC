@@ -1,0 +1,156 @@
+.dashboard-wrapper {
+  padding: 20px;
+  background-color: #f9fafb;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.create-btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.create-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.analytics-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.analytics-label {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.analytics-value {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.section-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+}
+
+.empty-state img {
+  width: 120px;
+  height: auto;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* === Tablet (≤ 1024px) === */
+@media (max-width: 1024px) {
+  .analytics-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* === Mobile (≤ 640px) === */
+@media (max-width: 640px) {
+  .dashboard-wrapper {
+    padding: 12px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dashboard-title {
+    font-size: 20px;
+  }
+
+  .create-btn {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .analytics-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .analytics-card {
+    padding: 12px;
+  }
+
+  .analytics-value {
+    font-size: 18px;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  .empty-state img {
+    width: 100px;
+  }
+
+  .empty-title {
+    font-size: 14px;
+  }
+
+  .empty-subtitle {
+    font-size: 12px;
+  }
+}

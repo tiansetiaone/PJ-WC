@@ -1,0 +1,112 @@
+.topnav {
+  position: sticky; /* Membuat header sticky */
+  top: 0; /* Tempel di bagian atas */
+  z-index: 1000; /* Pastikan di atas elemen lain */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #ffffff; /* Warna background */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Shadow untuk efek depth */
+  width: 100%;
+}
+
+.topnav .left,
+.topnav .right {
+   display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topnav img {
+  width: 10rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+  padding: 0.5rem;
+}
+
+.menu-toggle:hover {
+  color: #2c3e50;
+}
+
+.logo {
+  height: 40px;
+}
+
+.notification-icon {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.profile-dropdown .profile-pic {
+  width: 100%;
+  border-radius: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+
+/* Tambahkan ini ke Header.css */
+
+.profile-dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: #f9f9f9;
+  min-width: 120px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  border-radius: 4px;
+}
+
+.profile-dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #f1f1f1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .topnav {
+    padding: 0.5rem;
+  }
+  
+  .logo {
+    height: 30px;
+  }
+
+  .notification-icon,
+  .menu-toggle {
+    font-size: 18px;
+  }
+
+  .profile-pic {
+    width: 35px;
+    height: 35px;
+  }
+}

@@ -1,0 +1,137 @@
+.campaign-container {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.campaign-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.campaign-filters select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.campaign-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.campaign-table th {
+  background-color: #0052cc;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.campaign-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: white;
+}
+
+.status-checking {
+  background: #007bff;
+}
+.status-success {
+  background: #28a745;
+}
+.status-failed {
+  background: #dc3545;
+}
+
+.upload-btn {
+  background: #0052cc;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.upload-btn:hover {
+  background: #003d99;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+}
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.pagination {
+  display: flex;
+  gap: 5px;
+}
+
+.page-btn {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.page-btn.active {
+  background: #0052cc;
+  color: white;
+  border-color: #0052cc;
+}
+
+@media (max-width: 1024px) {
+  .campaign-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .campaign-container {
+    padding: 15px;
+  }
+  .campaign-table th, .campaign-table td {
+    font-size: 14px;
+  }
+  .search-input, .campaign-filters select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-table th, .campaign-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .upload-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}

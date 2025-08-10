@@ -1,0 +1,160 @@
+Tahap 1: Persiapan Data
+bash
+# 1. Pastikan admin sudah terdaftar
+curl -X POST "http://localhost:5000/api/auth/register" \
+-H "Content-Type: application/json" \
+-d '{
+  "username": "adminBot",
+  "password": "admin123",
+  "whatsapp_number": "6285724498827",
+  "role": "admin"
+}'
+
+# 2. Login sebagai admin untuk mendapatkan token
+curl -X POST "http://localhost:5000/api/auth/login" \
+-H "Content-Type: application/json" \
+-d '{
+  "username": "adminBot",
+  "password": "admin123"
+}'
+
+
+Tahap 2: Membuat Grup dan Token Registrasi
+bash
+# 1. Buat grup A (via WhatsApp)
+# (Dilakukan dengan menginvite bot ke grup WhatsApp)
+# Bot akan otomatis menjalankan:
+# INSERT INTO whatsapp_groups (group_id, group_name) VALUES ('GRUP_A_ID@g.us', 'Nama Grup A')
+
+# 2. Buat token registrasi untuk grup A (via WhatsApp)
+# Admin kirim: !adminbuatlink di grup A
+# Simpan token yang dihasilkan (misal: grp-1234567890)
+
+# 3. Buat grup B (via API)
+curl -X POST "http://localhost:5000/api/groups" \
+-H "Authorization: Bearer <ADMIN_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "group_id": "GRUP_B_ID@g.us",
+  "group_name": "Grup Narasumber"
+}'
+
+# 4. Buat token untuk grup B (via API)
+curl -X POST "http://localhost:5000/api/group-tokens" \
+-H "Authorization: Bearer <ADMIN_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "group_id": "GRUP_B_ID@g.us",
+  "expires_in_hours": 24
+}'
+
+
+
+Tahap 3: Registrasi User di Grup A
+bash
+curl -X POST "http://localhost:5000/api/auth/register?token=GRUP_A_TOKEN" \
+-H "Content-Type: application/json" \
+-d '{
+  "username": "userMulti",
+  "password": "user123",
+  "whatsapp_number": "6281234567890"
+}'
+Simpan token user yang didapat.
+
+Tahap 4: Tambahkan User ke Grup B
+bash
+# 1. Tambahkan relasi ke grup B dengan role admin_group
+curl -X POST "http://localhost:5000/api/auth/join-group" \
+-H "Authorization: Bearer <ADMIN_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "whatsapp_number": "6281234567890",
+  "group_id": "GRUP_B_ID@g.us",
+  "role": "admin_group"
+}'
+
+# 2. Verifikasi (harusnya user sekarang punya 2 grup)
+curl -H "Authorization: Bearer <USER_TOKEN>" \
+"http://localhost:5000/api/user/groups"
+Tahap 5: Uji Multi-Role
+bash
+# 1. Coba aksi yang membutuhkan admin_group di Grup B
+curl -X POST "http://localhost:5000/api/groups/GRUP_B_ID@g.us/questions" \
+-H "Authorization: Bearer <USER_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "question_text": "Ini pertanyaan dari admin grup B"
+}'
+
+# 2. Coba aksi yang membutuhkan admin_group di Grup A (harusnya gagal)
+curl -X POST "http://localhost:5000/api/groups/GRUP_A_ID@g.us/questions" \
+-H "Authorization: Bearer <USER_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "question_text": "Ini harusnya gagal"
+}'
+Tahap 6: Ubah Grup Utama
+bash
+# Jadikan Grup B sebagai grup utama
+curl -X POST "http://localhost:5000/api/user/primary-group" \
+-H "Authorization: Bearer <USER_TOKEN>" \
+-H "Content-Type: application/json" \
+-d '{
+  "group_id": "GRUP_B_ID@g.us"
+}'
+
+# Verifikasi
+curl -H "Authorization: Bearer <USER_TOKEN>" \
+"http://localhost:5000/api/auth/me"
+Tahap 7: Uji Join Grup Otomatis via WhatsApp
+Undang nomor 6281234567890 ke grup WhatsApp baru (misal: GRUP_C_ID@g.us)
+
+Bot akan otomatis menambahkan relasi:
+
+sql
+INSERT INTO user_group_relations 
+(user_id, group_id, role, is_default) 
+VALUES (
+  (SELECT id FROM users WHERE whatsapp_number = '6281234567890'),
+  'GRUP_C_ID@g.us',
+  'member',
+  0
+)
+Tahap 8: Verifikasi Akhir
+bash
+# Dapatkan semua data user
+curl -H "Authorization: Bearer <ADMIN_TOKEN>" \
+"http://localhost:5000/api/users/6281234567890"
+
+# Hasil yang diharapkan:
+{
+  "user": {
+    "id": 2,
+    "username": "userMulti",
+    "whatsapp_number": "6281234567890",
+    "groups": [
+      {
+        "group_id": "GRUP_A_ID@g.us",
+        "role": "user",
+        "is_default": false,
+        "group_name": "Grup A"
+      },
+      {
+        "group_id": "GRUP_B_ID@g.us",
+        "role": "admin_group",
+        "is_default": true,
+        "group_name": "Grup Narasumber"
+      },
+      {
+        "group_id": "GRUP_C_ID@g.us",
+        "role": "member",
+        "is_default": false,
+        "group_name": "Grup Baru"
+      }
+    ],
+    "primary_group": {
+      "group_id": "GRUP_B_ID@g.us",
+      "role": "admin_group"
+    }
+  }
+}

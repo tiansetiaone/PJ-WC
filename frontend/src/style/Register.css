@@ -1,0 +1,337 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.register-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* KIRI (Branding) */
+.register-left {
+    flex: 1;
+  background: radial-gradient(circle at top right, rgba(40, 161, 95, 1) 0%, transparent 40%),
+              radial-gradient(circle at bottom left, rgba(106, 24, 188, 1) 0%, transparent 40%),
+              #123DAF;
+    color: white;
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+      position: relative;
+  overflow: hidden;
+}
+
+.branding {
+    margin-top: 10rem;
+}
+
+.branding .logo {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+.branding .tagline {
+    font-size: 40px;
+    font-weight: 600;
+    max-width: 400px;
+    color: white;
+}
+
+/* KANAN (Form) */
+.register-right {
+    flex: 1;
+    background-color: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.register-form {
+    max-width: 420px;
+    width: 100%;
+    padding: 32px;
+}
+
+.register-form h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
+.google-btn {
+    width: 100%;
+    padding: 10px;
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.google-btn:hover {
+    background: #f3f4f6;
+}
+
+.separator {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.separator span {
+    background: white;
+    padding: 0 10px;
+    position: relative;
+    z-index: 2;
+    color: #9ca3af;
+}
+
+.separator::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e5e7eb;
+    z-index: 1;
+}
+
+/* Form */
+form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+form input:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+/* USDT Input Group */
+.usdt-input-group {
+    display: flex;
+    margin-bottom: 14px;
+    width: 100%;
+}
+
+.usdt-network-select {
+    width: 30%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px 0 0 6px;
+    font-size: 14px;
+    background-color: #f9fafb;
+    border-right: none;
+    height: 2.6rem;
+}
+
+.usdt-address-input {
+    width: 70%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+}
+
+.usdt-input-group:focus-within .usdt-network-select,
+.usdt-input-group:focus-within .usdt-address-input {
+    border-color: #6366f1;
+    outline: none;
+}
+
+.checkbox-group {
+   display: flex;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.captcha-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #123DAF;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: background 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #4f46e5;
+}
+
+.error-box {
+    background-color: #fee2e2;
+    border: 1px solid #f87171;
+    color: #b91c1c;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.login-link a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* For Register.css and Login.css */
+.hcaptcha-container {
+    margin: 15px 0;
+    display: flex;
+    justify-content: center;
+}
+
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.checkbox-group input {
+width: 2rem;
+}
+
+.checkbox-group label {
+    font-size: 14px;
+}
+
+.checkbox-group a {
+    color: #4a6cf7;
+    text-decoration: none;
+}
+
+.checkbox-group a:hover {
+    text-decoration: underline;
+}
+
+/* Form Validation Styles */
+.input-error {
+    border-color: #ff4444 !important;
+}
+
+.error-text {
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.button-disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #cccccc !important;
+}
+
+/* Form Group Styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* hCaptcha Container */
+.hcaptcha-container {
+    margin: 15px 0;
+}
+
+/* Error Box */
+.error-box {
+    background-color: #ffebee;
+    color: #ff4444;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border: 1px solid #ffcdd2;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .register-wrapper {
+        flex-direction: column;
+    }
+
+    .register-left {
+        padding: 40px 20px;
+    }
+
+    .register-right {
+        padding: 40px 20px;
+    }
+
+    .branding .logo {
+        font-size: 32px;
+    }
+
+    .branding .tagline {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .usdt-input-group {
+        flex-direction: column;
+    }
+
+    .usdt-network-select {
+        width: 100%;
+        border-radius: 6px 6px 0 0;
+        border-right: 1px solid #d1d5db;
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .usdt-address-input {
+        width: 100%;
+        border-radius: 0 0 6px 6px;
+    }
+}
