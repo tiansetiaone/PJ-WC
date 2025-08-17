@@ -52,10 +52,21 @@ exports.convertCommission = async (req, res) => {
   try {
     const { amount } = req.body;
     
+    // Input validation
     if (!amount || isNaN(amount)) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
+    // Get user's role details
+    const [role] = await db.query(
+      'SELECT commission_rate, min_conversion FROM referral_roles WHERE role_name = ?',
+      [req.user.role]
+    );
+
+    const minConversion = role[0]?.min_conversion || 10;
+    const commissionRate = role[0]?.commission_rate || 0.5;
+
+    // Get available balance
     const [rows] = await db.query(`
       SELECT SUM(amount) as total 
       FROM commissions 
@@ -64,6 +75,7 @@ exports.convertCommission = async (req, res) => {
     
     const available = rows[0]?.total || 0;
     
+    // Validate amount
     if (amount > available) {
       return res.status(400).json({ 
         error: 'Amount exceeds available balance',
@@ -72,24 +84,12 @@ exports.convertCommission = async (req, res) => {
       });
     }
     
-    if (amount < 10) {
-      return res.status(400).json({ error: 'Minimum convert is 10 USDT' });
+    if (amount < minConversion) {
+      return res.status(400).json({ 
+        error: `Minimum convert is ${minConversion} USDT`,
+        min_conversion: minConversion
+      });
     }
-
-    // Di controller
-if (commission_rate < 0) {
-  return res.status(400).json({ 
-    error: 'Commission rate cannot be negative',
-    field: 'commission_rate'
-  });
-}
-
-if (min_conversion < 1) {
-  return res.status(400).json({
-    error: 'Minimum conversion must be at least 1 USDT',
-    field: 'min_conversion'
-  });
-}
 
     // Mark as converted
     await db.query(`
@@ -98,9 +98,9 @@ if (min_conversion < 1) {
           converted_at = CURRENT_TIMESTAMP
       WHERE user_id = ? AND converted = 0
       LIMIT ?
-    `, [req.user.id, Math.floor(amount / 0.5)]);
+    `, [req.user.id, Math.floor(amount / commissionRate)]);
 
-    // Update saldo USDT user
+    // Update user balance
     await db.query(`
       UPDATE users 
       SET usdt_balance = COALESCE(usdt_balance, 0) + ?
@@ -110,17 +110,25 @@ if (min_conversion < 1) {
     res.json({ 
       success: true,
       message: `Successfully converted ${amount} USDT`,
-      new_balance: available - amount
+      new_balance: available - amount,
+      converted_amount: amount
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+
 exports.getAllReferrals = async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   
   try {
+    // Debugging: Check counts
+    const [referralCount] = await db.query('SELECT COUNT(*) as count FROM referrals');
+    const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
+    
+    console.log(`Total referrals: ${referralCount[0].count}, Total users: ${userCount[0].count}`);
+
     const [rows] = await db.query(`
       SELECT 
         r.id, 
@@ -134,9 +142,27 @@ exports.getAllReferrals = async (req, res) => {
       JOIN users u2 ON u2.id = r.referred_id
       ORDER BY r.created_at DESC
     `);
+
+    // Debugging: Log the raw query results
+    console.log('Raw query results:', rows);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: 'No referrals found',
+        counts: {
+          referrals: referralCount[0].count,
+          users: userCount[0].count
+        }
+      });
+    }
+
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in getAllReferrals:', err);
+    res.status(500).json({ 
+      error: 'Failed to get referrals',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -198,18 +224,331 @@ exports.createReferralRole = async (req, res) => {
   }
 };
 
-// Admin: Get all referral roles
-exports.getReferralRoles = async (req, res) => {
+// Admin: Get referral role details
+exports.getReferralRole = async (req, res) => {
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden' });
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
 
   try {
-    const [roles] = await db.query('SELECT * FROM referral_roles');
-    res.json(roles);
+    const { id } = req.params;
+
+    const [role] = await db.query(
+      'SELECT * FROM referral_roles WHERE id = ?',
+      [id]
+    );
+
+    if (!role.length) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+
+    res.json(role[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 
+
+// Track referral visit
+exports.trackVisit = async (req, res) => {
+  try {
+    const { referrer_code } = req.params;
+    const ip = req.ip;
+    const userAgent = req.headers['user-agent'];
+
+    // Get referrer ID from code
+    const [referrer] = await db.query(
+      'SELECT id FROM users WHERE referral_code = ?',
+      [referrer_code]
+    );
+
+    if (!referrer.length) {
+      return res.status(404).json({ error: 'Invalid referral code' });
+    }
+
+    // Record visit
+    await db.query(
+      'INSERT INTO referral_visits (referrer_id, ip_address, user_agent) VALUES (?, ?, ?)',
+      [referrer[0].id, ip, userAgent]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getCommissionStats = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const [stats] = await db.query(`
+      SELECT 
+        COUNT(DISTINCT user_id) as total_affiliates,
+        SUM(CASE WHEN converted = 0 THEN amount ELSE 0 END) as pending_commissions,
+        SUM(CASE WHEN converted = 1 THEN amount ELSE 0 END) as converted_commissions,
+        SUM(amount) as total_commissions
+      FROM commissions
+    `);
+
+    const [recentConversions] = await db.query(`
+      SELECT 
+        c.id,
+        u.name as user_name,
+        c.amount,
+        c.converted_at
+      FROM commissions c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.converted = 1
+      ORDER BY c.converted_at DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      stats: stats[0],
+      recent_conversions: recentConversions
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Admin: Update referral role
+exports.updateReferralRole = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  try {
+    const { id } = req.params;
+    const { role_name, commission_rate, min_conversion } = req.body;
+
+    // Validate input
+    if (!role_name || !commission_rate || !min_conversion) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Check if role exists
+    const [existingRole] = await db.query(
+      'SELECT * FROM referral_roles WHERE id = ?',
+      [id]
+    );
+
+    if (!existingRole.length) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+
+    // Update role
+    await db.query(
+      `UPDATE referral_roles 
+       SET role_name = ?, commission_rate = ?, min_conversion = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [role_name, commission_rate, min_conversion, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Referral role updated successfully'
+    });
+
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ error: 'Role name already exists' });
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Admin: Delete referral role
+exports.deleteReferralRole = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  try {
+    const { id } = req.params;
+
+    // Check if role exists
+    const [existingRole] = await db.query(
+      'SELECT * FROM referral_roles WHERE id = ?',
+      [id]
+    );
+
+    if (!existingRole.length) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+
+    // Prevent deletion of default role
+    if (existingRole[0].is_default) {
+      return res.status(400).json({ error: 'Cannot delete default role' });
+    }
+
+    // Delete role
+    await db.query('DELETE FROM referral_roles WHERE id = ?', [id]);
+
+    res.json({
+      success: true,
+      message: 'Referral role deleted successfully'
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Admin: Set default referral role
+exports.setDefaultRole = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  try {
+    const { id } = req.params;
+
+    // Check if role exists
+    const [existingRole] = await db.query(
+      'SELECT * FROM referral_roles WHERE id = ?',
+      [id]
+    );
+
+    if (!existingRole.length) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+
+    try {
+      // Reset all defaults
+      await db.query(
+        'UPDATE referral_roles SET is_default = 0 WHERE is_default = 1'
+      );
+    } catch (err) {
+      if (err.code === 'ER_BAD_FIELD_ERROR') {
+        // Column doesn't exist, skip this step
+        console.warn('is_default column not found, skipping reset');
+      } else {
+        throw err;
+      }
+    }
+
+    // Set new default
+    await db.query(
+      'UPDATE referral_roles SET is_default = 1 WHERE id = ?',
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Default referral role updated successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Add this function to referral.controller.js
+async function checkReferralCommissions(userId) {
+  try {
+    // Get the entire referral chain
+    const [chain] = await db.query(`
+      WITH RECURSIVE referral_chain AS (
+        SELECT referrer_id, referred_id, 1 as level
+        FROM referrals
+        WHERE referred_id = ?
+        
+        UNION ALL
+        
+        SELECT r.referrer_id, r.referred_id, rc.level + 1
+        FROM referrals r
+        JOIN referral_chain rc ON r.referred_id = rc.referrer_id
+      )
+      SELECT referrer_id, level FROM referral_chain
+      ORDER BY level
+    `, [userId]);
+
+    const commissionsAwarded = [];
+    
+    // Process each level in the chain
+    for (const link of chain) {
+      const referrerId = link.referrer_id;
+      const level = link.level;
+      
+      // Check if both users have minimum deposit
+      const [referrerDeposit] = await db.query(
+        `SELECT SUM(amount) as total 
+         FROM deposits 
+         WHERE user_id = ? AND status = 'approved'`,
+        [referrerId]
+      );
+      
+      const [referredDeposit] = await db.query(
+        `SELECT SUM(amount) as total 
+         FROM deposits 
+         WHERE user_id = ? AND status = 'approved'`,
+        [userId]
+      );
+      
+      const referrerHasDeposit = referrerDeposit[0]?.total >= 10;
+      const referredHasDeposit = referredDeposit[0]?.total >= 10;
+      
+      if (referrerHasDeposit && referredHasDeposit) {
+        // Calculate commission based on level (higher levels get less)
+        const commissionAmount = (0.5 / level).toFixed(2);
+        
+        // Add commission
+        await db.query(
+          'INSERT INTO commissions (user_id, amount, level, status) VALUES (?, ?, ?, "pending")',
+          [referrerId, commissionAmount, level]
+        );
+        
+        commissionsAwarded.push({
+          referrer_id: referrerId,
+          amount: commissionAmount,
+          level
+        });
+      }
+    }
+    
+    return commissionsAwarded;
+  } catch (err) {
+    console.error('Referral commission error:', err);
+    throw err;
+  }
+}
+
+// Then modify the checkCommissions function to use it:
+exports.checkCommissions = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  try {
+    const { id } = req.params;
+    
+    // Verify user exists
+    const [user] = await db.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (!user.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Trigger commission check
+    const results = await checkReferralCommissions(id);
+    
+    res.json({
+      success: true,
+      message: 'Commission check completed',
+      commissions_awarded: results.length,
+      details: results
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      error: 'Failed to check commissions',
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};

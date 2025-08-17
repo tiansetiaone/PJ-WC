@@ -100,33 +100,66 @@ transporter.verify((error) => {
 });
 
 
-// In services/emailService.js
+// Di services/emailService.js
 async function sendPasswordResetEmail(email, resetToken) {
   try {
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    
+    // Gunakan FRONTEND_URL dari environment variable atau default ke localhost
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
+    const appName = process.env.APP_NAME || 'Blasterc';
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: `"${appName} Support" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: 'Password Reset Request',
+      subject: `${appName} - Password Reset Request`,
       html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>Password Reset</h2>
-          <p>You requested a password reset. Click the link below to set a new password:</p>
-          <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">
-            Reset Password
-          </a>
-          <p>This link will expire in 30 minutes.</p>
-          <p>If you didn't request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50;">Password Reset Request</h2>
+            <p>You recently requested to reset your password for your ${appName} account.</p>
+            
+            <div style="margin: 20px 0; text-align: center;">
+              <a href="${resetLink}" 
+                 style="display: inline-block; background-color: #3498db; color: white; 
+                        padding: 12px 24px; text-decoration: none; border-radius: 4px;
+                        font-weight: bold;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p>This link will expire in 30 minutes. If you didn't request a password reset, 
+               please ignore this email or contact support if you have concerns.</p>
+            
+            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; 
+                        color: #777; font-size: 0.9em;">
+              <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+              <p style="word-break: break-all;">${resetLink}</p>
+            </div>
+          </div>
         </div>
       `,
-      text: `You requested a password reset. Please use the following link to reset your password:\n\n${resetUrl}\n\nThis link will expire in 30 minutes. If you didn't request this, please ignore this email.`
+      text: `
+Password Reset Request
+
+You recently requested to reset your password for your ${appName} account.
+Click the link below to reset your password:
+
+${resetLink}
+
+This link will expire in 30 minutes. If you didn't request a password reset, 
+please ignore this email or contact support if you have concerns.
+      `
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`Password reset email sent to ${email}`);
+    return { success: true, resetLink };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error('Error sending password reset email:', {
+      error: error.message,
+      email,
+      timestamp: new Date().toISOString()
+    });
     throw error;
   }
 }
@@ -182,11 +215,158 @@ This is an automated message. Please do not reply to this email.
 }
 
 
+async function sendVerificationRequestEmail(email, ticketId, subject, message) {
+  try {
+    // Validate required environment variables
+    if (!process.env.ADMIN_EMAIL) {
+      throw new Error('ADMIN_EMAIL is not configured');
+    }
+
+    const mailOptions = {
+      from: `"Blasterc Support" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `[Verification] Ticket #${ticketId}: ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px;">
+          <h2 style="color: #2c3e50;">New Verification Request</h2>
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <p><strong>Ticket ID:</strong> #${ticketId}</p>
+            <p><strong>User Email:</strong> ${email}</p>
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-wrap;">${message}</p>
+          </div>
+          
+          <a href="${process.env.ADMIN_DASHBOARD_URL}/verify-user?email=${encodeURIComponent(email)}&ticket=${ticketId}" 
+             style="display: inline-block; background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin-top: 10px;">
+            Verify This Account
+          </a>
+          
+          <p style="margin-top: 20px; color: #7f8c8d; font-size: 0.9em;">
+            This request was generated by the user via the verification system.
+          </p>
+        </div>
+      `,
+      text: `
+New Verification Request (Ticket #${ticketId})
+
+User Email: ${email}
+Message: ${message}
+
+Verify this account: ${process.env.ADMIN_DASHBOARD_URL}/verify-user?email=${encodeURIComponent(email)}&ticket=${ticketId}
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Verification request email sent for ticket #${ticketId}`);
+    return info;
+  } catch (error) {
+    console.error('Failed to send verification email:', {
+      error: error.message,
+      ticketId,
+      recipient: process.env.ADMIN_EMAIL,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
+
+// Tambahkan fungsi-fungsi baru
+async function sendAdminVerificationRequest(email, userId) {
+  try {
+    const verificationLink = `${process.env.ADMIN_DASHBOARD_URL}/verify-user?id=${userId}`;
+    const mailOptions = {
+      from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: 'New User Requires Verification',
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>New User Verification Required</h2>
+          <p>A new user with email ${email} has registered and requires verification.</p>
+          <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
+            Verify User
+          </a>
+          <p>This link will direct you to the admin dashboard for verification.</p>
+        </div>
+      `,
+      text: `New user ${email} requires verification. Click here: ${verificationLink}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Admin verification request sent for user ${email}`);
+  } catch (error) {
+    console.error('Failed to send admin verification request:', error);
+    throw error;
+  }
+}
+
+async function sendAccountApprovalEmail(email, name) {
+  try {
+    const loginUrl = `${process.env.FRONTEND_URL}/login`;
+    const mailOptions = {
+      from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Your Account Has Been Approved',
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Welcome to Blasterc, ${name}!</h2>
+          <p>Your account has been approved by our admin team.</p>
+          <p>You can now login and start using our services:</p>
+          <a href="${loginUrl}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
+            Login Now
+          </a>
+          <p>If you have any questions, please contact our support team.</p>
+        </div>
+      `,
+      text: `Your account has been approved. Login here: ${loginUrl}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Account approval email sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send account approval email:', error);
+    throw error;
+  }
+}
+
+async function sendAccountBlockedEmail(email, name, reason) {
+  try {
+    const supportEmail = process.env.SUPPORT_EMAIL || 'support@blasterc.com';
+    const mailOptions = {
+      from: `"Blasterc Support" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Your Account Has Been Blocked',
+      html: `
+        <div style="font-family: Arial, sans-serif;">
+          <h2>Account Status Update</h2>
+          <p>Dear ${name},</p>
+          <p>We regret to inform you that your account has been blocked by our admin team.</p>
+          <p><strong>Reason:</strong> ${reason || 'Violation of terms of service'}</p>
+          <p>If you believe this is a mistake, please contact our support team at:</p>
+          <a href="mailto:${supportEmail}">${supportEmail}</a>
+          <p>Thank you for your understanding.</p>
+        </div>
+      `,
+      text: `Your account has been blocked. Reason: ${reason || 'Violation of terms of service'}. Contact support at ${supportEmail} if you have questions.`
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Account blocked notification sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send account blocked email:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   transporter,
   sendRegistrationEmail,
   notifyNewTicket,
   sendTicketResponse,
   sendPasswordResetEmail,  // Add this line
-  sendPasswordResetConfirmation
+  sendPasswordResetConfirmation,
+  sendVerificationRequestEmail,
+  sendAccountApprovalEmail,
+  sendAccountBlockedEmail,
+  sendAdminVerificationRequest
 };

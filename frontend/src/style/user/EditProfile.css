@@ -1,0 +1,108 @@
+.edit-profile-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.edit-profile-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.profile-photo-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: auto;
+}
+
+.file-info {
+  font-size: 0.85rem;
+  margin-top: 5px;
+  color: #777;
+}
+
+.btn-delete-photo {
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.form-group label span {
+  color: red;
+}
+
+input, select {
+  padding: 10px;
+  border: 1px solid #0d6efd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.btn-save {
+  grid-column: span 2;
+  padding: 10px;
+  background: #ccc;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: not-allowed;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .edit-profile-container {
+    padding: 10px;
+  }
+  .avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 1rem;
+  }
+}

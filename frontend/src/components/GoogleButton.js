@@ -2,12 +2,13 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const GoogleButton = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const abortController = useRef(null);
 
-  // Cleanup effect untuk abort request saat komponen unmount
   useEffect(() => {
     return () => {
       if (abortController.current) {
@@ -32,14 +33,26 @@ const GoogleButton = () => {
         }
       );
 
-      if (res.data?.token) {
+      if (res.data?.token && res.data?.user) {
+        // Gunakan fungsi login dari auth context
+        login(res.data.user, res.data.token);
+        
+        // Simpan di localStorage
         localStorage.setItem('token', res.data.token);
-        navigate('/dashboard');
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+
+        // Redirect berdasarkan role
+        if (res.data.user.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       }
     } catch (err) {
-      // Abaikan error yang disebabkan oleh abort
       if (!axios.isCancel(err)) {
         console.error('Login error:', err.response?.data || err.message);
+        // Anda mungkin ingin menampilkan error ke user
+        alert('Google login failed: ' + (err.response?.data?.message || err.message));
       }
     }
   };

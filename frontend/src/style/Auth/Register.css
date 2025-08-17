@@ -142,7 +142,7 @@ form input:focus {
 .usdt-network-select {
     width: 30%;
     padding: 10px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #000000;
     border-radius: 6px 0 0 6px;
     font-size: 14px;
     background-color: #f9fafb;

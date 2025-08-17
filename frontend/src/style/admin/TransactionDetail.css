@@ -1,0 +1,175 @@
+.transaction-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.transaction-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.transaction-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #222;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.status-badge.checking {
+  background: #eaf3fc;
+  color: #2980b9;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section h4 {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin: 6px 0;
+}
+
+.info-row span {
+  color: #555;
+}
+
+.info-row strong {
+  color: #222;
+}
+
+.info-row a {
+  color: #0d47a1;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.info-row a:hover {
+  text-decoration: underline;
+}
+
+/* Highlight values */
+.info-row.highlight strong {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+}
+
+.info-row.highlight.credit strong {
+  color: #0d47a1;
+}
+
+/* Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.btn.secondary {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.btn.danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.btn.primary {
+  background: #0d47a1;
+  color: #fff;
+}
+
+/* Icon Buttons */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+/* --- RESPONSIVE --- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .transaction-card {
+    padding: 16px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-row strong,
+  .info-row a {
+    margin-top: 4px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .transaction-card {
+    padding: 12px;
+  }
+
+  .transaction-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .section h4 {
+    font-size: 13px;
+  }
+
+  .info-row {
+    font-size: 13px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 8px;
+  }
+}

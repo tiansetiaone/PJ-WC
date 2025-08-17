@@ -1,0 +1,112 @@
+.referral-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #222;
+}
+
+.referral-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.referral-header h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background: #0d47a1;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #09337a;
+}
+
+/* Card */
+.referral-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.empty-state img {
+  width: 80px;
+  height: 80px;
+  opacity: 0.8;
+  margin-bottom: 15px;
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.empty-subtitle {
+  font-size: 13px;
+  color: #666;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* --- RESPONSIVE --- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .referral-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .referral-container {
+    padding: 12px;
+  }
+
+  .referral-header h2 {
+    font-size: 18px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .empty-title {
+    font-size: 14px;
+  }
+
+  .empty-subtitle {
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,118 @@
+/* Container utama */
+.notification-info-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Card utama */
+.notification-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: "Arial", sans-serif;
+}
+
+/* Title utama */
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+/* Subjudul section */
+.subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Row data */
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.label {
+  color: #555;
+  font-size: 14px;
+}
+
+.value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Pesan notifikasi */
+.message {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+  margin-top: 8px;
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-back {
+  background: #f4f6f9;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1a73e8;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.btn-back:hover {
+  background: #e3e7ed;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+  .notification-card {
+    padding: 16px;
+  }
+  .title {
+    font-size: 18px;
+  }
+  .subtitle {
+    font-size: 15px;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .notification-card {
+    padding: 12px;
+  }
+  .title {
+    font-size: 16px;
+  }
+  .subtitle {
+    font-size: 14px;
+  }
+  .label,
+  .value,
+  .message {
+    font-size: 13px;
+  }
+  .btn-back {
+    width: 100%;
+    text-align: center;
+  }
+}

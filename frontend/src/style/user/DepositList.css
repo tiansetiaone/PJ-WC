@@ -1,0 +1,137 @@
+/* Container */
+.deposit-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #1e1e1e;
+}
+
+/* Header */
+.deposit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topup-btn {
+  background-color: #0056d2;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.topup-btn:hover {
+  background-color: #003c9d;
+}
+
+/* Card */
+.deposit-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.search-filter {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 20px 0;
+}
+
+.search-filter input,
+.search-filter select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #0a3d91;
+  color: white;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-badge.pending-transaction {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.checking-deposit {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.deposit-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.deposit-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* View Button */
+.view-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .search-filter {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead tr {
+    display: none;
+  }
+  tr {
+    margin-bottom: 15px;
+    border-bottom: 2px solid #eee;
+  }
+  td {
+    padding-left: 50%;
+    position: relative;
+  }
+  td::before {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    font-weight: bold;
+  }
+  td:nth-of-type(1)::before { content: "No."; }
+  td:nth-of-type(2)::before { content: "ID Deposit"; }
+  td:nth-of-type(3)::before { content: "Amount"; }
+  td:nth-of-type(4)::before { content: "Status"; }
+  td:nth-of-type(5)::before { content: "Top Up Date"; }
+  td:nth-of-type(6)::before { content: "Action"; }
+}

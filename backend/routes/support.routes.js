@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middlewares/auth.middleware');
-const { 
-  createTicket,
-  getAllTickets,
-  respondToTicket 
-} = require('../controllers/support.controller');
+const supportController = require('../controllers/support.controller');
+const authMiddleware = require('../middlewares/auth.middleware');
 
-// User endpoints
-router.post('/', auth, createTicket);
+// Public routes
+router.post('/request-verification', supportController.requestVerification);
 
-// Admin endpoints
-router.get('/', auth, getAllTickets);
-router.post('/:ticketId/respond', auth, respondToTicket);
-
+// Authenticated routes
+router.post('/tickets', authMiddleware, supportController.createTicket);
+router.get('/tickets', authMiddleware, authMiddleware.adminOnly, supportController.getAllTickets);
+router.post('/tickets/:ticketId/respond', authMiddleware, authMiddleware.adminOnly, supportController.respondToTicket);
+// Di support.routes.js
+router.post('/tickets/public', supportController.createTicket); // Tambahkan route baru untuk public access
+// Di support.routes.js
+router.get('/tickets/:ticketId', authMiddleware, authMiddleware.adminOnly, supportController.getTicketDetails);
 module.exports = router;

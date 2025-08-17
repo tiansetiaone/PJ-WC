@@ -6,8 +6,8 @@ const { validatePhoneNumbers } = require("../utils/validation");
 // Constants
 const MAX_TEXT_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TEXT_TYPES = ['text/plain'];
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+const ALLOWED_TEXT_TYPES = ["text/plain"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
 exports.createCampaign = async (req, res) => {
   const { campaign_name, campaign_date, message, campaign_type, image_url } = req.body;
@@ -16,17 +16,17 @@ exports.createCampaign = async (req, res) => {
   try {
     // Validate required fields
     if (!campaign_name || !campaign_date || !message || !campaign_type) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Missing required fields",
-        required: ["campaign_name", "campaign_date", "message", "campaign_type"]
+        required: ["campaign_name", "campaign_date", "message", "campaign_type"],
       });
     }
 
     // Validate campaign type
-    if (!['whatsapp', 'sms'].includes(campaign_type)) {
-      return res.status(400).json({ 
+    if (!["whatsapp", "sms"].includes(campaign_type)) {
+      return res.status(400).json({
         error: "Invalid campaign type",
-        allowed: ["whatsapp", "sms"]
+        allowed: ["whatsapp", "sms"],
       });
     }
 
@@ -38,17 +38,16 @@ exports.createCampaign = async (req, res) => {
       [user_id, campaign_name, campaign_date, message, image_url || null, campaign_type]
     );
 
-    res.status(201).json({ 
+    res.status(201).json({
       success: true,
       message: "Campaign created successfully",
-      campaign_id: result.insertId
+      campaign_id: result.insertId,
     });
-
   } catch (err) {
     console.error("Create campaign error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to create campaign",
-      details: process.env.NODE_ENV === 'development' ? err.message : null
+      details: process.env.NODE_ENV === "development" ? err.message : null,
     });
   }
 };
@@ -66,19 +65,19 @@ exports.getUserCampaigns = async (req, res) => {
         END as image_url
        FROM campaigns 
        WHERE user_id = ? 
-       ORDER BY created_at DESC`, 
+       ORDER BY created_at DESC`,
       [req.user.id]
     );
 
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (err) {
     console.error("Get campaigns error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to fetch campaigns",
-      details: process.env.NODE_ENV === 'development' ? err.message : null
+      details: process.env.NODE_ENV === "development" ? err.message : null,
     });
   }
 };
@@ -96,8 +95,8 @@ exports.uploadCampaignNumbers = async (req, res) => {
     );
 
     if (!campaign.length) {
-      return res.status(404).json({ 
-        error: "Campaign not found or access denied"
+      return res.status(404).json({
+        error: "Campaign not found or access denied",
       });
     }
 
@@ -109,10 +108,11 @@ exports.uploadCampaignNumbers = async (req, res) => {
     }
 
     // 3. Process file
-    const fileContent = fs.readFileSync(req.file.path, 'utf8');
-    const numbers = fileContent.split(/\r?\n/)
-      .map(num => num.trim())
-      .filter(num => num !== "");
+    const fileContent = fs.readFileSync(req.file.path, "utf8");
+    const numbers = fileContent
+      .split(/\r?\n/)
+      .map((num) => num.trim())
+      .filter((num) => num !== "");
 
     // 4. Validate phone numbers (logika validasi berbeda untuk SMS/WhatsApp)
     const { validNumbers, invalidNumbers } = validatePhoneNumbers(numbers, campaignType);
@@ -122,7 +122,7 @@ exports.uploadCampaignNumbers = async (req, res) => {
         error: "Some phone numbers are invalid",
         invalidNumbers,
         validCount: validNumbers.length,
-        invalidCount: invalidNumbers.length
+        invalidCount: invalidNumbers.length,
       });
     }
 
@@ -130,7 +130,7 @@ exports.uploadCampaignNumbers = async (req, res) => {
     await db.query(
       `INSERT INTO campaign_numbers (campaign_id, phone_number) 
        VALUES ?`,
-      [validNumbers.map(num => [campaignId, num])]
+      [validNumbers.map((num) => [campaignId, num])]
     );
 
     // 6. Update campaign status
@@ -143,13 +143,12 @@ exports.uploadCampaignNumbers = async (req, res) => {
     // Cleanup
     fs.unlinkSync(req.file.path);
 
-    res.json({ 
+    res.json({
       success: true,
       message: `Phone numbers uploaded successfully for ${campaignType} campaign`,
       totalUploaded: validNumbers.length,
-      campaignType: campaignType
+      campaignType: campaignType,
     });
-
   } catch (err) {
     console.error("Upload error:", err);
     if (req.file && fs.existsSync(req.file.path)) {
@@ -165,14 +164,11 @@ exports.getCampaignNumbers = async (req, res) => {
 
   try {
     // Verify campaign ownership
-    const [campaign] = await db.query(
-      `SELECT id FROM campaigns WHERE id = ? AND user_id = ?`,
-      [campaignId, user_id]
-    );
+    const [campaign] = await db.query(`SELECT id FROM campaigns WHERE id = ? AND user_id = ?`, [campaignId, user_id]);
 
     if (!campaign.length) {
-      return res.status(404).json({ 
-        error: "Campaign not found or access denied"
+      return res.status(404).json({
+        error: "Campaign not found or access denied",
       });
     }
 
@@ -185,13 +181,226 @@ exports.getCampaignNumbers = async (req, res) => {
 
     res.json({
       success: true,
-      data: numbers
+      data: numbers,
     });
-
   } catch (err) {
     console.error("Get campaign numbers error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to fetch campaign numbers",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
+  }
+};
+
+// Should add endpoint to track processing status
+exports.getCampaignStatus = async (req, res) => {
+  const { campaignId } = req.params;
+  const user_id = req.user.id;
+
+  try {
+    const [campaign] = await db.query(
+      `SELECT 
+        id, campaign_name, status, 
+        campaign_type, created_at,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = ?) as total_numbers,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = ? AND status = 'success') as success_count
+       FROM campaigns 
+       WHERE id = ? AND user_id = ?`,
+      [campaignId, campaignId, campaignId, user_id]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    res.json({
+      success: true,
+      data: campaign[0]
+    });
+  } catch (err) {
+    console.error("Status check error:", err);
+    res.status(500).json({ error: "Failed to check status" });
+  }
+};
+
+
+// Admin - Get All Campaigns
+exports.getAllCampaigns = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = `SELECT 
+      c.id, c.campaign_name, c.campaign_date, 
+      c.campaign_type, c.status, c.created_at,
+      c.message, c.image_url,
+      u.name as creator_name,
+      (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id) as total_numbers,
+      (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id AND status = 'success') as success_count
+     FROM campaigns c
+     JOIN users u ON c.user_id = u.id`;
+
+    const params = [];
+
+    if (status) {
+      query += ` WHERE c.status = ?`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit), offset);
+
+    const [campaigns] = await db.query(query, params);
+    const [total] = await db.query(`SELECT COUNT(*) as total FROM campaigns`);
+
+    res.json({
+      success: true,
+      data: campaigns,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: total[0].total
+      }
+    });
+  } catch (err) {
+    console.error("Admin get campaigns error:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch campaigns",
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};
+
+// Admin - Get Campaign Details
+exports.getCampaignDetails = async (req, res) => {
+  const { campaignId } = req.params;
+
+  try {
+    const [campaign] = await db.query(
+      `SELECT 
+        c.*, 
+        u.name as creator_name,
+        u.email as creator_email,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id) as total_numbers,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id AND status = 'success') as success_count
+       FROM campaigns c
+       JOIN users u ON c.user_id = u.id
+       WHERE c.id = ?`,
+      [campaignId]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    const [numbers] = await db.query(
+      `SELECT id, phone_number, status 
+       FROM campaign_numbers 
+       WHERE campaign_id = ?`,
+      [campaignId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ...campaign[0],
+        numbers
+      }
+    });
+  } catch (err) {
+    console.error("Admin get campaign details error:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch campaign details",
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};
+
+// Admin - Update Campaign Status
+exports.updateCampaignStatus = async (req, res) => {
+  const { campaignId } = req.params;
+  const { status } = req.body;
+
+  try {
+    if (!['on_process', 'success', 'failed'].includes(status)) {
+      return res.status(400).json({ 
+        error: "Invalid status",
+        allowed: ['on_process', 'success', 'failed']
+      });
+    }
+
+    const [result] = await db.query(
+      `UPDATE campaigns SET status = ? WHERE id = ?`,
+      [status, campaignId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    res.json({
+      success: true,
+      message: `Campaign status updated to ${status}`
+    });
+  } catch (err) {
+    console.error("Admin update campaign status error:", err);
+    res.status(500).json({ 
+      error: "Failed to update campaign status",
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};
+
+// Admin - Generate Campaign Report
+exports.generateCampaignReport = async (req, res) => {
+  const { campaignId } = req.params;
+
+  try {
+    const [campaign] = await db.query(
+      `SELECT 
+        c.*, 
+        u.name as creator_name,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id) as total_numbers,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id AND status = 'success') as success_count,
+        (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id AND status = 'failed') as failed_count
+       FROM campaigns c
+       JOIN users u ON c.user_id = u.id
+       WHERE c.id = ?`,
+      [campaignId]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    const [numbers] = await db.query(
+      `SELECT phone_number, status 
+       FROM campaign_numbers 
+       WHERE campaign_id = ?`,
+      [campaignId]
+    );
+
+    // In a real implementation, you would generate a PDF/Excel file here
+    // For this example, we'll return JSON with all the report data
+    const report = {
+      campaign: campaign[0],
+      numbers,
+      summary: {
+        success_rate: (campaign[0].success_count / campaign[0].total_numbers * 100).toFixed(2) + '%',
+        failed_rate: (campaign[0].failed_count / campaign[0].total_numbers * 100).toFixed(2) + '%'
+      },
+      generated_at: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: report,
+      message: "Report generated successfully"
+    });
+  } catch (err) {
+    console.error("Admin generate report error:", err);
+    res.status(500).json({ 
+      error: "Failed to generate report",
       details: process.env.NODE_ENV === 'development' ? err.message : null
     });
   }

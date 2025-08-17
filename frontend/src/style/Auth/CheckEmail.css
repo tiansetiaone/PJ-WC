@@ -1,0 +1,138 @@
+/* Container Utama */
+.checkemail-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* Bagian Kiri */
+.checkemail-left {
+  flex: 1;
+  background: linear-gradient(135deg, #0048ff, #002f8e);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.checkemail-logo {
+  width: 150px;
+  margin-bottom: 20px;
+}
+
+.checkemail-title {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+/* Bagian Kanan */
+.checkemail-right {
+  flex: 1;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.checkemail-image {
+  width: 220px;
+  margin-bottom: 20px;
+}
+
+.checkemail-heading {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #222;
+}
+
+.checkemail-text {
+  font-size: 15px;
+  color: #555;
+  max-width: 400px;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+.checkemail-button {
+  background: #0048ff;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.checkemail-button:hover {
+  background: #0036c7;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .checkemail-container {
+    flex-direction: column;
+  }
+
+  .checkemail-left,
+  .checkemail-right {
+    flex: none;
+    width: 100%;
+    height: 50vh;
+  }
+
+  .checkemail-title {
+    font-size: 22px;
+  }
+
+  .checkemail-heading {
+    font-size: 20px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .checkemail-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .checkemail-left {
+    padding: 1.5rem;
+    height: auto;
+  }
+
+  .checkemail-title {
+    font-size: 20px;
+  }
+
+  .checkemail-right {
+    padding: 2rem 1rem;
+  }
+
+  .checkemail-image {
+    width: 150px;
+  }
+
+  .checkemail-text {
+    font-size: 14px;
+    padding: 0 1rem;
+  }
+
+  .checkemail-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+}

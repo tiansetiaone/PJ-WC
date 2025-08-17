@@ -1,0 +1,139 @@
+:root {
+  --primary: #0044cc;
+  --gradient-left: linear-gradient(160deg, #0044cc 0%, #0052ff 40%, #4d00b8 100%);
+}
+
+.checking-wrap {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Inter", Arial, sans-serif;
+}
+
+/* Left side */
+.checking-left {
+  flex: 1;
+  background: var(--gradient-left);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px;
+}
+
+.checking-left .logo {
+  width: 180px;
+  margin-bottom: 40px;
+}
+
+.checking-left .tagline {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Right side */
+.checking-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+}
+
+.content-box {
+  max-width: 460px;
+  text-align: center;
+  padding: 20px;
+}
+
+.illustration {
+  width: 160px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.desc {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+.btn-back {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-back:hover {
+  background: #0033aa;
+}
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+  .checking-left {
+    padding: 50px;
+  }
+  .checking-left .tagline {
+    font-size: 28px;
+  }
+  .illustration {
+    width: 140px;
+  }
+  .title {
+    font-size: 18px;
+  }
+  .desc {
+    font-size: 14px;
+  }
+}
+
+/* Mobile (≤ 768px) */
+@media (max-width: 768px) {
+  .checking-wrap {
+    flex-direction: column;
+  }
+  .checking-left {
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .checking-left .logo {
+    margin-bottom: 20px;
+  }
+  .content-box {
+    padding: 16px;
+  }
+}
+
+/* Mobile kecil (≤ 480px) */
+@media (max-width: 480px) {
+  .checking-left .tagline {
+    font-size: 24px;
+  }
+  .illustration {
+    width: 120px;
+  }
+  .title {
+    font-size: 16px;
+  }
+  .desc {
+    font-size: 13px;
+  }
+  .btn-back {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}

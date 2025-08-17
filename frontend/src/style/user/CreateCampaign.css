@@ -1,0 +1,112 @@
+.campaign-container {
+  display: flex;
+  gap: 2rem;
+  padding: 20px;
+}
+
+.campaign-form {
+  flex: 2;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.campaign-form h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.campaign-form h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.campaign-form label {
+  font-weight: bold;
+  margin-top: 15px;
+  display: block;
+}
+
+.campaign-form span {
+  color: red;
+}
+
+.campaign-form input,
+.campaign-form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.campaign-form small {
+  display: block;
+  color: gray;
+  font-size: 12px;
+}
+
+.campaign-form button {
+  background-color: #0056ff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.campaign-form button:hover {
+  background-color: #0040cc;
+}
+
+.campaign-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-frame img {
+  max-width: 250px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .campaign-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .campaign-form {
+    width: 100%;
+  }
+
+  .campaign-preview {
+    margin-top: 20px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .campaign-form h2 {
+    font-size: 20px;
+  }
+
+  .campaign-form h3 {
+    font-size: 16px;
+  }
+
+  .campaign-form button {
+    width: 100%;
+  }
+
+  .phone-frame img {
+    max-width: 200px;
+  }
+}

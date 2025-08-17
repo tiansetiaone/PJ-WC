@@ -1,0 +1,165 @@
+.referral-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #222;
+}
+
+.referral-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.referral-header h2 {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background: #0d47a1;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #09337a;
+}
+
+/* Card */
+.referral-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.filters input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.filters select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* Table */
+.referral-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.referral-table th {
+  background: #0d47a1;
+  color: #fff;
+  padding: 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.referral-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+}
+
+.pagination div button {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  margin: 0 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pagination div button.active {
+  background: #0d47a1;
+  color: #fff;
+  border: none;
+}
+
+.pagination div span {
+  margin: 0 4px;
+  color: #999;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 992px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filters input,
+  .filters select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .referral-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .referral-table th,
+  .referral-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

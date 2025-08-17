@@ -1,0 +1,106 @@
+/* Container */
+.deposit-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* Title */
+.deposit-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+/* Card */
+.deposit-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Card title */
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Content */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-image {
+  width: 120px;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.empty-text {
+  font-size: 13px;
+  color: #666;
+  max-width: 400px;
+}
+
+/* --- RESPONSIVE --- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .deposit-container {
+    padding: 15px;
+  }
+
+  .deposit-title {
+    font-size: 20px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .empty-text {
+    font-size: 12px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .deposit-container {
+    padding: 12px;
+  }
+
+  .deposit-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .deposit-card {
+    padding: 15px;
+  }
+
+  .card-image {
+    width: 100px;
+  }
+
+  .empty-title {
+    font-size: 14px;
+  }
+
+  .empty-text {
+    font-size: 12px;
+  }
+}

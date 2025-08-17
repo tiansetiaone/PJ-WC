@@ -1,0 +1,137 @@
+.ticket-container {
+  padding: 24px;
+}
+
+.ticket-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.ticket-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* Toolbar */
+.ticket-toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ticket-search {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.ticket-filter {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Table */
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.ticket-table th,
+.ticket-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.ticket-table th {
+  background: #0052cc;
+  color: #fff;
+  font-weight: 500;
+}
+
+.ticket-table td {
+  color: #333;
+  font-size: 13px;
+}
+
+.ticket-action {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Footer */
+.ticket-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pagination {
+  display: flex;
+  gap: 6px;
+}
+
+.page-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
+.page-btn.active {
+  background: #0052cc;
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  /* Tablet */
+  .ticket-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ticket-search,
+  .ticket-filter {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile */
+  .ticket-table th:nth-child(3),
+  .ticket-table td:nth-child(3) {
+    display: none; /* hide message column */
+  }
+
+  .ticket-footer {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}

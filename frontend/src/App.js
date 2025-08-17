@@ -21,6 +21,7 @@ import CreateCampaignPage from './components/Campaigns/CreateCampaignModal'; // 
 
 import AdminRoute from './components/Auth/AdminRoute';
 import PrivateRoute from './components/Auth/PrivateRoute';
+import AccountChecking from './components/Auth/AccountChecking';
 
 const App = () => {
   return (
@@ -93,6 +94,8 @@ const AppRoutes = () => {
           </PrivateRoute>
         }
       />
+
+      <Route path="/account-checking" element={<AccountChecking />} />
 
       {/* Admin Routes */}
       <Route

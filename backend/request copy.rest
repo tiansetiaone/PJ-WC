@@ -1,0 +1,567 @@
+###REGISTER SESSION
+
+####ADMIN
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "username": "johndoe",
+    "email": "john@example.com",
+    "password": "SecurePass123!",
+    "password_confirmation": "SecurePass123!",
+    "whatsapp_number": "+120456789000",
+    "usdt_network": "BEP20",
+    "usdt_address": "TAbc123...",
+    "acceptTerms": true,
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001",
+    "referral_code": ""
+  }'
+
+
+####USER
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Testing-Unverified4",
+    "username": "testingunverified4",
+    "email": "testing4@example.com",
+    "password": "Password123!",
+    "password_confirmation": "Password123!",
+    "acceptTerms": true,
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001",
+    "referral_code": "TEST2L35"
+  }'
+
+
+
+####LOGIN SESSION
+
+
+####ADMIN
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "john@example.com",
+  "password": "SecurePass123!",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####USER
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "unverified@example.com",
+  "password": "SecurePass123!",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####USER
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "testing4@example.com",
+  "password": "Password123!",
+  "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+}'
+
+
+####ADMIN USER VERIF
+
+####
+curl -X POST http://localhost:5000/api/auth/admin/verify-user \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyNTIyMywiZXhwIjoxNzU1NDI4ODIzfQ.VC1lpq4nd2vNHjVVlpi37FoMeCerpHla7o3s1HGb6ow" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 40,
+    "action": "approve", 
+    "reason": "Optional reason for blocking"
+  }'
+
+
+####SEND TICKET
+
+####For unverified users to request verification:
+curl -X POST http://localhost:5000/api/support/request-verification \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testing@example.com",
+    "message": "Please verify my account"
+  }'
+
+
+####For general support (authenticated):
+curl -X POST http://localhost:5000/api/support/tickets \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzYsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzU1MTgwLCJleHAiOjE3NTUzNTg3ODB9.skCI-ODDOI60WDjDBoxiSoPz1AacONsvToN3-BvvO_s" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subject": "Verification Request",
+    "message": "Please verify my account",
+    "requestType": "verification"
+  }'
+
+####Check account status:
+curl -X GET "http://localhost:5000/api/auth/account-status?email=testing@example.com" \
+  -H "Content-Type: application/json"
+
+
+####Get All Tickets (Admin)
+curl -X GET http://localhost:5000/api/support/tickets \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ"
+
+
+####Get Ticket Details (baru):
+curl -X GET http://localhost:5000/api/support/tickets/7 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ"
+
+####Respond to Ticket (Admin) Respond via Email (modifikasi):
+curl -X POST http://localhost:5000/api/support/tickets/7/respond \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "response": "Your issue has been resolved",
+    "via": "email",
+    "action": "reply"
+  }'
+
+
+####Respond via Telegram (modifikasi):
+curl -X POST http://localhost:5000/api/support/tickets/6/respond \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "response": "Your issue has been resolved",
+    "via": "telegram",
+    "action": "reply"
+  }'
+
+####Mark as Called (fitur baru):
+curl -X POST http://localhost:5000/api/support/tickets/7/respond \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "call"
+  }'
+
+####Contoh curl untuk unauthenticated user:
+curl -X POST http://localhost:5000/api/support/tickets/public \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doel",
+    "email": "john@examples.com",
+    "subject": "Login Problem",
+    "message": "I cant login to my account",
+    "requestType": "general"
+  }'
+
+
+####FORGOT PASSWORD SESSION
+
+####Request Password Reset (Submit Email)
+curl -X POST http://localhost:5000/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "tiansetiawan.1331@gmail.com",
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+  }'
+
+####Verify Reset Token (Optional - for debugging)
+curl -X GET "http://localhost:5000/api/auth/get-reset-token?email=testunverified@example.com" \
+  -H "Content-Type: application/json"
+
+
+####Submit New Password
+curl -X POST http://localhost:5000/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "e3823b1e0ec73bcdde5cb5fb48b673bd4107282d",
+    "newPassword": "NewPassword123lagi!",
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
+  }'
+
+#### Check Account Status (Optional)
+
+curl -X GET "http://localhost:5000/api/auth/account-status?email=testunverified@example.com" \
+  -H "Content-Type: application/json"
+
+
+####SETTING PROFILE
+
+####Get Profile (for Dashboard):
+curl -X GET http://localhost:5000/api/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzY5MjAwLCJleHAiOjE3NTUzNzI4MDB9.ga1QUE2N-hNL2X4Y7w88TyUMJzYR70a04uISyp4sjIs"
+
+
+####Update Profile with Image:
+# Pastikan file avatar.jpg ada di direktori saat ini
+curl -X PUT http://localhost:5000/api/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzY5MjAwLCJleHAiOjE3NTUzNzI4MDB9.ga1QUE2N-hNL2X4Y7w88TyUMJzYR70a04uISyp4sjIs" \
+  -F "name=Johny Doe" \
+  -F "username=johnydoe" \
+  -F "profile_image=@./avatar.jpg"
+
+####Get Profile Summary:
+curl -X GET http://localhost:5000/api/profile/summary \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzY5MjAwLCJleHAiOjE3NTUzNzI4MDB9.ga1QUE2N-hNL2X4Y7w88TyUMJzYR70a04uISyp4sjIs"
+
+####Deactivate Account:
+curl -X DELETE http://localhost:5000/api/profile \
+  -H "Authorization: Bearer YeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzYsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzYwMDQwLCJleHAiOjE3NTUzNjM2NDB9.f1-R5Bw5Eep-XqGC_REuoORVcp5TPDMilWrYIVkxSNw"
+
+
+####CAMPAIGN PROCESS USER
+
+####Create Campaign:
+curl -X POST http://localhost:5000/api/campaigns \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Mzk5ODI2LCJleHAiOjE3NTU0MDM0MjZ9.nXADv92f6DsEo57_g_Ygt79yrplIarf0ElAAFAOxGwk" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "campaign_name": "Summer Promotion",
+    "campaign_date": "2023-08-20",
+    "message": "Special discount for students!",
+    "campaign_type": "whatsapp",
+    "image_url": "https://example.com/promo.jpg"
+  }'
+
+####Upload Phone Numbers:
+curl -X POST http://localhost:5000/api/campaigns/34/numbers \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Mzk5ODI2LCJleHAiOjE3NTU0MDM0MjZ9.nXADv92f6DsEo57_g_Ygt79yrplIarf0ElAAFAOxGwk" \
+  -H "Content-Type: multipart/form-data" \
+  -F "numbersFile=@/path/to/numbers.txt"
+
+####Check Campaign Status:
+curl -X GET http://localhost:5000/api/campaigns/34/status \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Mzk5ODI2LCJleHAiOjE3NTU0MDM0MjZ9.nXADv92f6DsEo57_g_Ygt79yrplIarf0ElAAFAOxGwk"
+
+####Get Campaign Numbers:
+curl -X GET http://localhost:5000/api/campaigns/34/numbers \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Mzk5ODI2LCJleHAiOjE3NTU0MDM0MjZ9.nXADv92f6DsEo57_g_Ygt79yrplIarf0ElAAFAOxGwk"
+
+
+####List User Campaigns:
+curl -X GET http://localhost:5000/api/campaigns \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Mzk5ODI2LCJleHAiOjE3NTU0MDM0MjZ9.nXADv92f6DsEo57_g_Ygt79yrplIarf0ElAAFAOxGwk"
+
+
+####CAMPAIGN PROCESS ADMIN
+
+####List All Campaigns (with filtering by status)
+curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns?status=success&page=1&limit=10" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg"
+
+####Get Campaign Details
+curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns/34" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg"
+
+####Update Campaign Status
+curl -X PUT "http://localhost:5000/api/campaigns/admin/campaigns/34/status" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "success"}'
+
+####Generate Campaign Report
+curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns/34/report" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg"
+
+
+####DEPOSIT BY USER
+
+####Initiate Deposit (Select Network & Amount)
+curl -X POST http://localhost:5000/api/deposits/initiate \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDI3MDI0LCJleHAiOjE3NTU0MzA2MjR9.8tkaEFQWmPGHaT2sSrPrWiaRtwFlcBWEnIGKFA_This" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "network": "TRC20",
+  "amount": 20,
+    "is_custom": false
+  }'
+
+####Submit Transfer Evidence (TX Hash)
+curl -X POST http://localhost:5000/api/deposits/submit-evidence \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDI3MjU3LCJleHAiOjE3NTU0MzA4NTd9.bKFbpN74jhW4CqYfhyuWfk3fGOuqg1pjKtDzqK6HLU4" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deposit_id": 16,
+    "tx_hash": "0x123...abc"
+  }'
+
+
+####Check Deposit Status
+curl -X GET http://localhost:5000/api/deposits/status/11 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4"
+
+####View Deposit History
+curl -X GET "http://localhost:5000/api/deposits?status=approved&network=TRC20&page=1&limit=10" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDAzMjYxLCJleHAiOjE3NTU0MDY4NjF9.fRrICn0PRwa48X92hSQ1u6AtJNZMrau954-nGeJs_7M"
+
+
+####Get Deposit History (User)
+curl -X GET "http://localhost:5000/api/deposits/history" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4"
+
+####Check Referral Data (User)
+curl -X GET "http://localhost:5000/api/referrals" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4"
+
+####Convert Commission (User)
+curl -X POST "http://localhost:5000/api/referrals/convert" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4" \
+-H "Content-Type: application/json" \
+-d '{
+  "amount": 5
+}'
+
+
+
+
+####DEPOSIT BY ADMIN
+
+
+####Get Deposit Requests (Admin)
+curl -X GET "http://localhost:5000/api/deposits/admin/requests?status=approved" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyNTQxMCwiZXhwIjoxNzU1NDI5MDEwfQ.Pp-VndxEyyFsQpnk1r8fFNHHc8ybk1LInFi2ZYcPV-U"
+
+
+####Process Deposit (Approve/Reject) - Admin
+curl -X POST "http://localhost:5000/api/deposits/admin/process" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyNTQxMCwiZXhwIjoxNzU1NDI5MDEwfQ.Pp-VndxEyyFsQpnk1r8fFNHHc8ybk1LInFi2ZYcPV-U" \
+-H "Content-Type: application/json" \
+-d '{
+  "deposit_id": 13,
+  "action": "approve",
+  "admin_notes": "Deposit verified"
+}'
+
+####Get Deposit Report (Admin)
+curl -X GET "http://localhost:5000/api/deposits/admin/report?start_date=2025-01-01&end_date=2025-12-31" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyMjk3MSwiZXhwIjoxNzU1NDI2NTcxfQ.ItWq0QBeOYZbQo8PZVSkb2k-sJcX0WnBO1QbRGU3wFo"
+
+
+####Check Referral Commission (Admin)
+curl -X POST "http://localhost:5000/api/referrals/admin/check-commissions/32" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyMjk3MSwiZXhwIjoxNzU1NDI2NTcxfQ.ItWq0QBeOYZbQo8PZVSkb2k-sJcX0WnBO1QbRGU3wFo"
+
+
+####List Deposit Requests (with filters)
+curl -X GET "http://localhost:5000/api/deposits/admin/requests?status=checking&page=1&limit=10" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwNDMzNCwiZXhwIjoxNzU1NDA3OTM0fQ.b_ie8za_xA3p7LVAPz-pIzVm3w_r054K6tN2jY7ipek"
+
+####Get Deposit Details
+curl -X GET "http://localhost:5000/api/deposits/admin/deposits/10" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwNDMzNCwiZXhwIjoxNzU1NDA3OTM0fQ.b_ie8za_xA3p7LVAPz-pIzVm3w_r054K6tN2jY7ipek"
+
+
+####Process Deposit (Approve/Reject)
+curl -X POST "http://localhost:5000/api/deposits/admin/process" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwNDMzNCwiZXhwIjoxNzU1NDA3OTM0fQ.b_ie8za_xA3p7LVAPz-pIzVm3w_r054K6tN2jY7ipek" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deposit_id": 10,
+    "action": "approve",
+    "admin_notes": "Transaction verified on blockchain"
+  }'
+
+####Generate Deposit Report
+curl -X GET "http://localhost:5000/api/deposits/admin/report?start_date=2023-01-01&end_date=2023-12-31&status=approved&network=TRC20" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwNDMzNCwiZXhwIjoxNzU1NDA3OTM0fQ.b_ie8za_xA3p7LVAPz-pIzVm3w_r054K6tN2jY7ipek"
+
+
+
+
+
+#####Testing Scenario
+#### 1. User A daftar dengan referral code User B
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "User-A",
+    "username": "testingusera",
+    "email": "testingusera@example.com",
+    "password": "Password123!",
+    "password_confirmation": "Password123!",
+    "acceptTerms": true,
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001",
+    "referral_code": "TESTHJCD"
+}'
+
+#### 2. User A login
+curl -X POST "http://localhost:5000/api/auth/login" \
+-H "Content-Type: application/json" \
+-d '{
+  "email": "testing3@example.com",
+  "password": "Password123!"
+}'
+
+#### 3. User A buat deposit
+curl -X POST "http://localhost:5000/api/deposits/initiate" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzksInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDI1MjY1LCJleHAiOjE3NTU0Mjg4NjV9.g5M06AuLgrVZHxagKKp22TiBU6hqgJ14mtKLbJIPAzY" \
+-H "Content-Type: application/json" \
+-d '{
+  "network": "TRC20",
+  "amount": 20
+}'
+
+##### 4. Admin approve deposit User A
+curl -X POST "http://localhost:5000/api/deposits/admin/process" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyNTQxMCwiZXhwIjoxNzU1NDI5MDEwfQ.Pp-VndxEyyFsQpnk1r8fFNHHc8ybk1LInFi2ZYcPV-U" \
+-H "Content-Type: application/json" \
+-d '{
+  "deposit_id": 16,
+  "action": "approve"
+}'
+
+#### 5. User B cek komisi
+curl -X GET "http://localhost:5000/api/referrals" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzgsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDI2NjgwLCJleHAiOjE3NTU0MzAyODB9.gfe7bSVuIyPL3yvc4TJUjBTnU819j-z2DysIpmPBeuo"
+
+#### 6. User B konversi komisi
+curl -X POST "http://localhost:5000/api/referrals/convert" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzgsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDI2NjgwLCJleHAiOjE3NTU0MzAyODB9.gfe7bSVuIyPL3yvc4TJUjBTnU819j-z2DysIpmPBeuo" \
+-H "Content-Type: application/json" \
+-d '{
+  "amount": 0.5
+}'
+
+
+
+
+
+####REFERRAL BY USER
+
+
+####Track Referral Visit (Public)
+curl -X GET "http://localhost:5000/api/referrals/track/UNVE6E3A" \
+-H "Content-Type: application/json"
+
+####Get Referral Data (Authenticated User)
+curl -X GET "http://localhost:5000/api/referrals" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDA5MzA2LCJleHAiOjE3NTU0MTI5MDZ9.69z5u6LDWnmeerpqNyiz0JenlJwVH5HEJKPYw9HGizA" \
+-H "Content-Type: application/json"
+
+####Convert Earnings
+curl -X POST "http://localhost:5000/api/referrals/convert" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDA5MzA2LCJleHAiOjE3NTU0MTI5MDZ9.69z5u6LDWnmeerpqNyiz0JenlJwVH5HEJKPYw9HGizA" \
+-H "Content-Type: application/json" \
+-d '{"amount": 15}'
+
+####Get Balance
+curl -X GET "http://localhost:5000/api/referrals/balance" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDA5MzA2LCJleHAiOjE3NTU0MTI5MDZ9.69z5u6LDWnmeerpqNyiz0JenlJwVH5HEJKPYw9HGizA" \
+-H "Content-Type: application/json"
+
+
+####REFERRAL BY ADMIN
+
+####Admin Endpoints:Get All Referrals
+curl -X GET "http://localhost:5000/api/referrals/all" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwOTQwMywiZXhwIjoxNzU1NDEzMDAzfQ.7vNBYhvM5j7_vqpokFZc3c6_ehrMdMJH4p56ghfPG1k" \
+-H "Content-Type: application/json"
+
+####Get Commission Statistics
+curl -X GET "http://localhost:5000/api/referrals/stats" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwOTQwMywiZXhwIjoxNzU1NDEzMDAzfQ.7vNBYhvM5j7_vqpokFZc3c6_ehrMdMJH4p56ghfPG1k" \
+-H "Content-Type: application/json"
+
+####Create Referral Role
+curl -X POST "http://localhost:5000/api/referrals/admin/roles" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMjQ0MSwiZXhwIjoxNzU1NDE2MDQxfQ.8YVmjXKMsAKxiqTsvfuGVxYKPbyhlZ2FsRMjM8QMJ1A" \
+-H "Content-Type: application/json" \
+-d '{
+  "role_name": "premium",
+  "commission_rate": 0.75,
+  "min_conversion": 5
+}'
+
+
+####
+curl -X POST "http://localhost:5000/api/referrals/admin/roles" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json" \
+-d '{
+  "role_name": "vip",
+  "commission_rate": 1.0,
+  "min_conversion": 5
+}'
+
+####Get Referral Roles
+curl -X GET "http://localhost:5000/api/referrals/admin/roles" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwOTQwMywiZXhwIjoxNzU1NDEzMDAzfQ.7vNBYhvM5j7_vqpokFZc3c6_ehrMdMJH4p56ghfPG1k" \
+-H "Content-Type: application/json"
+
+####
+curl -X GET "http://localhost:5000/api/referrals/admin/roles" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json"
+
+####Get Specific Referral Role
+curl -X GET "http://localhost:5000/api/referrals/admin/roles/3" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json"
+
+####Update Referral Role
+curl -X PUT "http://localhost:5000/api/referrals/admin/roles/3" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json" \
+-d '{
+  "role_name": "vip_updated",
+  "commission_rate": 1.2,
+  "min_conversion": 10
+}'
+
+
+#### Delete Referral Role
+curl -X DELETE "http://localhost:5000/api/referrals/admin/roles/4" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json"
+
+
+####Set Default Referral Role
+curl -X POST "http://localhost:5000/api/referrals/admin/roles/3/set-default" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMjQ0MSwiZXhwIjoxNzU1NDE2MDQxfQ.8YVmjXKMsAKxiqTsvfuGVxYKPbyhlZ2FsRMjM8QMJ1A" \
+-H "Content-Type: application/json"
+
+####Get Referral Statistics (Admin View)
+curl -X GET "http://localhost:5000/api/referrals/stats" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Content-Type: application/json"
+
+####Get All Referrals (Admin View)
+curl -X GET "http://localhost:5000/api/referrals/all" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMjQ0MSwiZXhwIjoxNzU1NDE2MDQxfQ.8YVmjXKMsAKxiqTsvfuGVxYKPbyhlZ2FsRMjM8QMJ1A" \
+-H "Content-Type: application/json"
+
+
+####NOTIFICATION BY ADMIN
+
+####Get All Notifications (Admin Only)
+curl -X GET "http://localhost:5000/api/notifications/admin" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNDg0MCwiZXhwIjoxNzU1NDE4NDQwfQ.zq1Vxd795OBtQuV6_ETojH559q0tyRrZXh1UGXTsUJY"
+
+####Create New Notification (Admin Only)
+curl -X POST "http://localhost:5000/api/notifications/admin" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNDg0MCwiZXhwIjoxNzU1NDE4NDQwfQ.zq1Vxd795OBtQuV6_ETojH559q0tyRrZXh1UGXTsUJY" \
+-H "Content-Type: application/json" \
+-d '{
+  "title": "Maintenance Schedule",
+  "content": "System will be down for maintenance on 2023-12-25 from 00:00 to 04:00",
+  "user_scope": "all"
+}'
+
+####Update Notification (Admin Only)
+curl -X PUT "http://localhost:5000/api/notifications/admin/10" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNDg0MCwiZXhwIjoxNzU1NDE4NDQwfQ.zq1Vxd795OBtQuV6_ETojH559q0tyRrZXh1UGXTsUJY" \
+-H "Content-Type: application/json" \
+-d '{
+  "title": "Updated Maintenance Schedule",
+  "content": "System will be down for maintenance on 2023-12-25 from 01:00 to 05:00",
+  "user_scope": "all"
+}'
+
+####Delete Notification (Admin Only)
+curl -X DELETE "http://localhost:5000/api/notifications/admin/11" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNDg0MCwiZXhwIjoxNzU1NDE4NDQwfQ.zq1Vxd795OBtQuV6_ETojH559q0tyRrZXh1UGXTsUJY"
+
+####Get Notifications for Current User (User/Admin)
+curl -X GET "http://localhost:5000/api/notifications" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDE0OTY1LCJleHAiOjE3NTU0MTg1NjV9.cGKVN1TyuoWoCJAALjCrG3ElK09hAgsujzB0vG3WuYA"

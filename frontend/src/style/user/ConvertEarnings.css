@@ -1,0 +1,132 @@
+.convert-earnings-container {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 500px;
+  margin: auto;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.card {
+  background: #f8fbff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.earnings {
+  color: #0044cc;
+  font-size: 2rem;
+  margin: 5px 0;
+}
+
+.eligible {
+  font-size: 0.85rem;
+  color: green;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.amount-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.required {
+  color: red;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.currency-symbol {
+  padding: 0 10px;
+  background: #f5f5f5;
+  font-weight: bold;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  outline: none;
+}
+
+.convert-all {
+  background: transparent;
+  color: #0044cc;
+  border: none;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.credits {
+  font-size: 0.85rem;
+  margin-top: 5px;
+  color: #555;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.back-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background: #f2f5ff;
+  color: #0044cc;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.convert-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background: #ccc;
+  color: #fff;
+  font-weight: bold;
+  cursor: not-allowed;
+}
+
+/* 📱 Mobile */
+@media (max-width: 768px) {
+  .convert-earnings-container {
+    padding: 15px;
+  }
+
+  .earnings {
+    font-size: 1.6rem;
+  }
+}
+
+/* 💻 Tablet & Desktop */
+@media (min-width: 769px) {
+  .convert-earnings-container {
+    padding: 25px;
+  }
+}

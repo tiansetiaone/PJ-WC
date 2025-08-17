@@ -8,7 +8,12 @@ const {
   createCampaign, 
   getUserCampaigns, 
   uploadCampaignNumbers,
-  getCampaignNumbers
+  getCampaignNumbers,
+  getCampaignStatus,
+  generateCampaignReport,
+  getAllCampaigns,
+  getCampaignDetails,
+  updateCampaignStatus
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -100,5 +105,35 @@ router.post(
 );
 
 router.get("/:campaignId/numbers", auth, getCampaignNumbers);
+router.get("/:campaignId/status", auth, getCampaignStatus);
+
+// Admin routes
+router.get(
+  "/admin/campaigns",
+  auth,
+  auth.adminOnly,
+  getAllCampaigns
+);
+
+router.get(
+  "/admin/campaigns/:campaignId",
+  auth,
+  auth.adminOnly,
+  getCampaignDetails
+);
+
+router.put(
+  "/admin/campaigns/:campaignId/status",
+  auth,
+  auth.adminOnly,
+  updateCampaignStatus
+);
+
+router.get(
+  "/admin/campaigns/:campaignId/report",
+  auth,
+  auth.adminOnly,
+  generateCampaignReport
+);
 
 module.exports = router;

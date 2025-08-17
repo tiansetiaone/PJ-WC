@@ -1,0 +1,103 @@
+/* Container */
+.campaign-info-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Card */
+.campaign-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Title */
+.campaign-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Banner */
+.campaign-banner img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Section */
+.campaign-section {
+  margin-top: 20px;
+}
+
+.campaign-section h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Details */
+.campaign-details p {
+  margin: 5px 0;
+}
+
+.status-checking {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* Message */
+.campaign-message {
+  background: #fff3e0;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Back Button */
+.button-container {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.back-button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: #1565c0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .campaign-card {
+    padding: 15px;
+  }
+  .campaign-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-card {
+    padding: 10px;
+  }
+  .campaign-title {
+    font-size: 16px;
+  }
+  .campaign-message {
+    font-size: 13px;
+  }
+}

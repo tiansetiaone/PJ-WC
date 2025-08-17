@@ -1,0 +1,170 @@
+/* Layout Container */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  background: #f5f6f8;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  padding: 20px 0;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #0052cc;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menu-item {
+  padding: 10px 20px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.menu-item:hover {
+  background: #f1f1f1;
+}
+
+.menu-item.active {
+  background: #0052cc;
+  color: #fff;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.notif-icon {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.avatar {
+  background: #0052cc;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Ticket Section */
+.ticket-section {
+  padding: 24px;
+}
+
+.ticket-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.ticket-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.ticket-empty {
+  text-align: center;
+  padding: 20px;
+}
+
+.ticket-img {
+  width: 100px;
+  margin-bottom: 16px;
+}
+
+.ticket-empty-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.ticket-empty-desc {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  /* Tablet */
+  .sidebar {
+    width: 200px;
+  }
+  .ticket-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile */
+  .dashboard-container {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+  }
+  .menu {
+    flex-direction: row;
+    justify-content: space-around;
+  }
+  .main-content {
+    flex: 1;
+  }
+  .ticket-empty-desc {
+    font-size: 12px;
+  }
+}

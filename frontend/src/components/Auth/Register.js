@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../../style/Register.css';
+import '../../style/Auth/Register.css';
 import GoogleButton from '../GoogleButton';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import logoImage from "../../assets/logo-blasterc.png";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -12,18 +14,41 @@ const Register = () => {
         username: '',
         email: '',
         password: '',
-        password_confirmation: '', // New field
+        password_confirmation: '',
         whatsapp_number: '',
         usdt_network: 'TRC20',
         usdt_address: ''
     });
     const [formErrors, setFormErrors] = useState({});
-    const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [hCaptchaToken, setHCaptchaToken] = useState(null);
     const hCaptchaRef = useRef(null);
     const navigate = useNavigate();
+
+    const showErrorToast = (message) => {
+        toast.error(message, {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+    };
+
+    const showSuccessToast = (message) => {
+        toast.success(message, {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -31,7 +56,6 @@ const Register = () => {
             ...formData,
             [name]: value
         });
-        // Clear error when user types
         if (formErrors[name]) {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -39,42 +63,35 @@ const Register = () => {
 
     const handleHCaptchaVerify = (token) => {
         setHCaptchaToken(token);
-        if (error.includes('captcha')) {
-            setError('');
-        }
     };
 
-    const handleHCaptchaError = (err) => {
-        console.error('hCaptcha Error:', err);
+    const handleHCaptchaError = () => {
         setHCaptchaToken(null);
-        setError('Captcha verification failed. Please try again.');
+        showErrorToast('Captcha verification failed. Please try again.');
     };
 
     const handleHCaptchaExpire = () => {
         setHCaptchaToken(null);
-        setError('Captcha session expired. Please verify again.');
+        showErrorToast('Captcha session expired. Please verify again.');
     };
 
     const validateForm = () => {
         const errors = {};
         let isValid = true;
 
-        // Name validation
         if (!formData.name.trim()) {
             errors.name = 'Full name is required';
             isValid = false;
         }
 
-        // Username validation
         if (!formData.username.trim()) {
             errors.username = 'Username is required';
             isValid = false;
         } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-            errors.username = 'Username can only contain letters, numbers and underscores';
+            errors.username = 'Only letters, numbers and underscores allowed';
             isValid = false;
         }
 
-        // Email validation
         if (!formData.email.trim()) {
             errors.email = 'Email is required';
             isValid = false;
@@ -83,12 +100,11 @@ const Register = () => {
             isValid = false;
         }
 
-        // Password validation
         if (!formData.password) {
             errors.password = 'Password is required';
             isValid = false;
         } else if (formData.password.length < 8) {
-            errors.password = 'Password must be at least 8 characters';
+            errors.password = 'Minimum 8 characters required';
             isValid = false;
         }
 
@@ -100,27 +116,23 @@ const Register = () => {
             isValid = false;
         }
 
-        // WhatsApp number validation
         if (formData.whatsapp_number && !/^\+?[\d\s-]+$/.test(formData.whatsapp_number)) {
             errors.whatsapp_number = 'Please enter a valid WhatsApp number';
             isValid = false;
         }
 
-        // USDT address validation
         if (formData.usdt_address && formData.usdt_address.length < 10) {
-            errors.usdt_address = 'Please enter a valid USDT address';
+            errors.usdt_address = 'USDT address must be at least 10 characters';
             isValid = false;
         }
 
-        // Terms validation
         if (!acceptTerms) {
-            setError('You must accept the terms and conditions');
+            showErrorToast('You must accept the terms and conditions');
             isValid = false;
         }
 
-        // hCaptcha validation
         if (!hCaptchaToken) {
-            setError('Please complete the captcha verification');
+            showErrorToast('Please complete the captcha verification');
             isValid = false;
         }
 
@@ -129,56 +141,56 @@ const Register = () => {
     };
 
     const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!validateForm()) return;
+        e.preventDefault();
+        
+        if (!validateForm()) return;
 
-  setIsLoading(true);
-  setError('');
+        setIsLoading(true);
 
-  try {
-    const response = await axios.post('http://localhost:5000/api/auth/register', {
-      ...formData,
-      acceptTerms,
-      hCaptchaToken
-    });
-    
-    if (response.data.success) {
-      alert('Registration successful! Please login.');
-      navigate('/login');
-    }
-  } catch (err) {
-    let errorMessage = 'Registration failed. Please try again.'; // Changed from errorMsg to errorMessage
-    
-    if (err.response) {
-      // Handle specific error codes from backend
-      if (err.response.data.code === 'INVALID_CAPTCHA') {
-        errorMessage = 'Captcha verification failed. Please try again.';
-        hCaptchaRef.current.resetCaptcha();
-        setHCaptchaToken(null);
-      } else if (err.response.data.error) {
-        errorMessage = err.response.data.error;
-      }
+        try {
+            const response = await axios.post('http://localhost:5000/api/auth/register', {
+                ...formData,
+                acceptTerms,
+                hCaptchaToken
+            });
+            
+            if (response.data.success) {
+                showSuccessToast('Registration successful!');
+                navigate('/account-checking', { 
+                    state: { 
+                        email: formData.email,
+                        isActive: response.data.is_active 
+                    } 
+                });
+            }
+        } catch (err) {
+            let errorMessage = 'Registration failed. Please try again.';
+            
+            if (err.response) {
+                if (err.response.data.code === 'INVALID_CAPTCHA') {
+                    errorMessage = 'Captcha verification failed. Please try again.';
+                    hCaptchaRef.current.resetCaptcha();
+                    setHCaptchaToken(null);
+                } else if (err.response.data.error) {
+                    errorMessage = err.response.data.error;
+                }
 
-      // Map backend errors to form fields
-      if (err.response.data.details) {
-        setFormErrors(err.response.data.details);
-      } else if (err.response.data.field) {
-        setFormErrors(prev => ({
-          ...prev,
-          [err.response.data.field]: err.response.data.error
-        }));
-      }
-    }
-    
-    setError(errorMessage); // Changed from errorMsg to errorMessage
-  } finally {
-    setIsLoading(false);
-  }
-};
+                if (err.response.data.details) {
+                    setFormErrors(err.response.data.details);
+                    // Show field-specific errors
+                    Object.values(err.response.data.details).forEach(msg => {
+                        showErrorToast(msg);
+                    });
+                }
+            }
+            
+            showErrorToast(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    // Disable button if form is invalid or loading
-const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken || 
+    const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken || 
         !formData.name || !formData.username || !formData.email || 
         !formData.password || formData.password.length < 8 ||
         !formData.password_confirmation || formData.password !== formData.password_confirmation ||
@@ -186,6 +198,18 @@ const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken ||
 
     return (
         <div className="register-wrapper">
+            <ToastContainer
+                position="top-center"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+            />
+            
             <div className="register-left">
                 <div className="branding">
                    <img src={logoImage} alt="BLASTERC" className="logo-img" />
@@ -200,16 +224,14 @@ const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken ||
                         Join us and experience the convenience of managing WhatsApp and SMS broadcasts in a single, integrated platform.
                     </p>
 
-          <div className="google-login">
-            <GoogleButton />
-            <div className="separator">
-              <div className='border1'></div>
-              <span>or</span>
-              <div className='border1'></div>
-            </div>
-          </div>
-
-                    {error && !Object.keys(formErrors).length && <div className="error-box">{error}</div>}
+                    <div className="google-login">
+                        <GoogleButton />
+                        <div className="separator">
+                            <div className='border1'></div>
+                            <span>or</span>
+                            <div className='border1'></div>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
@@ -330,11 +352,6 @@ const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken ||
                                 onError={handleHCaptchaError}
                                 ref={hCaptchaRef}
                             />
-                            {!hCaptchaToken && error.includes('captcha') && (
-                                <span className="error-text" style={{ display: 'block', marginTop: '5px' }}>
-                                    {error}
-                                </span>
-                            )}
                         </div>
 
                         <button 
@@ -342,7 +359,11 @@ const isSubmitDisabled = isLoading || !acceptTerms || !hCaptchaToken ||
                             disabled={isSubmitDisabled} 
                             className={`submit-btn ${isSubmitDisabled ? 'button-disabled' : ''}`}
                         >
-                            {isLoading ? 'Registering...' : 'Register Now'}
+                            {isLoading ? (
+                                <>
+                                    <span className="spinner"></span> Registering...
+                                </>
+                            ) : 'Register Now'}
                         </button>
                     </form>
 

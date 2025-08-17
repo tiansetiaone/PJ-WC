@@ -11,6 +11,7 @@ const {
   sendPasswordResetConfirmation  // Tambahkan ini jika diperlukan
 } = require('../services/emailService');
 const crypto = require('crypto');
+require('dotenv').config();
 
 exports.googleAuth = async (req, res) => {
   try {
@@ -101,7 +102,7 @@ exports.registerUser = async (req, res) => {
     username, 
     email, 
     password, 
-    password_confirmation, // New field
+    password_confirmation,
     whatsapp_number = null, 
     usdt_network = 'TRC20',
     usdt_address = null,
@@ -113,7 +114,7 @@ exports.registerUser = async (req, res) => {
   // Enhanced input validation with referral code check
   const validation = validateRegistrationInput({
     ...req.body,
-    password_confirmation // Include in validation
+    password_confirmation
   });
 
   if (!validation.valid) {
@@ -124,7 +125,6 @@ exports.registerUser = async (req, res) => {
     });
   }
 
-    // Additional password confirmation check
   if (password !== password_confirmation) {
     return res.status(400).json({
       error: 'Password confirmation does not match',
@@ -133,9 +133,8 @@ exports.registerUser = async (req, res) => {
     });
   }
 
-
   try {
-    // hCaptcha verification with better error handling
+    // hCaptcha verification
     const captchaVerification = await verifyHCaptcha(hCaptchaToken);
     if (!captchaVerification.success) {
       return res.status(400).json({
@@ -145,7 +144,7 @@ exports.registerUser = async (req, res) => {
       });
     }
 
-    // Check referral code validity if provided
+    // Check referral code
     let referrer_id = null;
     if (referral_code) {
       const [referrer] = await db.query(
@@ -162,12 +161,12 @@ exports.registerUser = async (req, res) => {
       referrer_id = referrer[0].id;
     }
 
-    // User registration with referral tracking
-const registrationResult = await registerNewUser({
+    // User registration
+    const registrationResult = await registerNewUser({
       name, 
       username, 
       email, 
-      password, // Only store the main password
+      password,
       whatsapp_number, 
       usdt_network: usdt_address ? usdt_network : null,
       usdt_address: usdt_address || null,
@@ -182,10 +181,9 @@ const registrationResult = await registerNewUser({
           [referrer_id, registrationResult.userId]
         );
         
-        // Add commission to referrer
         await db.query(
           'INSERT INTO commissions (user_id, amount) VALUES (?, ?)',
-          [referrer_id, 0.5] // $0.5 commission per referral
+          [referrer_id, 0.5]
         );
 
         registrationResult.referral = {
@@ -194,15 +192,23 @@ const registrationResult = await registerNewUser({
         };
       } catch (err) {
         console.error('Failed to record referral:', err);
-        // Don't fail registration if referral recording fails
         registrationResult.referral_error = err.message;
       }
     }
 
-    // Email notification
+    // Email notifications
     try {
+      // Send registration email to user
       await sendRegistrationEmail(email, name);
       registrationResult.emailSent = true;
+
+      // Send admin verification request if needed
+      if (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') {
+        await sendAdminVerificationRequest(email, registrationResult.userId);
+      } else {
+        // If no verification needed, send welcome email immediately
+        await sendAccountApprovalEmail(email, name);
+      }
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
       registrationResult.emailSent = false;
@@ -211,8 +217,11 @@ const registrationResult = await registerNewUser({
 
     return res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: process.env.REQUIRE_ADMIN_VERIFICATION === 'true' 
+        ? 'Registration successful. Waiting for admin approval.' 
+        : 'Registration successful. You can now login.',
       ...registrationResult,
+      is_active: registrationResult.is_active,
       captchaVerification: {
         success: true,
         hostname: captchaVerification.hostname
@@ -380,12 +389,15 @@ async function registerNewUser(userData) {
   const hashedPassword = await bcrypt.hash(userData.password, 12);
   const referralCode = generateReferralCode(userData.username);
   
+  // Tentukan nilai is_active secara eksplisit
+  const is_active = (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') ? 0 : 1;
+
   const [result] = await db.query(
     `INSERT INTO users 
      (name, username, email, password, whatsapp_number, 
       usdt_network, usdt_address, referral_code, referred_by,
-      role, created_at) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'user', NOW())`,
+      role, created_at, provider, is_active) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'user', NOW(), 'local', ?)`,
     [
       userData.name,
       userData.username,
@@ -396,6 +408,7 @@ async function registerNewUser(userData) {
       userData.usdt_address,
       referralCode,
       userData.referrer_id || null,
+      is_active // Gunakan nilai yang sudah ditentukan
     ]
   );
 
@@ -403,7 +416,8 @@ async function registerNewUser(userData) {
     userId: result.insertId,
     username: userData.username,
     email: userData.email,
-    referralCode // Return the generated referral code
+    referralCode,
+    is_active // Kembalikan status aktual
   };
 }
 
@@ -449,22 +463,56 @@ exports.loginUser = async (req, res) => {
     const [rows] = await db.query(`SELECT * FROM users WHERE email = ?`, [email]);
     const user = rows[0];
 
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    // Enhanced account status check
+    if (user.is_active !== 1) {
+      let errorMessage, errorCode;
+      
+      if (user.deleted_at) {
+        errorMessage = 'Account blocked. Please contact support.';
+        errorCode = 'ACCOUNT_BLOCKED';
+      } else if (user.is_active === 0) {
+        errorMessage = 'Account pending admin verification.';
+        errorCode = 'PENDING_VERIFICATION';
+      } else {
+        errorMessage = 'Account not active';
+        errorCode = 'ACCOUNT_INACTIVE';
+      }
+
+      return res.status(403).json({
+        error: errorMessage,
+        code: errorCode,
+        is_active: user.is_active,
+        deleted_at: user.deleted_at
+      });
+    }
 
     // Handle Google-registered users attempting password login
     if (user.provider === 'google' && password) {
       return res.status(400).json({ 
-        error: 'This account uses Google login. Please sign in with Google.' 
+        error: 'This account uses Google login. Please sign in with Google.',
+        code: 'GOOGLE_AUTH_REQUIRED'
       });
     }
 
     // Handle password login
     if (user.provider === 'local') {
       const valid = await bcrypt.compare(password, user.password);
-      if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+      if (!valid) {
+        return res.status(400).json({ 
+          error: 'Invalid credentials',
+          code: 'INVALID_CREDENTIALS'
+        });
+      }
     }
 
-    // Generate token for both methods
+    // Generate token only if all checks pass
     const token = generateToken(user);
     res.json({ 
       token,
@@ -473,13 +521,18 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        provider: user.provider
+        provider: user.provider,
+        is_active: user.is_active
       }
     });
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ 
+      error: 'Login failed',
+      code: 'LOGIN_FAILED',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -507,8 +560,8 @@ exports.forgotPassword = async (req, res) => {
     }
 
     // Generate token with crypto
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 meni
     
     await db.query(
       'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?',
@@ -711,4 +764,108 @@ exports.getResetToken = async (req, res) => {
             details: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
     }
+};
+
+
+// Add this to auth.controller.js
+// Update verifyUser function
+exports.verifyUser = async (req, res) => {
+  const { user_id, action, reason } = req.body;
+  
+  try {
+    const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
+    if (!user.length) {
+      return res.status(404).json({ 
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    if (action === 'approve') {
+      await db.query(
+        'UPDATE users SET is_active = 1, verified_at = NOW() WHERE id = ?',
+        [user_id]
+      );
+      
+      // Kirim email pemberitahuan ke user
+      await sendAccountApprovalEmail(user[0].email, user[0].name);
+      
+      return res.json({ 
+        success: true,
+        message: 'User approved successfully',
+        code: 'USER_APPROVED'
+      });
+    } 
+    
+    if (action === 'block') {
+      await db.query(
+        'UPDATE users SET is_active = 0, deleted_at = NOW(), blocked_reason = ? WHERE id = ?',
+        [reason || 'Blocked by admin', user_id]
+      );
+      
+      // Kirim email pemberitahuan ke user
+      await sendAccountBlockedEmail(
+        user[0].email, 
+        user[0].name, 
+        reason || 'Blocked by admin'
+      );
+      
+      return res.json({ 
+        success: true,
+        message: 'User blocked successfully',
+        code: 'USER_BLOCKED'
+      });
+    }
+
+    return res.status(400).json({ 
+      error: 'Invalid action',
+      code: 'INVALID_ACTION'
+    });
+
+  } catch (err) {
+    console.error('Admin verification error:', err);
+    res.status(500).json({ 
+      error: 'Verification failed',
+      code: 'VERIFICATION_FAILED'
+    });
+  }
+};
+
+exports.checkAccountStatus = async (req, res) => {
+  const { email } = req.query;
+  
+  try {
+    if (!email) {
+      return res.status(400).json({
+        error: 'Email parameter is required',
+        code: 'EMAIL_REQUIRED'
+      });
+    }
+
+    const [user] = await db.query(
+      'SELECT id, email, is_active, deleted_at FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (!user.length) {
+      return res.status(404).json({
+        error: 'Account not found',
+        code: 'ACCOUNT_NOT_FOUND'
+      });
+    }
+
+    res.json({
+      email: user[0].email,
+      is_active: user[0].is_active,
+      is_blocked: user[0].deleted_at !== null,
+      status: user[0].deleted_at ? 'blocked' : 
+             (user[0].is_active ? 'active' : 'pending_verification')
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: 'Failed to check account status',
+      code: 'STATUS_CHECK_FAILED'
+    });
+  }
 };
