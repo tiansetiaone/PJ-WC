@@ -13,7 +13,8 @@ const {
   generateCampaignReport,
   getAllCampaigns,
   getCampaignDetails,
-  updateCampaignStatus
+  updateCampaignStatus,
+  getCampaignStats
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -135,5 +136,14 @@ router.get(
   auth.adminOnly,
   generateCampaignReport
 );
+
+router.get(
+  "/admin/stats",
+  auth,
+  auth.adminOnly,
+  getCampaignStats
+);
+
+
 
 module.exports = router;

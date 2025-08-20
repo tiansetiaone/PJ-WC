@@ -22,6 +22,7 @@ import CreateCampaignPage from './components/Campaigns/CreateCampaignModal'; // 
 import AdminRoute from './components/Auth/AdminRoute';
 import PrivateRoute from './components/Auth/PrivateRoute';
 import AccountChecking from './components/Auth/AccountChecking';
+import VerifyUser from './pages/admin/VerifyUser';
 
 const App = () => {
   return (
@@ -109,6 +110,19 @@ const AppRoutes = () => {
         }
       />
 
+
+            {/* Add this new route for verification */}
+      <Route
+        path="/admin/verify-user/:id"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <VerifyUser />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
       <Route
         path="/admin/campaigns"
         element={
@@ -119,6 +133,7 @@ const AppRoutes = () => {
           </AdminRoute>
         }
       />
+
 
       <Route
         path="/admin/campaigns/create"

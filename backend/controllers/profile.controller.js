@@ -380,3 +380,34 @@ exports.changePassword = async (req, res) => {
     });
   }
 };
+
+
+// Get User Stats (for Dashboard Card User)
+exports.getUserStats = async (req, res) => {
+  try {
+    const [results] = await db.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users WHERE is_active = 1) AS registered,
+        (SELECT COUNT(*) FROM users WHERE is_active = 0) AS failed
+    `);
+
+    res.json({
+      success: true,
+      data: results[0]
+    });
+  } catch (err) {
+    console.error('[GET USER STATS ERROR]', err);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user stats',
+      code: 'SERVER_ERROR',
+      details: process.env.NODE_ENV === 'development' ? {
+        message: err.message,
+        sql: err.sql
+      } : undefined
+    });
+  }
+};
+
+
+

@@ -8,7 +8,11 @@ const {
   sendRegistrationEmail, 
   transporter,
   sendPasswordResetEmail,  // Tambahkan ini
-  sendPasswordResetConfirmation  // Tambahkan ini jika diperlukan
+  sendPasswordResetConfirmation,  // Tambahkan ini jika diperlukan
+  sendAdminVerificationRequest,
+  sendAccountApprovalEmail,
+  sendAccountBlockedEmail,
+  sendVerificationRequestEmail
 } = require('../services/emailService');
 const crypto = require('crypto');
 require('dotenv').config();
@@ -196,24 +200,24 @@ exports.registerUser = async (req, res) => {
       }
     }
 
-    // Email notifications
-    try {
-      // Send registration email to user
-      await sendRegistrationEmail(email, name);
-      registrationResult.emailSent = true;
+// Email notifications
+try {
+  // Send registration email to user
+  await sendRegistrationEmail(email, name);
+  registrationResult.emailSent = true;
 
-      // Send admin verification request if needed
-      if (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') {
-        await sendAdminVerificationRequest(email, registrationResult.userId);
-      } else {
-        // If no verification needed, send welcome email immediately
-        await sendAccountApprovalEmail(email, name);
-      }
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError);
-      registrationResult.emailSent = false;
-      registrationResult.emailError = emailError.message;
-    }
+  // Send admin verification request if needed
+  if (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') {
+    await sendAdminVerificationRequest(email, registrationResult.userId);
+  } else {
+    // If no verification needed, send welcome email immediately
+    await sendAccountApprovalEmail(email, name);
+  }
+} catch (emailError) {
+  console.error('Email sending failed:', emailError);
+  registrationResult.emailSent = false;
+  registrationResult.emailError = emailError.message;
+}
 
     return res.status(201).json({
       success: true,
@@ -767,6 +771,27 @@ exports.getResetToken = async (req, res) => {
 };
 
 
+// controllers/auth.controller.js
+exports.getVerifyUserPage = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const [user] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (!user.length) {
+      return res.status(404).send('User not found');
+    }
+
+    // Render verification page with user data
+    res.render('admin/verify-user', { 
+      user: user[0],
+      layout: 'admin-layout' // If using a template engine with layouts
+    });
+  } catch (err) {
+    console.error('Error fetching user for verification:', err);
+    res.status(500).send('Internal server error');
+  }
+};
+
 // Add this to auth.controller.js
 // Update verifyUser function
 exports.verifyUser = async (req, res) => {
@@ -866,6 +891,31 @@ exports.checkAccountStatus = async (req, res) => {
     res.status(500).json({
       error: 'Failed to check account status',
       code: 'STATUS_CHECK_FAILED'
+    });
+  }
+};
+
+
+// controllers/adminController.js
+exports.getUserById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [user] = await db.query('SELECT id, name, email, is_active, created_at FROM users WHERE id = ?', [id]);
+
+    if (!user.length) {
+      return res.status(404).json({
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    res.json(user[0]);
+  } catch (err) {
+    console.error('Get user by ID error:', err);
+    res.status(500).json({
+      error: 'Failed to fetch user',
+      code: 'FETCH_USER_FAILED'
     });
   }
 };

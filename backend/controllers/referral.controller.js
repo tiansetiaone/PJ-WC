@@ -552,3 +552,24 @@ exports.checkCommissions = async (req, res) => {
     });
   }
 };
+
+exports.getGlobalReferralStats = async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM referrals) AS total_registered,
+        (SELECT COUNT(*) FROM referral_visits) AS total_visited,
+        (SELECT SUM(CASE WHEN converted = 1 THEN amount ELSE 0 END) FROM commissions) AS total_payouts,
+        (SELECT SUM(CASE WHEN converted = 0 THEN amount ELSE 0 END) FROM commissions) AS total_pending,
+        (SELECT SUM(amount) FROM commissions) AS total_commissions
+    `);
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

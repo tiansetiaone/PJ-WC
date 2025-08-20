@@ -272,33 +272,76 @@ Verify this account: ${process.env.ADMIN_DASHBOARD_URL}/verify-user?email=${enco
 
 
 // Tambahkan fungsi-fungsi baru
-async function sendAdminVerificationRequest(email, userId) {
+async function sendAdminVerificationRequest(email, userId, userName) {
   try {
-    const verificationLink = `${process.env.ADMIN_DASHBOARD_URL}/verify-user?id=${userId}`;
+    // Bukan langsung ke /admin/verify-user, tapi ke /login?redirect=...
+    const verificationPath = `/admin/verify-user/${userId}`;
+    const verificationLink = `${process.env.FRONTEND_URL}/login?redirect=${encodeURIComponent(verificationPath)}`;
+
     const mailOptions = {
-      from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
+      from: `"${process.env.APP_NAME || 'Blasterc'}" <${process.env.EMAIL_FROM}>`,
       to: process.env.ADMIN_EMAIL,
-      subject: 'New User Requires Verification',
+      subject: `[Action Required] New User Verification - ${userName || email}`,
       html: `
-        <div style="font-family: Arial, sans-serif;">
-          <h2>New User Verification Required</h2>
-          <p>A new user with email ${email} has registered and requires verification.</p>
-          <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">
-            Verify User
-          </a>
-          <p>This link will direct you to the admin dashboard for verification.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+            <h2 style="color: #2c3e50;">New User Verification Required</h2>
+            
+            <div style="margin: 20px 0; padding: 15px; background-color: #e9f7ef; border-radius: 4px;">
+              <p><strong>User Email:</strong> ${email}</p>
+              <p><strong>User Name:</strong> ${userName || 'Not provided'}</p>
+              <p><strong>Action Required:</strong> Please verify this new registration</p>
+            </div>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${verificationLink}" 
+                 style="display: inline-block; background-color: #4CAF50; color: white; 
+                        padding: 12px 24px; text-decoration: none; border-radius: 4px;
+                        font-weight: bold;">
+                Verify User Now
+              </a>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #777;">
+              <p>This link will expire in 24 hours. If you didn't request this verification, 
+                 please contact your system administrator.</p>
+            </div>
+          </div>
         </div>
       `,
-      text: `New user ${email} requires verification. Click here: ${verificationLink}`
+      text: `
+New User Verification Required
+
+User Email: ${email}
+User Name: ${userName || 'Not provided'}
+
+Please verify this new registration by logging in:
+${verificationLink}
+
+This link will expire in 24 hours. If you didn't request this verification, please ignore this email.
+      `
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Admin verification request sent for user ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Verification email sent:', {
+      userId,
+      email,
+      messageId: info.messageId,
+      timestamp: new Date().toISOString()
+    });
+    
+    return { success: true, verificationLink };
   } catch (error) {
-    console.error('Failed to send admin verification request:', error);
+    console.error('Failed to send verification email:', {
+      error: error.message,
+      userId,
+      email,
+      timestamp: new Date().toISOString()
+    });
     throw error;
   }
 }
+
 
 async function sendAccountApprovalEmail(email, name) {
   try {

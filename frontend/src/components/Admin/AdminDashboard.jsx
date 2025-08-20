@@ -1,54 +1,225 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "../../style/admin/AdminDashboard.css"; // import css terpisah
 
 const AdminDashboard = () => {
-  const Card = ({ title, green, red, link }) => (
-    <div className="admin-card">
-      <h3>{title}</h3>
-      <div className="admin-stats">
-        <span className="green">✅ {green}</span>
-        <span className="red">❌ {red}</span>
+  const [notifications, setNotifications] = useState([]);
+  const [userStats, setUserStats] = useState({ registered: 0, failed: 0 });
+  const [campaignStats, setCampaignStats] = useState({ success: 0, failed: 0 });
+const [depositStats, setDepositStats] = useState({ received: 0, failed: 0 });
+  const [referralStats, setReferralStats] = useState({
+    current_earnings: 0,
+    converted_earnings: 0,
+    total_registered: 0,
+    total_visited: 0,
+  });
+
+
+
+  // 🔹 Format tanggal agar tidak "Invalid Date"
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // fallback kalau gagal parse
+    return date.toLocaleString("id-ID", {
+      dateStyle: "long",
+      timeStyle: "short",
+    });
+  };
+
+  // 🔹 Ambil data notifikasi dari backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem("token"); 
+        const res = await axios.get("http://localhost:5000/api/notifications/admin", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(res.data); 
+      } catch (err) {
+        console.error("Gagal fetch notifications:", err);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  // 🔹 Ambil data user stats dari backend
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/profile/stats/users", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        if (res.data.success) {
+          setUserStats(res.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching user stats:", err);
+      }
+    };
+    fetchUserStats();
+  }, []);
+
+
+  useEffect(() => {
+  const fetchCampaignStats = async () => {
+    try {
+const res = await axios.get("http://localhost:5000/api/campaigns/admin/stats", {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
+      if (res.data.success) {
+        setCampaignStats(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching campaign stats:", err);
+    }
+  };
+  fetchCampaignStats();
+}, []);
+
+
+// 🔹 Ambil data campaign stats
+// 🔹 Ambil data deposit stats
+useEffect(() => {
+  const fetchDepositStats = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/deposits/admin/deposit-stats", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (res.data.success) {
+        setDepositStats(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching deposit stats:", err);
+    }
+  };
+  fetchDepositStats();
+}, []);
+
+
+useEffect(() => {
+  const fetchReferralData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/referrals/admin/global-stats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // hasil query gabungan SQL: total_registered, total_visited, total_payouts, total_pending, total_commissions
+      setReferralStats({
+        current_earnings: res.data.total_pending || 0,
+        converted_earnings: res.data.total_payouts || 0,
+        total_registered: res.data.total_registered || 0,
+        total_visited: res.data.total_visited || 0,
+      });
+    } catch (err) {
+      console.error("Error fetching referral data:", err);
+    }
+  };
+
+  fetchReferralData();
+}, []);
+
+
+
+  // 🔹 Komponen Card
+  const Card = ({ title, stats, link }) => (
+    <div className="card">
+      <div className="card-header">
+        <h3>{title}</h3>
+        <button className="btn-link">{link} →</button>
       </div>
-      <button className="btn-link">{link} →</button>
+      <div className="card-stats">
+        {stats.map((s, i) => (
+          <div key={i} className="stat-block">
+            <p className="stat-label">{s.label}</p>
+            <p className={`stat-value ${s.type}`}>
+              {s.type === "green" ? "✔" : "✖"} {s.value}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
   return (
-    <div>
-      <h1 className="dashboard-title">Admin Dashboard</h1>
-      
-      <div className="admin-grid">
-        <Card title="User" green="0" red="0" link="View User" />
-        <Card title="Campaign" green="0" red="0" link="View Campaign" />
-        <Card title="Deposit" green="0" red="0" link="View Deposit" />
-        <Card title="Referral" green="0" red="0" link="View Referral" />
+    <div className="dashboard-container">
+      <h1 className="dashboard-title">Dashboard</h1>
+
+      {/* 🔹 Grid Statistik */}
+      <div className="grid">
+        <Card
+          title="User"
+          stats={[
+            { label: "Registered", value: userStats.registered, type: "green" },
+            { label: "Failed", value: userStats.failed, type: "red" },
+          ]}
+          link="View User"
+        />
+<Card
+  title="Campaign"
+  stats={[
+    { label: "Success", value: campaignStats.success, type: "green" },
+    { label: "Failed", value: campaignStats.failed, type: "red" },
+  ]}
+  link="View Campaign"
+/>
+
+<Card
+  title="Deposit"
+  stats={[
+    { label: "Received", value: depositStats.received, type: "green" },
+    { label: "Failed", value: depositStats.failed, type: "red" },
+  ]}
+  link="View Deposit"
+/>
+
+<Card
+  title="Referral"
+  stats={[
+    {
+      label: "Payouts",
+      value: referralStats.converted_earnings,
+      type: "green",
+    },
+    {
+      label: "Visited",
+      value: referralStats.total_visited,
+      type: "red",
+    },
+  ]}
+  link="View Referral"
+/>
+
       </div>
 
+      {/* 🔹 What's New Section */}
       <section className="news-section">
-        <h2>What's New</h2>
+        <h2 className="news-title">What's New</h2>
 
-        <div className="news-item">
-          <p className="news-date">23 June 2025, 15:09 WIB</p>
-          <h3>New Campaign Features at Blasterc</h3>
-          <ul>
-            <li>✅ Fresh login & registration interface</li>
-            <li>✅ Upload campaign numbers via .TXT file</li>
-            <li>✅ Secure USDT TRC20 deposit system</li>
-            <li>✅ Referral system & Real-time reporting</li>
-          </ul>
-          <p>🎯 Start your campaign now with Blasterc!</p>
-        </div>
-
-        <div className="news-item">
-          <p className="news-date">22 June 2025, 12:00 WIB</p>
-          <h3>Ready to Launch Bigger WhatsApp Campaigns?</h3>
-          <ul>
-            <li>✅ Send bulk messages faster</li>
-            <li>✅ Upload numbers via .TXT file</li>
-            <li>✅ Track results on dashboard</li>
-          </ul>
-          <button className="btn-primary">+ Create Campaign</button>
-        </div>
+        {notifications.length === 0 ? (
+          <p className="news-empty">Belum ada notifikasi terbaru.</p>
+        ) : (
+          notifications.map((notif) => (
+            <div key={notif.id} className="news-card">
+              {/* Tanggal */}
+              <p className="news-date">{formatDate(notif.created_at)}</p>
+              {/* Judul */}
+              <h3 className="news-heading">{notif.title}</h3>
+              {/* Konten */}
+              <p className="news-body">{notif.content}</p>
+            </div>
+          ))
+        )}
       </section>
+
+      <button className="btn-primary">+ Create Campaign</button>
     </div>
   );
 };

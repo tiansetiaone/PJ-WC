@@ -1,71 +1,171 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { fetchApi } from "../utils/api";
 import '../style/Dashboard.css';
 import AdminDashboard from '../components/Admin/AdminDashboard';
 
-const UserDashboard = () => (
-  <div>
-    {/* Credit & Campaign Stats */}
-    <div className="dashboard-grid">
-      {/* Credit Box */}
-      <div className="dashboard-card">
-        <h2>Credit</h2>
-        <p className="credit-value">0</p>
-        <p className="credit-info">You don't have any balance, top up now.</p>
-        <button className="btn-primary">+ Top Up Credit</button>
-      </div>
+// Komponen DashboardCredit
+const DashboardCredit = () => {
+  const [credit, setCredit] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-      {/* Campaign Box */}
-      <div className="dashboard-card">
-        <h2>Campaign</h2>
-        <div className="campaign-stats">
-          <span className="success">✅ 0 Success</span>
-          <span className="failed">❌ 0 Failed</span>
-        </div>
-        <button className="btn-link">View Campaign →</button>
-      </div>
-    </div>
+  useEffect(() => {
+    const fetchCredit = async () => {
+      try {
+        const res = await fetchApi("/deposits/credit/total");
+        if (res.success) {
+          setCredit(res.totalCredit);
+        }
+      } catch (err) {
+        console.error("Failed to fetch credit:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    {/* What's New Section */}
+    fetchCredit();
+  }, []);
+
+  return (
     <div className="dashboard-card">
-      <h2>What's New</h2>
-
-      <div className="news-item">
-        <p className="news-date">23 June 2025, 15:09 WIB</p>
-        <h3 className="news-title">
-          New Campaign Features at Blasterc – Ready to Boost Your Business?
-        </h3>
-        <ul className="news-list">
-          <li>✅ Fresh login & registration interface</li>
-          <li>✅ All-in-one dashboard: track credit & campaign stats</li>
-          <li>✅ Upload campaign numbers via .TXT file</li>
-          <li>✅ Fast & secure USDT TRC20 deposit system</li>
-          <li>✅ Active referral system – invite & earn ✨</li>
-          <li>✅ Full campaign history & real-time reports</li>
-          <li>✅ Notifications now live on your dashboard!</li>
-        </ul>
-        <p>🚀 Start your campaign today! Just prepare your message, contact list, and image — <strong>Blasterc</strong> will blast it out for you!</p>
-        <p>🔒 Upgrade to a premium campaign for advanced features!</p>
+      <div className="card-header">
+        <h2>Credit</h2>
       </div>
-
-      <hr />
-
-      <div className="news-item">
-        <p className="news-date">22 June 2025, 12:00 WIB</p>
-        <h3 className="news-title">Ready to Launch Bigger WhatsApp Campaigns?</h3>
-        <ul className="news-list">
-          <li>✅ Send bulk messages faster</li>
-          <li>✅ Upload numbers via .txt file</li>
-          <li>✅ Add campaign images</li>
-          <li>✅ Track results directly on your dashboard</li>
-          <li>✅ Top up via USDT TRC20 with minimum 10 USDT</li>
-        </ul>
-        <p>📣 More credits = Wider reach = Better results.</p>
-        <button className="btn-primary">+ Create Campaign</button>
-      </div>
+      <p className="credit-value">
+        {loading ? "Loading..." : credit}
+      </p>
+      <p className="credit-info">
+        {credit > 0
+          ? `Your current balance is ${credit}`
+          : "You don't have any balance, top up now."}
+      </p>
+      <button className="btn-primary">+ Top Up Credit</button>
     </div>
-  </div>
-);
+  );
+};
 
+// Komponen What's New / Notifications
+const WhatsNew = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetchApi("/notifications");
+        if (Array.isArray(res)) {
+          setNotifications(res);
+        } else if (res.success && Array.isArray(res.data)) {
+          // jika backend kirim dengan { success, data }
+          setNotifications(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  return (
+    <div className="news-section">
+      <h2 className="news-heading">What's New</h2>
+      {loading ? (
+        <p>Loading news...</p>
+      ) : notifications.length === 0 ? (
+        <p>No updates available.</p>
+      ) : (
+        notifications.map((n) => (
+          <div key={n.id} className="news-card">
+            <p className="news-date">
+              {new Date(n.created_at).toLocaleString("id-ID", {
+                dateStyle: "long",
+                timeStyle: "short",
+              })}
+            </p>
+            <h3 className="news-title">{n.title}</h3>
+            <p>{n.content}</p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+// Komponen UserDashboard
+const UserDashboard = () => {
+  const [successCount, setSuccessCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
+  const [onProcessCount, setOnProcessCount] = useState(0);
+  const [loadingCampaign, setLoadingCampaign] = useState(true);
+
+  useEffect(() => {
+    const fetchCampaignStats = async () => {
+      try {
+        const res = await fetchApi("/campaigns");
+        if (res.success) {
+          const campaigns = res.data || [];
+          const success = campaigns.filter(c => c.status === "success").length;
+          const failed = campaigns.filter(c => c.status === "failed").length;
+          const onProcess = campaigns.filter(c => c.status === "on_process").length;
+
+          setSuccessCount(success);
+          setFailedCount(failed);
+          setOnProcessCount(onProcess);
+        }
+      } catch (err) {
+        console.error("Failed to fetch campaigns:", err.message);
+      } finally {
+        setLoadingCampaign(false);
+      }
+    };
+
+    fetchCampaignStats();
+  }, []);
+
+  return (
+    <div>
+      {/* Credit & Campaign Stats */}
+      <div className="dashboard-grid">
+        <DashboardCredit />
+
+        <div className="dashboard-card">
+          <div className="card-header">
+            <h2>Campaign</h2>
+          </div>
+          <div className="campaign-stats">
+            <div className="stat success">
+              <span className="stat-number">
+                {loadingCampaign ? "..." : successCount}
+              </span>
+              <span>Success</span>
+            </div>
+            <div className="stat failed">
+              <span className="stat-number">
+                {loadingCampaign ? "..." : failedCount}
+              </span>
+              <span>Failed</span>
+            </div>
+            <div className="stat on-process">
+              <span className="stat-number">
+                {loadingCampaign ? "..." : onProcessCount}
+              </span>
+              <span>On Process</span>
+            </div>
+          </div>
+          <button className="btn-link">View Campaign →</button>
+        </div>
+      </div>
+
+      {/* What's New Section */}
+      <WhatsNew />
+       <button className="btn-primary">+ Create Campaign</button>
+    </div>
+  );
+};
+
+// Komponen utama Dashboard
 const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const role = user.role || 'user';
@@ -73,13 +173,9 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <h1 className="dashboard-title">Dashboard</h1>
-      <p>Welcome, {user.name || 'User'}!</p>
+      <p className="welcome-text">Welcome, {user.name || 'User'}!</p>
 
-      {role === 'admin' ? (
-        <AdminDashboard />
-      ) : (
-        <UserDashboard />
-      )}
+      {role === 'admin' ? <AdminDashboard /> : <UserDashboard />}
     </div>
   );
 };

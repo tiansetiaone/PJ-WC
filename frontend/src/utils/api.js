@@ -11,7 +11,7 @@ export const fetchApi = async (endpoint, options = {}) => {
 
   // Handle FormData (for file uploads)
   if (options.body instanceof FormData) {
-    // Don't set Content-Type for FormData - browser will set it automatically with boundary
+    // Jangan set Content-Type untuk FormData, browser otomatis atur boundary
     delete headers['Content-Type'];
   } else if (typeof options.body === 'object' && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

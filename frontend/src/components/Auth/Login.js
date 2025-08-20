@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; 
 import GoogleButton from '../GoogleButton';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +16,7 @@ const Login = () => {
   const hCaptchaRef = useRef(null);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); 
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -77,7 +78,7 @@ const Login = () => {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -106,8 +107,13 @@ const Login = () => {
           sessionStorage.setItem('user', JSON.stringify(data.user));
         }
 
-        // Redirect berdasarkan role
-        if (data.user.role === 'admin') {
+        // ⬇️ cek query param redirect
+        const params = new URLSearchParams(location.search);
+        const redirect = params.get("redirect");
+
+        if (redirect) {
+          navigate(redirect, { replace: true });
+        } else if (data.user.role === 'admin') {
           navigate('/admin/dashboard', { replace: true });
         } else {
           navigate('/dashboard', { replace: true });

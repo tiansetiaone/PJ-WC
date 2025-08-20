@@ -1,187 +1,222 @@
-/* Layout */
 .dashboard-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  font-family: sans-serif;
+  padding: 24px;
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  min-height: 100vh;
 }
 
+/* Title & Welcome */
 .dashboard-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 16px;
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #111827;
 }
 
-/* Responsive Grid */
+.welcome-text {
+  font-size: 16px;
+  color: #4b5563;
+  margin-bottom: 24px;
+}
+
+/* Grid for credit + campaign */
 .dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 30px;
+  justify-content: space-between;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Grid untuk admin box */
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  margin-bottom: 30px;
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-
-@media (min-width: 768px) {
-  .dashboard-grid {
-    flex-direction: row;
-  }
-    .admin-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.card-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #1f2937;
 }
 
-/* Card Style */
-.dashboard-card {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  flex: 1;
-}
-
-/* Credit Box */
+/* Credit styling */
 .credit-value {
   font-size: 32px;
-  font-weight: bold;
-  color: red;
-  margin: 10px 0;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 6px;
 }
 
 .credit-info {
-  color: gray;
-  margin-bottom: 15px;
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 14px;
 }
 
-/* Campaign Stats */
+/* Campaign stats */
 .campaign-stats {
   display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
+  justify-content: space-evenly;
+  margin-bottom: 14px;
 }
 
-.success {
-  color: green;
-  font-weight: bold;
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-.failed {
-  color: red;
-  font-weight: bold;
+.stat-number {
+  font-size: 22px;
+  font-weight: 700;
 }
 
-/* News Section */
-.news-item {
-  margin-bottom: 20px;
+.success .stat-number {
+  color: #16a34a;
 }
 
-.news-date {
-  color: gray;
-  font-size: 14px;
-}
-
-.news-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin: 8px 0;
-}
-
-.news-list {
-  padding-left: 20px;
-  margin-bottom: 10px;
+.failed .stat-number {
+  color: #dc2626;
 }
 
 /* Buttons */
 .btn-primary {
-  background-color: #2563eb;
-  color: white;
-  padding: 10px 20px;
+  background: #2563eb;
+  color: #fff;
+  padding: 12px 18px;
   border: none;
-  border-radius: 6px;
+  border-radius: 14px;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.25s ease;
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-link:hover {
-  text-decoration: underline;
-}
-
-
-@media (min-width: 1024px) {
-  .admin-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.admin-card {
-  background: white;
-  padding: 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.admin-stats {
-  display: flex;
-  justify-content: space-between;
-  margin: 10px 0;
-}
-
-.green {
-  color: green;
-  font-weight: bold;
-}
-
-.red {
-  color: red;
-  font-weight: bold;
-}
-
-/* News section */
-.news-section {
-  background: white;
-  padding: 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.news-section h2 {
-  font-size: 18px;
-  margin-bottom: 16px;
-}
-
-.news-item {
-  margin-bottom: 20px;
-}
-
-.news-date {
-  color: gray;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.btn-primary {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
+  background: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .btn-link {
-  background: none;
+  background: #f9fafb;
   border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 14px;
   color: #2563eb;
-  font-weight: 500;
   cursor: pointer;
+  transition: background 0.25s;
+}
+
+.btn-link:hover {
+  background: #e5e7eb;
+}
+
+/* What's New section */
+.news-section {
+  margin-top: 28px;
+}
+
+.news-heading {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: #111827;
+}
+
+.news-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.news-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
+}
+
+.news-date {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.news-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+.news-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.news-list li {
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 18px;
+  }
+
+  .dashboard-title {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .welcome-text {
+    text-align: center;
+  }
+
+  .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 20px;
+  }
+
+  .news-heading {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .news-card {
+    padding: 16px;
+  }
+
+  .campaign-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
 }

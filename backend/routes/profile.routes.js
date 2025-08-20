@@ -46,4 +46,7 @@ router.put('/:id', auth, auth.adminOnly, handleProfileUpload, profileController.
 router.delete('/', auth, profileController.deactivateAccount);
 router.delete('/:id', auth, auth.adminOnly, profileController.deactivateAccount);
 
+router.get('/stats/users', auth, auth.adminOnly, profileController.getUserStats);
+
+
 module.exports = router;

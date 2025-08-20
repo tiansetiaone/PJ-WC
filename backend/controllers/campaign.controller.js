@@ -405,3 +405,30 @@ exports.generateCampaignReport = async (req, res) => {
     });
   }
 };
+
+
+// Admin - Get Campaign Stats
+exports.getCampaignStats = async (req, res) => {
+  try {
+    const [stats] = await db.query(`
+      SELECT 
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count
+      FROM campaigns
+    `);
+
+    res.json({
+      success: true,
+      data: {
+        success: stats[0].success_count || 0,
+        failed: stats[0].failed_count || 0,
+      }
+    });
+  } catch (err) {
+    console.error("Get campaign stats error:", err);
+    res.status(500).json({
+      error: "Failed to fetch campaign stats",
+      details: process.env.NODE_ENV === 'development' ? err.message : null
+    });
+  }
+};

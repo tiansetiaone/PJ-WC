@@ -13,7 +13,8 @@ const {
   deleteReferralRole,
   getReferralRole,
   setDefaultRole,
-  checkCommissions
+  checkCommissions,
+  getGlobalReferralStats
 } = require('../controllers/referral.controller');
 
 // Public endpoint
@@ -35,6 +36,7 @@ router.delete('/admin/roles/:id', auth, deleteReferralRole);
 router.post('/admin/roles/:id/set-default', auth, setDefaultRole);
 router.get('/admin/roles', auth, getReferralRole);
 router.post('/admin/check-commissions/:id', auth, checkCommissions);
+router.get('/admin/global-stats', auth, getGlobalReferralStats);
 
 
 module.exports = router;
