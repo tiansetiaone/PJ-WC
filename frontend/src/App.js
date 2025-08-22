@@ -13,6 +13,7 @@ import NotFound from './components/Common/NotFound';
 
 import MainLayout from './layouts/MainLayout';
 import CampaignDashboard from './components/Campaigns/CampaignDashboard';
+import CampaignDashboardUser from './pages/user/CampaignDashboard';
 import AdminCampaignList from './components/Campaigns/AdminCampaignList';
 import AdminCreateCampaign from './components/Campaigns/AdminCreateCampaign';
 import CampaignDetailModal from './components/Campaigns/CampaignDetailModal';
@@ -78,7 +79,7 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <MainLayout>
-              <CampaignDashboard />
+              <CampaignDashboardUser />
             </MainLayout>
           </PrivateRoute>
         }

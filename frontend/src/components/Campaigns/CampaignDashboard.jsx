@@ -1,89 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CampaignList from "./CampaignList";
 import UploadNumbersModal from "./UploadNumbersModal";
-import "../../style/CampaignDashboard.css"; // Import CSS native
+import "../../style/CampaignDashboard.css"; // CSS native
 
 export default function CampaignDashboard() {
   const navigate = useNavigate();
-const [uploadModal, setUploadModal] = useState({ open: false, campaignId: null });
+  const [uploadModal, setUploadModal] = useState({
+    open: false,
+    campaignId: null,
+  });
+
+  const stats = [
+    { label: "Total", value: 255, color: "blue", icon: "🏴" },
+    { label: "Checking", value: 3, color: "orange", icon: "🔍" },
+    { label: "Success", value: 240, color: "green", icon: "✅" },
+    { label: "Failed", value: 12, color: "red", icon: "❌" },
+  ];
+
 
 
   return (
-    <div className="dashboard-wrapper">
-      {/* Header */}
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">Campaign</h1>
-        <button
-          className="create-btn"
-          onClick={() => navigate("/campaigns/new")}
-        >
-          + Create New Campaign
-        </button>
-      </div>
+    <div className="cd-root">
 
-      {/* Analytics Summary */}
-      <div className="analytics-summary">
-        <div className="analytics-card">
-          <span className="analytics-label">Total</span>
-          <span className="analytics-value">0</span>
-        </div>
-        <div className="analytics-card">
-          <span className="analytics-label">Checking</span>
-          <span className="analytics-value">0</span>
-        </div>
-        <div className="analytics-card">
-          <span className="analytics-label">Success</span>
-          <span className="analytics-value">0</span>
-        </div>
-        <div className="analytics-card">
-          <span className="analytics-label">Failed</span>
-          <span className="analytics-value">0</span>
-        </div>
-      </div>
-
-{/* Campaign Analytics */}
-      <div className="section-card">
-        <h2 className="section-title">Campaign Analytics</h2>
-        <div className="empty-state">
-          <img src="/images/analytics-empty.png" alt="No Campaign Analytics" />
-          <p className="empty-title">No Campaign Analytics Yet</p>
-          <p className="empty-subtitle">
-            Track and measure the performance of your campaigns here. Review
-            delivery rates, engagement, and results to optimize your next
-            campaign.
-          </p>
-        </div>
-      </div>
-
-    {/* Campaign Activity */}
- <div className="section-card">
-      <h2 className="section-title">Campaign Activity</h2>
-      <CampaignList
-        onUploadNumbers={(campaignId) =>
-          setUploadModal({ open: true, campaignId })
-        }
-      />
-      {/* Modal Upload Numbers */}
-      {uploadModal.open && (
-        <div className="modal">
-          <h3>Upload Numbers for Campaign {uploadModal.campaignId}</h3>
-          {/* form upload numbers */}
-          <button onClick={() => setUploadModal({ open: false, campaignId: null })}>
-            Close
+      {/* Main Content */}
+      <main className="cd-main">
+        {/* Header */}
+        <header className="cd-header">
+          <h1>Campaign</h1>
+          <button
+            className="cd-btn-primary"
+            onClick={() => navigate("/campaigns/new")}
+          >
+            + Create New Campaign
           </button>
+        </header>
+
+        {/* Stats */}
+        <div className="cd-stats">
+          {stats.map((s) => (
+            <div key={s.label} className={`cd-stat cd-${s.color}`}>
+              <div className="cd-stat-icon">{s.icon}</div>
+              <div className="cd-stat-value">{s.value}</div>
+              <div className="cd-stat-label">{s.label}</div>
+            </div>
+          ))}
         </div>
-      )}
-    </div>
 
+        {/* Analytics */}
+        <div className="cd-card">
+          <h3>Campaign Analytics</h3>
+          <div className="cd-chart-placeholder">[Chart Here]</div>
+        </div>
 
-{/* Modal Upload */}
-      {uploadModal.open && (
-        <UploadNumbersModal
-          campaignId={uploadModal.campaignId}
-          onClose={() => setUploadModal({ open: false, campaignId: null })}
-        />
-      )}
+        {/* Campaign Activity */}
+<div className="cd-card">
+  {/* Campaign List (sudah ada) */}
+  <CampaignList
+    onUploadNumbers={(campaignId) =>
+      setUploadModal({ open: true, campaignId })
+    }
+  />
+
+  {/* Modal Upload Numbers */}
+  {uploadModal.open && (
+    <UploadNumbersModal
+      campaignId={uploadModal.campaignId}
+      onClose={() =>
+        setUploadModal({ open: false, campaignId: null })
+      }
+    />
+  )}
+</div>
+      </main>
     </div>
   );
 }

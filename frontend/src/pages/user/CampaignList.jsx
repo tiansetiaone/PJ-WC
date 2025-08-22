@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { fetchApi } from "../../utils/api";
-import { useToast } from "../ui/use-toast";
-import "../../style/CampaignList.css"
+import { useToast } from "../../components/ui/use-toast";
+import "../../style/user/CampaignList.css"
 
-export default function CampaignList() {
+export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const [campaigns, setCampaigns] = useState([]);
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("");
@@ -15,39 +15,102 @@ export default function CampaignList() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchApi("/campaigns");
-        const data = Array.isArray(response)
-          ? response
-          : response?.data
-          ? response.data
-          : [];
-
-        const validatedData = data.map((campaign) => ({
-          id: campaign.id || "",
-          name: campaign.name || campaign.campaign_name || "",
-          channel: campaign.channel || campaign.campaign_type || "",
-          status: campaign.status || "",
-          created_at: campaign.created_at || new Date().toISOString(),
-        }));
-
-        setCampaigns(validatedData);
-      } catch (err) {
-        toast({
-          title: "Error",
-          description: err.message || "Failed to load campaigns",
-          variant: "destructive",
-        });
-        setCampaigns([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCampaigns();
   }, [toast]);
+
+  const fetchCampaigns = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchApi("/campaigns");
+      const data = Array.isArray(response)
+        ? response
+        : response?.data
+        ? response.data
+        : [];
+
+      const validatedData = data.map((campaign) => ({
+        id: campaign.id || "",
+        name: campaign.name || campaign.campaign_name || "",
+        channel: campaign.channel || campaign.campaign_type || "",
+        status: campaign.status || "",
+        created_at: campaign.created_at || new Date().toISOString(),
+      }));
+
+      setCampaigns(validatedData);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to load campaigns",
+        variant: "destructive",
+      });
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCampaign = async (campaignId) => {
+    if (!window.confirm("Are you sure you want to delete this campaign?")) {
+      return;
+    }
+
+    try {
+      await fetchApi(`/campaigns/${campaignId}`, {
+        method: 'DELETE'
+      });
+      
+      toast({
+        title: "Success",
+        description: "Campaign deleted successfully",
+        variant: "default",
+      });
+      
+      // Refresh daftar campaign
+      fetchCampaigns();
+      
+      // Notify parent component untuk update statistik
+      if (onCampaignUpdate) {
+        onCampaignUpdate();
+      }
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete campaign",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusUpdate = async (campaignId, newStatus) => {
+    try {
+      await fetchApi(`/campaigns/${campaignId}/status`, {
+        method: 'PUT',
+        body: { status: newStatus }
+      });
+      
+      toast({
+        title: "Success",
+        description: `Campaign status updated to ${newStatus}`,
+        variant: "default",
+      });
+      
+      // Refresh daftar campaign
+      fetchCampaigns();
+      
+      // Notify parent component untuk update statistik
+      if (onCampaignUpdate) {
+        onCampaignUpdate();
+      }
+    } catch (error) {
+      console.error("Error updating campaign status:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update campaign status",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredData = campaigns.filter((c) => {
     const nameMatch =
@@ -145,6 +208,7 @@ export default function CampaignList() {
               <th>Channel</th>
               <th>Status</th>
               <th>Campaign Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -183,11 +247,29 @@ export default function CampaignList() {
                       minute: "2-digit",
                     })}
                   </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="action-btn upload-btn"
+                        onClick={() => onUploadNumbers(c.id)}
+                        title="Upload Numbers"
+                      >
+                        📤
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={() => handleDeleteCampaign(c.id)}
+                        title="Delete Campaign"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="no-data">
+                <td colSpan="7" className="no-data">
                   No campaigns found
                 </td>
               </tr>

@@ -1,0 +1,267 @@
+.campaign-list-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.campaign-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937; /* gray-800 */
+  margin-bottom: 1rem;
+}
+
+/* Filters Bar */
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.campaign-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.campaign-table th,
+.campaign-table td {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+}
+
+.campaign-table th {
+  background: #0052cc; /* biru solid */
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: none; /* jangan uppercase biar natural */
+  padding: 1rem;
+}
+
+.campaign-table tr:hover {
+  background: #f3f4f6; /* gray-100 */
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  text-transform: none;
+}
+
+.status-checking {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+.status-success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.status-failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Action Icons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #374151;
+  transition: color 0.2s ease;
+}
+.action-btn:hover {
+  color: #0052cc;
+}
+
+
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+}
+.delete-btn:hover {
+  background-color: #dc2626;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* No Data */
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+}
+
+/* Footer */
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.page-btn {
+  border: 1px solid #d1d5db;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  cursor: pointer;
+}
+
+.page-btn.active {
+  background: #0052cc;
+  color: white;
+  border-color: #0052cc;
+}
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .campaign-list-container {
+    padding: 15px;
+  }
+
+  .campaign-table th,
+  .campaign-table td {
+    font-size: 14px;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .action-btn {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .campaign-table,
+  .campaign-table thead,
+  .campaign-table tbody,
+  .campaign-table th,
+  .campaign-table td,
+  .campaign-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .campaign-table thead {
+    display: none;
+  }
+
+  .campaign-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.8rem;
+    background: white;
+  }
+
+  .campaign-table td {
+  padding: 0.9rem 1rem;
+  font-size: 0.9rem;
+  color: #1f2937;
+  }
+
+  .campaign-table td:last-child {
+    border-bottom: none;
+  }
+
+  .campaign-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #374151;
+    text-transform: capitalize;
+  }
+}
+
+@media (max-width: 480px) {
+  .campaign-table th,
+  .campaign-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .upload-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}

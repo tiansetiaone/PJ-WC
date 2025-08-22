@@ -412,23 +412,161 @@ exports.getCampaignStats = async (req, res) => {
   try {
     const [stats] = await db.query(`
       SELECT 
+        COUNT(*) AS total_campaigns,
         SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
-        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count,
+        SUM(CASE WHEN status = 'on_process' THEN 1 ELSE 0 END) AS on_process_count
       FROM campaigns
     `);
 
     res.json({
       success: true,
       data: {
+        total: stats[0].total_campaigns || 0,
         success: stats[0].success_count || 0,
         failed: stats[0].failed_count || 0,
+        on_process: stats[0].on_process_count || 0
       }
     });
   } catch (err) {
     console.error("Get campaign stats error:", err);
     res.status(500).json({
-      error: "Failed to fetch campaign stats",
-      details: process.env.NODE_ENV === 'development' ? err.message : null
+      error: "Failed to fetch campaign stats"
+    });
+  }
+};
+
+// Get User Campaign Stats
+exports.getUserCampaignStats = async (req, res) => {
+  const user_id = req.user.id;
+
+  try {
+    const [stats] = await db.query(`
+      SELECT 
+        COUNT(*) AS total_campaigns,
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count,
+        SUM(CASE WHEN status = 'on_process' THEN 1 ELSE 0 END) AS on_process_count
+      FROM campaigns
+      WHERE user_id = ?
+    `, [user_id]);
+
+    res.json({
+      success: true,
+      data: {
+        total: stats[0].total_campaigns || 0,
+        success: stats[0].success_count || 0,
+        failed: stats[0].failed_count || 0,
+        on_process: stats[0].on_process_count || 0
+      }
+    });
+  } catch (err) {
+    console.error("Get user campaign stats error:", err);
+    res.status(500).json({
+      error: "Failed to fetch campaign stats"
+    });
+  }
+};
+
+
+// Delete Campaign
+exports.deleteCampaign = async (req, res) => {
+  const { campaignId } = req.params;
+  const user_id = req.user.id;
+
+  try {
+    // Verify campaign ownership
+    const [campaign] = await db.query(
+      `SELECT id FROM campaigns WHERE id = ? AND user_id = ?`,
+      [campaignId, user_id]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({
+        error: "Campaign not found or access denied",
+      });
+    }
+
+    // Delete campaign numbers first (due to foreign key constraint)
+    await db.query(
+      `DELETE FROM campaign_numbers WHERE campaign_id = ?`,
+      [campaignId]
+    );
+
+    // Delete campaign
+    const [result] = await db.query(
+      `DELETE FROM campaigns WHERE id = ?`,
+      [campaignId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Campaign deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete campaign error:", err);
+    res.status(500).json({
+      error: "Failed to delete campaign",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
+  }
+};
+
+
+// Get User Campaign Monthly Stats
+exports.getUserCampaignMonthlyStats = async (req, res) => {
+  const user_id = req.user.id;
+
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        DATE_FORMAT(created_at, '%b') AS month,
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed
+      FROM campaigns
+      WHERE user_id = ?
+      GROUP BY MONTH(created_at), DATE_FORMAT(created_at, '%b')
+      ORDER BY MONTH(created_at)
+    `, [user_id]);
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (err) {
+    console.error("Get user campaign monthly stats error:", err);
+    res.status(500).json({
+      error: "Failed to fetch monthly campaign stats"
+    });
+  }
+};
+
+
+// Admin - Get Campaign Monthly Stats
+exports.getAdminCampaignMonthlyStats = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        DATE_FORMAT(created_at, '%b') AS month,
+        SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed
+      FROM campaigns
+      GROUP BY MONTH(created_at), DATE_FORMAT(created_at, '%b')
+      ORDER BY MONTH(created_at)
+    `);
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (err) {
+    console.error("Get admin campaign monthly stats error:", err);
+    res.status(500).json({
+      error: "Failed to fetch monthly campaign stats"
     });
   }
 };

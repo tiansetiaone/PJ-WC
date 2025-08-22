@@ -14,7 +14,11 @@ const {
   getAllCampaigns,
   getCampaignDetails,
   updateCampaignStatus,
-  getCampaignStats
+  getCampaignStats,
+  getUserCampaignStats,
+  deleteCampaign,
+  getAdminCampaignMonthlyStats,
+  getUserCampaignMonthlyStats
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -144,6 +148,32 @@ router.get(
   getCampaignStats
 );
 
+router.get(
+  "/stats",
+  auth,
+  getUserCampaignStats
+);
 
+// Delete campaign route
+router.delete(
+  "/:campaignId",
+  auth,
+  deleteCampaign
+);
+
+// Monthly Stats (User)
+router.get(
+  "/stats/monthly",
+  auth,
+  getUserCampaignMonthlyStats
+);
+
+// Monthly Stats (Admin)
+router.get(
+  "/admin/stats/monthly",
+  auth,
+  auth.adminOnly,
+  getAdminCampaignMonthlyStats
+);
 
 module.exports = router;
