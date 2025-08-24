@@ -61,7 +61,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
 -d '{
-  "email": "testing4@example.com",
+  "email": "testing2@example.com",
   "password": "Password123!",
   "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
 }'
@@ -214,7 +214,7 @@ curl -X DELETE http://localhost:5000/api/profile \
 
 ####Create Campaign:
 curl -X POST http://localhost:5000/api/campaigns \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Njk1MjQ0LCJleHAiOjE3NTU2OTg4NDR9.erVLzzO8CobTBD2NClIM2-MSyaMpiM6sryGBqRzcWsw" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1OTY3MDk0LCJleHAiOjE3NTU5NzA2OTR9.ZCxFKL4gf6dSEuoLyhUpJkV5VhBg_GF8auqOfJxZWk0" \
   -H "Content-Type: application/json" \
   -d '{
     "campaign_name": "Summer Promotion",
@@ -243,6 +243,12 @@ curl -X GET http://localhost:5000/api/campaigns/34/numbers \
 curl -X GET http://localhost:5000/api/campaigns \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Njk1MjQ0LCJleHAiOjE3NTU2OTg4NDR9.erVLzzO8CobTBD2NClIM2-MSyaMpiM6sryGBqRzcWsw"
 
+####
+# Test apakah server menerima file dengan approach berbeda
+curl -X POST http://localhost:5000/api/campaigns/50/numbers-raw \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1OTY3MDk0LCJleHAiOjE3NTU5NzA2OTR9.ZCxFKL4gf6dSEuoLyhUpJkV5VhBg_GF8auqOfJxZWk0" \
+  -H "Content-Type: text/plain" \
+  --data-binary "@numbers.txt"
 
 ####CAMPAIGN PROCESS ADMIN
 
@@ -255,8 +261,8 @@ curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns/34" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg"
 
 ####Update Campaign Status
-curl -X PUT "http://localhost:5000/api/campaigns/admin/campaigns/34/status" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg" \
+curl -X PUT "http://localhost:5000/api/campaigns/admin/campaigns/50/status" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjAwMDg0NCwiZXhwIjoxNzU2MDA0NDQ0fQ.F7Jr2TAglof0PJGiPCbSD4DH7yhx31BM3YWxGCyuoDI" \
   -H "Content-Type: application/json" \
   -d '{"status": "success"}'
 
@@ -289,11 +295,21 @@ curl -X POST http://localhost:5000/api/deposits/submit-evidence \
 
 ####Check Deposit Status
 curl -X GET http://localhost:5000/api/deposits/status/11 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4"
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDQ2NzI4LCJleHAiOjE3NTYwNTAzMjh9.1Cq7A24wVr3HtWx6pi2AKcnZZ52EnALgdjMsvg1nCnE"
+
+####
+curl -X GET http://localhost:5000/api/deposits/history \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDQ2NzI4LCJleHAiOjE3NTYwNTAzMjh9.1Cq7A24wVr3HtWx6pi2AKcnZZ52EnALgdjMsvg1nCnE" \
+  -H "Content-Type: application/json"
+
+####
+curl -X GET http://localhost:5000/api/deposits/credit/total \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDI1NDg5LCJleHAiOjE3NTYwMjkwODl9.m_zB9OrvTKqCGetFmi8PnJUrx92iXld3Yg8RoVfa21k" \
+  -H "Content-Type: application/json"
 
 ####View Deposit History
 curl -X GET "http://localhost:5000/api/deposits?status=approved&network=TRC20&page=1&limit=10" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDAzMjYxLCJleHAiOjE3NTU0MDY4NjF9.fRrICn0PRwa48X92hSQ1u6AtJNZMrau954-nGeJs_7M"
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDQ2NzI4LCJleHAiOjE3NTYwNTAzMjh9.1Cq7A24wVr3HtWx6pi2AKcnZZ52EnALgdjMsvg1nCnE"
 
 
 ####Get Deposit History (User)
@@ -344,6 +360,21 @@ curl -X POST "http://localhost:5000/api/deposits/admin/process" \
 ####Get Deposit Report (Admin)
 curl -X GET "http://localhost:5000/api/deposits/admin/report?start_date=2025-01-01&end_date=2025-12-31" \
 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQyMjk3MSwiZXhwIjoxNzU1NDI2NTcxfQ.ItWq0QBeOYZbQo8PZVSkb2k-sJcX0WnBO1QbRGU3wFo"
+
+
+####
+curl -X GET http://localhost:5000/api/deposits/admin/commission/history \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjA1MzM1NiwiZXhwIjoxNzU2MDU2OTU2fQ.7GjkE-tT2KTsjNQMHQl1xF-gWKvFLqsG-SEMFh59vHs" \
+  -H "Content-Type: application/json"
+
+
+
+#### CONVERT COMMISSION
+curl -X POST "http://localhost:5000/api/deposits/convert-commission" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzgsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDU0NjA4LCJleHAiOjE3NTYwNTgyMDh9.pEWcxgHZcJiybbg0FlE1aoO2Pmz6M2yjctFRmCKiRcs" \
+-H "Content-Type: application/json" \
+-d '{"amount":10}'
+
 
 
 ####Check Referral Commission (Admin)
@@ -557,7 +588,7 @@ curl -X GET http://localhost:5000/api/referrals/admin/global-stats \
 
 ####Get All Notifications (Admin Only)
 curl -X GET "http://localhost:5000/api/notifications/admin" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNDg0MCwiZXhwIjoxNzU1NDE4NDQwfQ.zq1Vxd795OBtQuV6_ETojH559q0tyRrZXh1UGXTsUJY"
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjAwODQzMiwiZXhwIjoxNzU2MDEyMDMyfQ._OLkQU5hzKdh4VI57sfoo78XmfUbhIeOxM2ZqUL_n6M"
 
 ####Create New Notification (Admin Only)
 curl -X POST "http://localhost:5000/api/notifications/admin" \
@@ -586,6 +617,17 @@ curl -X DELETE "http://localhost:5000/api/notifications/admin/11" \
 ####Get Notifications for Current User (User/Admin)
 curl -X GET "http://localhost:5000/api/notifications" \
 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Njk1MjQ0LCJleHAiOjE3NTU2OTg4NDR9.erVLzzO8CobTBD2NClIM2-MSyaMpiM6sryGBqRzcWsw"
+
+
+####Mark single notification as read
+curl -X PATCH http://localhost:5000/api/notifications/123/read \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json"
+
+#### Mark all as read (jika kamu bikin endpoint baru)
+curl -X PATCH http://localhost:5000/api/notifications/read-all \
+  -H "Authorization: Bearer <your_token>" \
+  -H "Content-Type: application/json"
 
 
 ####STATS DASHBOARD 
@@ -617,3 +659,39 @@ curl -X POST http://localhost:5000/notifications/admin \
     "message": "This is a sample notification",
     "user_id": 1
   }'
+
+
+#### CREATE DEPOSIT AMOUNTS
+
+#### Get all deposit amounts
+curl -X GET http://localhost:5000/api/deposits/admin/amounts \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDQ2NzI4LCJleHAiOjE3NTYwNTAzMjh9.1Cq7A24wVr3HtWx6pi2AKcnZZ52EnALgdjMsvg1nCnE"
+
+
+#### Create Amount
+curl -X POST http://localhost:5000/api/deposits/admin/amounts \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjA0MDQyOCwiZXhwIjoxNzU2MDQ0MDI4fQ.D1OIeXqzk9VCJ2212zh7sWBQDSxubRN3Ndf1IBXcsos" \
+-d '{
+  "value": 10,
+  "credits": "1.000 credits",
+  "best": true
+}'
+
+
+#### Update Amount
+curl -X PUT http://localhost:5000/api/deposits/admin/amounts/1 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjA0MDQyOCwiZXhwIjoxNzU2MDQ0MDI4fQ.D1OIeXqzk9VCJ2212zh7sWBQDSxubRN3Ndf1IBXcsos" \
+-d '{
+  "value": 20,
+  "credits": "2.000 credits",
+  "best": false
+}'
+
+
+#### Delete Amount
+curl -X DELETE http://localhost:5000/api/deposits/admin/amounts/1 \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer YOUR_JWT_TOKEN"

@@ -158,6 +158,81 @@ exports.uploadCampaignNumbers = async (req, res) => {
   }
 };
 
+
+exports.uploadCampaignNumbersRaw = async (req, res) => {
+  const { campaignId } = req.params;
+  const user_id = req.user.id;
+
+  try {
+    // 1. Verify campaign ownership
+    const [campaign] = await db.query(
+      `SELECT id, campaign_type FROM campaigns 
+       WHERE id = ? AND user_id = ?`,
+      [campaignId, user_id]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({
+        error: "Campaign not found or access denied",
+      });
+    }
+
+    const campaignType = campaign[0].campaign_type;
+
+    // 2. Get raw text from body
+    let numbers = [];
+    if (req.body && typeof req.body === 'string') {
+      numbers = req.body.split(/\r?\n/)
+        .map((num) => num.trim())
+        .filter((num) => num !== "");
+    } else if (req.body && Array.isArray(req.body)) {
+      numbers = req.body;
+    }
+
+    if (numbers.length === 0) {
+      return res.status(400).json({ 
+        error: "No phone numbers found in request body" 
+      });
+    }
+
+    // 3. Validate phone numbers
+    const { validNumbers, invalidNumbers } = validatePhoneNumbers(numbers, campaignType);
+
+    if (invalidNumbers.length > 0) {
+      return res.status(400).json({
+        error: "Some phone numbers are invalid",
+        invalidNumbers,
+        validCount: validNumbers.length,
+        invalidCount: invalidNumbers.length,
+      });
+    }
+
+    // 4. Save to database
+    await db.query(
+      `INSERT INTO campaign_numbers (campaign_id, phone_number) 
+       VALUES ?`,
+      [validNumbers.map((num) => [campaignId, num])]
+    );
+
+    // 5. Update campaign status
+    await db.query(
+      `UPDATE campaigns SET status = 'on_process' 
+       WHERE id = ?`,
+      [campaignId]
+    );
+
+    res.json({
+      success: true,
+      message: `Phone numbers uploaded successfully for ${campaignType} campaign`,
+      totalUploaded: validNumbers.length,
+      campaignType: campaignType,
+    });
+  } catch (err) {
+    console.error("Upload raw numbers error:", err);
+    res.status(500).json({ error: "Failed to process numbers" });
+  }
+};
+
 exports.getCampaignNumbers = async (req, res) => {
   const { campaignId } = req.params;
   const user_id = req.user.id;

@@ -1,20 +1,48 @@
-import React, { useState } from "react";
-import "./TopUpCredit.css";
+import React, { useEffect, useState } from "react";
+import "../../style/user/TopUpCredit.css";
+import { fetchApi } from "../../utils/api";
+import { useNavigate } from "react-router-dom";
 
 const TopUpCredit = () => {
+  const [amounts, setAmounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [customAmount, setCustomAmount] = useState("");
+  const navigate = useNavigate();
 
-  const amounts = [
-    { value: 100, credits: "10.000 credits" },
-    { value: 200, credits: "20.000 credits" },
-    { value: 500, credits: "50.000 credits", best: true },
-    { value: 1000, credits: "1.000.000 credits" },
-    { value: 2000, credits: "10.000 credits" },
-    { value: 3000, credits: "20.000 credits" },
-    { value: 5000, credits: "50.000 credits" },
-    { value: 10000, credits: "1.000.000 credits" },
-  ];
+  // Ambil data nominal dari backend
+  useEffect(() => {
+    const loadAmounts = async () => {
+      try {
+        const res = await fetchApi("/deposits/admin/amounts");
+        setAmounts(res.data || []);
+      } catch (err) {
+        console.error("Error fetching amounts:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAmounts();
+  }, []);
+
+// TopUpCredit.jsx
+const handleConfirm = () => {
+  let amount;
+  if (selected !== null && amounts[selected]) {
+    amount = amounts[selected].value;
+  } else {
+    amount = customAmount;
+  }
+
+  // Simpan sementara di localStorage
+  localStorage.setItem("topupAmount", amount);
+
+  // Pindah ke step berikutnya (misalnya halaman upload proof)
+  navigate("/deposits/topup2");
+};
+
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="topup-container">
@@ -23,7 +51,9 @@ const TopUpCredit = () => {
 
       {/* Step Indicator */}
       <div className="steps">
-        <div className="step active">1 <span>Top Up Deposit</span></div>
+        <div className="step active">
+          1 <span>Top Up Deposit</span>
+        </div>
         <div className="step">2 <span>Check Payment</span></div>
         <div className="step">3 <span>Payment Instruction</span></div>
       </div>
@@ -31,10 +61,11 @@ const TopUpCredit = () => {
       {/* Nominal Section */}
       <div className="nominal-section">
         <h3>Choose Nominal</h3>
+
         <div className="nominal-grid">
           {amounts.map((item, index) => (
             <div
-              key={index}
+              key={item.id || index}
               className={`nominal-card ${selected === index ? "selected" : ""}`}
               onClick={() => {
                 setSelected(index);
@@ -43,11 +74,12 @@ const TopUpCredit = () => {
             >
               {item.best && <div className="best-badge">BEST</div>}
               <div className="amount">${item.value}</div>
-              <div className="credits">Get {item.credits}</div>
+              <div className="credits">Get {item.credits} credits</div>
             </div>
           ))}
         </div>
 
+        {/* Custom input */}
         <div className="custom-input">
           <label>Input Another Nominal</label>
           <input
@@ -65,6 +97,7 @@ const TopUpCredit = () => {
         <button
           className="confirm-btn"
           disabled={!selected && !customAmount}
+          onClick={handleConfirm}
         >
           Confirm
         </button>

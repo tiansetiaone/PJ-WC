@@ -96,6 +96,49 @@ body {
   color: #fff;
 }
 
+/* Overlay */
+.sc-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal */
+.sc-modal {
+  width: 90%;
+  max-width: 640px;
+}
+
+/* Animasi pop-up */
+@keyframes popUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pop {
+  animation: popUp 0.25s ease-out;
+}
+
+/* Tambahan highlight active */
+.sc-option.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11,95,255,0.2);
+}
+
+
 /* Responsive */
 @media (max-width: 768px) {
   .sc-root {

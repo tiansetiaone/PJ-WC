@@ -1,17 +1,10 @@
 /* Layout Container */
-.topup-container {
+.topup-container-topup2 {
   display: flex;
   font-family: Arial, sans-serif;
   background: #f8f9fa;
 }
 
-/* Sidebar */
-.sidebar {
-  background: white;
-  padding: 20px;
-  width: 250px;
-  border-right: 1px solid #eee;
-}
 
 .logo {
   font-weight: bold;
@@ -126,9 +119,6 @@
 
 /* Responsive Tablet */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 200px;
-  }
   .step {
     width: 120px;
     font-size: 12px;
@@ -139,11 +129,6 @@
 @media (max-width: 768px) {
   .topup-container {
     flex-direction: column;
-  }
-  .sidebar {
-    width: 100%;
-    display: flex;
-    overflow-x: auto;
   }
   .content {
     padding: 10px;

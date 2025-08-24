@@ -1,29 +1,39 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastProvider } from './components/ui/use-toast';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ToastProvider } from "./components/ui/use-toast";
 
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
-import Dashboard from './pages/Dashboard';
-import ForgotPassword from './components/Auth/ForgotPassword';
-import ResetPassword from './components/Auth/ResetPassword';
-import CheckEmail from './components/Auth/CheckEmail';
-import NotFound from './components/Common/NotFound';
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Register";
+import Dashboard from "./pages/Dashboard";
+import ForgotPassword from "./components/Auth/ForgotPassword";
+import ResetPassword from "./components/Auth/ResetPassword";
+import CheckEmail from "./components/Auth/CheckEmail";
+import NotFound from "./components/Common/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import MainLayout from './layouts/MainLayout';
-import CampaignDashboard from './components/Campaigns/CampaignDashboard';
-import CampaignDashboardUser from './pages/user/CampaignDashboard';
-import AdminCampaignList from './components/Campaigns/AdminCampaignList';
-import AdminCreateCampaign from './components/Campaigns/AdminCreateCampaign';
-import CampaignDetailModal from './components/Campaigns/CampaignDetailModal';
-import AdminDashboard from './components/Admin/AdminDashboard';
-import CreateCampaignPage from './components/Campaigns/CreateCampaignModal'; // Import the new page component
+import MainLayout from "./layouts/MainLayout";
+import CampaignDashboard from "./components/Campaigns/CampaignDashboard";
+import CampaignDashboardUser from "./pages/user/CampaignDashboard";
+import AdminCampaignList from "./components/Campaigns/AdminCampaignList";
+import AdminCreateCampaign from "./components/Campaigns/AdminCreateCampaign";
+import CampaignDetailModal from "./components/Campaigns/CampaignDetailModal";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import CreateCampaignPageWA from "./pages/user/CreateCampaignUser"; // Import the new page component
+import CreateCampaignPageSMS from "./pages/user/CreateCampaignUser2"; // Import the new page component
+import NotificationManagement from "./pages/admin/NotificationManagement";
+import CreateNotification from "./pages/admin/CreateNotification";
+import Deposit from "./pages/user/Deposit";
+import TopUpCredit from "./pages/user/TopUpCredit";
+import TopUpCredit2 from "./pages/user/TopUpCredit2";
+import TopUpCredit3 from "./pages/user/TopUpCredit3";
+import DepositManagement from "./pages/admin/DepositManagement";
 
-import AdminRoute from './components/Auth/AdminRoute';
-import PrivateRoute from './components/Auth/PrivateRoute';
-import AccountChecking from './components/Auth/AccountChecking';
-import VerifyUser from './pages/admin/VerifyUser';
+
+import AdminRoute from "./components/Auth/AdminRoute";
+import PrivateRoute from "./components/Auth/PrivateRoute";
+import AccountChecking from "./components/Auth/AccountChecking";
+import VerifyUser from "./pages/admin/VerifyUser";
 
 const App = () => {
   return (
@@ -42,12 +52,15 @@ const AppRoutes = () => {
 
   if (isLoading) {
     return (
-      <div className="app-loading" style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh'
-      }}>
+      <div
+        className="app-loading"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         Loading...
       </div>
     );
@@ -61,7 +74,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/check-email" element={<CheckEmail />} />
-      
+
       {/* User Routes */}
       <Route
         path="/dashboard"
@@ -87,11 +100,67 @@ const AppRoutes = () => {
 
       {/* New Campaign Creation Route */}
       <Route
-        path="/campaigns/new"
+        path="/campaigns/createwa"
         element={
           <PrivateRoute>
             <MainLayout>
-              <CreateCampaignPage />
+              <CreateCampaignPageWA />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
+      {/* New Campaign Creation Route */}
+      <Route
+        path="/campaigns/createsms"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <CreateCampaignPageSMS />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+      
+      <Route
+        path="/deposits/list"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <Deposit />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/deposits/topup"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <TopUpCredit />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/deposits/topup2"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <TopUpCredit2 />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/deposits/topup-credit-3"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <TopUpCredit3 />
             </MainLayout>
           </PrivateRoute>
         }
@@ -100,6 +169,29 @@ const AppRoutes = () => {
       <Route path="/account-checking" element={<AccountChecking />} />
 
       {/* Admin Routes */}
+
+        <Route
+          path="/admin/notifications"
+          element={
+          <AdminRoute>
+            <MainLayout admin>
+              <NotificationManagement />
+            </MainLayout>
+          </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/create/notifications"
+          element={
+          <AdminRoute>
+            <MainLayout admin>
+              <CreateNotification />
+            </MainLayout>
+          </AdminRoute>
+          }
+        />
+
+      
       <Route
         path="/admin/dashboard"
         element={
@@ -111,8 +203,7 @@ const AppRoutes = () => {
         }
       />
 
-
-            {/* Add this new route for verification */}
+      {/* Add this new route for verification */}
       <Route
         path="/admin/verify-user/:id"
         element={
@@ -135,7 +226,6 @@ const AppRoutes = () => {
         }
       />
 
-
       <Route
         path="/admin/campaigns/create"
         element={
@@ -153,6 +243,17 @@ const AppRoutes = () => {
           <AdminRoute>
             <MainLayout admin>
               <CampaignDetailModal />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/deposits/list"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <DepositManagement />
             </MainLayout>
           </AdminRoute>
         }

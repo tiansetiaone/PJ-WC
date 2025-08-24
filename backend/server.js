@@ -5,7 +5,12 @@ const app = express();
 const db = require("./config/db");
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",  // frontend origin
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -18,6 +23,7 @@ app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/support", require("./routes/support.routes"));
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
+app.use('/uploads', express.static('uploads'));
 
 // Error handling
 const errorHandler = require("./middlewares/errorHandler");

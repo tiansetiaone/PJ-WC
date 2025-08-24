@@ -96,16 +96,12 @@
   color: #dc2626;
 }
 /* Action Buttons */
-.action-buttons {
+.action-buttons-list {
   display: flex;
-  gap: 8px;
-}
-
-/* Action Icons */
-.action-buttons {
-  display: flex;
-  gap: 8px;
+  flex-direction: row; /* pastikan horizontal */
+  align-items: center;
   justify-content: center;
+  gap: 8px;
 }
 
 .action-btn {
@@ -115,18 +111,32 @@
   font-size: 18px;
   color: #374151;
   transition: color 0.2s ease;
+  display: inline-flex; /* pastikan tombol rapat dan inline */
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 .action-btn:hover {
-  color: #0052cc;
+  background-color: #0052cc;
+  color: white;
 }
 
+.approve-btn{
+  color: #16a34a;
+}
+
+.approve-btn:hover{
+  color:white;
+  background-color: #16a34a;
+}
 
 .delete-btn {
-  background-color: #ef4444;
-  color: white;
+color: #ef4444;
 }
 .delete-btn:hover {
   background-color: #dc2626;
+  color: white;
 }
 
 .action-btn:disabled {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchApi } from "../../utils/api";
 import { useToast } from "../../components/ui/use-toast";
-import "../../style/user/CampaignList.css"
+import "../../style/user/CampaignList.css";
 
 export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -12,11 +12,12 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const pageSize = 10;
-  const { toast } = useToast();
+  const { addToast } = useToast();
 
   useEffect(() => {
     fetchCampaigns();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchCampaigns = async () => {
     try {
@@ -38,10 +39,10 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
 
       setCampaigns(validatedData);
     } catch (err) {
-      toast({
+      addToast({
         title: "Error",
         description: err.message || "Failed to load campaigns",
-        variant: "destructive",
+        variant: "error",
       });
       setCampaigns([]);
     } finally {
@@ -53,60 +54,19 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
     if (!window.confirm("Are you sure you want to delete this campaign?")) {
       return;
     }
-
     try {
-      await fetchApi(`/campaigns/${campaignId}`, {
-        method: 'DELETE'
-      });
-      
-      toast({
+      await fetchApi(`/campaigns/${campaignId}`, { method: "DELETE" });
+      addToast({
         title: "Success",
         description: "Campaign deleted successfully",
         variant: "default",
       });
-      
-      // Refresh daftar campaign
       fetchCampaigns();
-      
-      // Notify parent component untuk update statistik
-      if (onCampaignUpdate) {
-        onCampaignUpdate();
-      }
+      if (onCampaignUpdate) onCampaignUpdate();
     } catch (error) {
-      console.error("Error deleting campaign:", error);
-      toast({
+      addToast({
         title: "Error",
         description: error.message || "Failed to delete campaign",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStatusUpdate = async (campaignId, newStatus) => {
-    try {
-      await fetchApi(`/campaigns/${campaignId}/status`, {
-        method: 'PUT',
-        body: { status: newStatus }
-      });
-      
-      toast({
-        title: "Success",
-        description: `Campaign status updated to ${newStatus}`,
-        variant: "default",
-      });
-      
-      // Refresh daftar campaign
-      fetchCampaigns();
-      
-      // Notify parent component untuk update statistik
-      if (onCampaignUpdate) {
-        onCampaignUpdate();
-      }
-    } catch (error) {
-      console.error("Error updating campaign status:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update campaign status",
         variant: "destructive",
       });
     }
@@ -134,72 +94,64 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const handlePageChange = (page) => setCurrentPage(page);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        Loading campaigns...
-      </div>
-    );
+    return <div className="loading">Loading campaigns...</div>;
   }
 
   return (
-    <div className="cd-card">
-      <h3>Campaign Activity</h3>
+    <div className="campaign-container-list">
+      <h3 className="title">Campaign Activity</h3>
 
       {/* Search Box */}
-      <input
-        type="text"
-        placeholder="Search campaign by campaign name or id campaign.."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="cd-search"
-      />
+<div className="search-container">
+  <input
+    type="text"
+    placeholder="Search campaign by campaign name or id campaign.."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="search-input"
+  />
+</div>
 
-      {/* Filters */}
-      <div className="campaign-filters">
-        <button className="filter-btn">
-          Channel
-          <select
-            value={channelFilter}
-            onChange={(e) => setChannelFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="sms">SMS</option>
-          </select>
-        </button>
+{/* Filters */}
+<div className="filters">
+  <select
+    className="filter-select"
+    value={channelFilter}
+    onChange={(e) => setChannelFilter(e.target.value)}
+  >
+    <option value="">Channel</option>
+    <option value="whatsapp">WhatsApp</option>
+    <option value="sms">SMS</option>
+  </select>
 
-        <button className="filter-btn">
-          Status
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="on_process">Checking Campaign</option>
-            <option value="completed">Campaign Success</option>
-            <option value="failed">Campaign Failed</option>
-          </select>
-        </button>
+  <select
+    className="filter-select"
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="">Status</option>
+    <option value="on_process">Checking Campaign</option>
+    <option value="completed">Campaign Success</option>
+    <option value="failed">Campaign Failed</option>
+  </select>
 
-        <button className="filter-btn">
-          Month
-          <select
-            value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            {[...Array(12)].map((_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {new Date(0, i).toLocaleString("default", { month: "long" })}
-              </option>
-            ))}
-          </select>
-        </button>
-      </div>
+  <select
+    className="filter-select"
+    value={monthFilter}
+    onChange={(e) => setMonthFilter(e.target.value)}
+  >
+    <option value="">Month</option>
+    {[...Array(12)].map((_, i) => (
+      <option key={i + 1} value={i + 1}>
+        {new Date(0, i).toLocaleString("default", { month: "long" })}
+      </option>
+    ))}
+  </select>
+</div>
 
       {/* Table */}
       <div className="table-wrapper">
-        <table className="cd-table">
+        <table className="campaign-table">
           <thead>
             <tr>
               <th>No.</th>
@@ -208,7 +160,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
               <th>Channel</th>
               <th>Status</th>
               <th>Campaign Date</th>
-              <th>Actions</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -222,20 +174,18 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
                   <td>
                     <span
                       className={`status-badge ${
-                        c.status === "completed"
+                        c.status === "on_process"
+                          ? "status-checking"
+                          : c.status === "success"
                           ? "status-success"
-                          : c.status === "failed"
-                          ? "status-failed"
-                          : "status-checking"
+                          : "status-failed"
                       }`}
                     >
                       {c.status === "on_process"
                         ? "Checking Campaign"
-                        : c.status === "completed"
+                        : c.status === "success"
                         ? "Campaign Success"
-                        : c.status === "failed"
-                        ? "Campaign Failed"
-                        : c.status}
+                        : "Campaign Failed"}
                     </span>
                   </td>
                   <td>
@@ -252,14 +202,12 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
                       <button
                         className="action-btn upload-btn"
                         onClick={() => onUploadNumbers(c.id)}
-                        title="Upload Numbers"
                       >
                         📤
                       </button>
                       <button
                         className="action-btn delete-btn"
                         onClick={() => handleDeleteCampaign(c.id)}
-                        title="Delete Campaign"
                       >
                         🗑️
                       </button>
@@ -280,7 +228,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
 
       {/* Pagination */}
       <div className="table-footer">
-        <div className="text-sm text-gray-500">
+        <div className="text-sm">
           {paginatedData.length} out of {filteredData.length} data
         </div>
         <div className="pagination">
@@ -293,21 +241,15 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
           </button>
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
             let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (currentPage <= 3) {
-              pageNum = i + 1;
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i;
-            } else {
-              pageNum = currentPage - 2 + i;
-            }
+            if (totalPages <= 5) pageNum = i + 1;
+            else if (currentPage <= 3) pageNum = i + 1;
+            else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+            else pageNum = currentPage - 2 + i;
+
             return (
               <button
                 key={pageNum}
-                className={`page-btn ${
-                  pageNum === currentPage ? "active" : ""
-                }`}
+                className={`page-btn ${pageNum === currentPage ? "active" : ""}`}
                 onClick={() => handlePageChange(pageNum)}
               >
                 {pageNum}

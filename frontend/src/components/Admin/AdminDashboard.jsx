@@ -219,7 +219,7 @@ useEffect(() => {
         )}
       </section>
 
-      <button className="btn-primary">+ Create Campaign</button>
+      <button className="btn-primary">+ Create New Notification</button>
     </div>
   );
 };

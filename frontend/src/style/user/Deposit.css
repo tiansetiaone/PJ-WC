@@ -1,91 +1,53 @@
-/* Layout Wrapper */
+/* Container */
 .deposit-container {
-  display: flex;
-  min-height: 100vh;
+  padding: 20px;
   font-family: Arial, sans-serif;
+  color: #1e1e1e;
   background: #f9fafb;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  background: #fff;
-  padding: 20px;
-  border-right: 1px solid #e5e7eb;
-}
-
-.sidebar .logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #1e40af;
-  margin-bottom: 30px;
-}
-
-.sidebar nav ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar nav ul li {
-  padding: 12px 10px;
-  cursor: pointer;
-  border-radius: 8px;
-  color: #374151;
-  font-weight: 500;
-}
-
-.sidebar nav ul li.active,
-.sidebar nav ul li:hover {
-  background: #1e40af;
-  color: #fff;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  padding: 20px;
+  min-height: 100vh;
 }
 
 /* Header */
-.header {
+.deposit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.header h2 {
+.deposit-header h2 {
   font-size: 22px;
   font-weight: bold;
 }
 
 .topup-btn {
-  background: #1e40af;
+  background-color: #0056d2;
   color: white;
-  padding: 10px 18px;
   border: none;
+  padding: 8px 14px;
   border-radius: 20px;
-  font-weight: 500;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .topup-btn:hover {
-  background: #2563eb;
+  background-color: #003c9d;
 }
 
-/* Deposit History Card */
-.deposit-history {
+/* Card */
+.deposit-card {
   background: white;
   border-radius: 12px;
   padding: 20px;
   margin-top: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.deposit-history h3 {
+.deposit-card h3 {
   font-weight: bold;
   margin-bottom: 20px;
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 30px;
@@ -105,44 +67,362 @@
   font-size: 14px;
 }
 
-/* RESPONSIVE */
+/* Search Filter */
+.search-filter {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 20px 0;
+}
+
+.search-filter input,
+.search-filter select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #0a3d91;
+  color: white;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-badge.pending-transaction {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.checking-deposit {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.deposit-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.deposit-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* View Button */
+.view-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  width: 480px;
+  max-width: 95%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  position: relative;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.deposit-detail p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.deposit-detail a {
+  color: #0a3d91;
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+.status-banner {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.status-banner.checking {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.status-banner.failed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Status Badge */
+.status-badge.checking {
+  background: #e6f0ff;
+  color: #004085;
+}
+
+.status-badge.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.pending {
+  background: #fff7e6; /* kuning muda */
+  color: #f59e0b;     /* orange */
+}
+
+/* Payment Section */
+.payment-section {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.payment-section p {
+  margin: 6px 0;
+}
+
+/* Amount Section */
+.amount-section {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Actions */
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-primary, .btn-secondary, .btn-download {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-secondary {
+  background: #f1f1f1;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #ddd;
+}
+
+.btn-download {
+  background: #28a745;
+  color: #fff;
+}
+
+.btn-download:hover {
+  background: #1e7e34;
+}
+
+/* Status pill (atas modal) */
+/* Status Pill */
+.status-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.status-pill.success { background: #dcfce7; color: #15803d; }
+.status-pill.checking { background: #e0f2fe; color: #0369a1; }
+.status-pill.failed { background: #fee2e2; color: #b91c1c; }
+
+/* Detail List */
+.detail-list { margin-bottom: 20px; }
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.detail-row .label { color: #6b7280; }
+.detail-row .value { font-weight: 500; color: #111827; }
+.detail-row .value.link { color: #2563eb; cursor: pointer; }
+.detail-row .value.link:hover { text-decoration: underline; }
+
+/* Amount Box */
+.amount-box {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+  margin-bottom: 20px;
+}
+.amount-box .value.bold { font-weight: 600; }
+.amount-box .value.highlight { color: #2563eb; font-weight: 700; }
+
+/* Action Buttons */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.btn-secondary,
+.btn-primary,
+.btn-download {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-secondary {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+}
+.btn-primary:hover { background: #1d4ed8; }
+.btn-download {
+  background: #10b981;
+  color: #fff;
+  border: none;
+}
+.btn-download:hover { background: #059669; }
+
+/* ✅ Tombol close */
+.btn-close {
+  display: inline-block;
+  background: #dc3545; /* merah */
+  color: #fff;
+  padding: 8px 16px;
+  margin-top: 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-close:hover {
+  background: #a71d2a; /* merah lebih gelap */
+}
+
+
+/* Responsive */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 200px;
+  .search-filter {
+    flex-wrap: wrap;
   }
 }
 
+
 @media (max-width: 768px) {
-  .deposit-container {
-    flex-direction: column;
+  table, thead, tbody, th, td, tr {
+    display: block;
   }
-  
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  thead tr {
+    display: none;
   }
+  tr {
+    margin-bottom: 15px;
+    border-bottom: 2px solid #eee;
+  }
+  td {
+    padding-left: 50%;
+    position: relative;
+  }
+  td::before {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    font-weight: bold;
+  }
+  td:nth-of-type(1)::before { content: "No."; }
+  td:nth-of-type(2)::before { content: "ID Deposit"; }
+  td:nth-of-type(3)::before { content: "Amount"; }
+  td:nth-of-type(4)::before { content: "Status"; }
+  td:nth-of-type(5)::before { content: "Top Up Date"; }
+  td:nth-of-type(6)::before { content: "Action"; }
 
-  .sidebar nav ul {
-    display: flex;
-    gap: 10px;
+   .modal-content {
+    width: 95%;
+    padding: 16px;
   }
-
-  .main-content {
-    padding: 15px;
+  .modal-title {
+    font-size: 18px;
   }
-
-  .topup-btn {
-    padding: 8px 14px;
-    font-size: 14px;
+  .payment-section, .amount-section {
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
-  .header h2 {
+  .deposit-header h2 {
     font-size: 18px;
   }
 
@@ -157,5 +437,13 @@
 
   .empty-state p {
     font-size: 12px;
+  }
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-primary, .btn-secondary, .btn-download {
+    width: 100%;
+    text-align: center;
   }
 }

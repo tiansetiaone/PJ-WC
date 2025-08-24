@@ -14,7 +14,9 @@ import {
   ResponsiveContainer,
   CartesianGrid
 } from "recharts";
+import SelectCampaign from "./SelectCampaign"; // ⬅️ Import
 import "../../style/user/CampaignDashboardUser.css";
+// import "../../style/user/selectCampaign.css"; 
 
 export default function CampaignDashboard() {
   const navigate = useNavigate();
@@ -22,6 +24,12 @@ export default function CampaignDashboard() {
     open: false,
     campaignId: null,
   });
+
+
+    const [showSelectModal, setShowSelectModal] = useState(false); // ⬅️ state modal
+  const [selectedChannel, setSelectedChannel] = useState(null);
+
+
   const [stats, setStats] = useState([
     { label: "Total", value: 0, color: "blue", icon: "🏴" },
     { label: "Checking", value: 0, color: "orange", icon: "🔍" },
@@ -107,7 +115,7 @@ useEffect(() => {
           {!isAdmin && (
             <button
               className="cd-btn-primary"
-              onClick={() => navigate("/campaigns/new")}
+              onClick={() => setShowSelectModal(true)} // ⬅️ Buka modal, bukan navigate langsung
             >
               + Create New Campaign
             </button>
@@ -188,6 +196,35 @@ useEffect(() => {
             </>
           )}
         </div>
+
+
+{/* SelectCampaign Modal */}
+{showSelectModal && (
+  <div
+    className="sc-overlay"
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        setShowSelectModal(false); // ⬅️ close modal kalau klik di luar
+      }
+    }}
+  >
+    <div className="sc-modal">
+      <SelectCampaign
+        onBack={() => setShowSelectModal(false)}
+        onNext={() => {
+          if (selectedChannel === "whatsapp") {
+            navigate("/campaigns/createwa");
+          } else if (selectedChannel === "sms") {
+            navigate("/campaigns/createsms");
+          }
+          setShowSelectModal(false);
+        }}
+        onSelectChannel={(ch) => setSelectedChannel(ch)}
+        selected={selectedChannel}
+      />
+    </div>
+  </div>
+)}
       </main>
     </div>
   );

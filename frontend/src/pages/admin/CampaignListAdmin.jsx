@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchApi } from "../../utils/api";
 import { useToast } from "../../components/ui/use-toast";
+import CampaignInfo from "./CampaignInfo";
 import "../../style/admin/CampaignList.css";
 
 export default function CampaignListAdmin({ onCampaignUpdate }) {
@@ -10,6 +11,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
   const pageSize = 10;
 
   const { addToast } = useToast();
@@ -32,10 +34,12 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
       const validatedData = data.map((campaign) => ({
         id: campaign.id || "",
         name: campaign.name || campaign.campaign_name || "",
-        numbers: campaign.numbers || campaign.sum_number || 0,
+        numbers: campaign.numbers || campaign.total_numbers || 0,
         status: campaign.status || "",
-        user: campaign.user || campaign.created_by || "Unknown",
+        user: campaign.user || campaign.creator_name || "Unknown",
         created_at: campaign.created_at || new Date().toISOString(),
+        message: campaign.message || "",
+        image: campaign.image || null,
       }));
 
       setCampaigns(validatedData);
@@ -51,35 +55,40 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
     }
   };
 
-  const handleApprove = async (campaignId) => {
+  const updateCampaignStatus = async (campaignId, status) => {
     try {
-      await fetchApi(`/campaigns/${campaignId}/approve`, { method: "PUT" });
-      addToast({ title: "Success", description: "Campaign approved ✅" });
+      await fetchApi(`/campaigns/admin/campaigns/${campaignId}/status`, {
+        method: "PUT",
+        body: { status },
+      });
+
+      addToast({
+        title: "Success",
+        description: `Campaign updated to ${status}`,
+        variant: "success",
+      });
+
+      // Refresh campaign list setelah update
       fetchCampaigns();
+
+      // callback ke parent kalau ada
       if (onCampaignUpdate) onCampaignUpdate();
+
+      // Tutup modal kalau ada
+      setSelectedCampaign(null);
     } catch (err) {
       addToast({
         title: "Error",
-        description: err.message || "Failed to approve campaign",
+        description: err.message || "Failed to update campaign",
         variant: "error",
       });
     }
   };
 
-  const handleReject = async (campaignId) => {
-    try {
-      await fetchApi(`/campaigns/${campaignId}/reject`, { method: "PUT" });
-      addToast({ title: "Success", description: "Campaign rejected ❌" });
-      fetchCampaigns();
-      if (onCampaignUpdate) onCampaignUpdate();
-    } catch (err) {
-      addToast({
-        title: "Error",
-        description: err.message || "Failed to reject campaign",
-        variant: "error",
-      });
-    }
-  };
+  const handleApprove = (id) => updateCampaignStatus(id, "success");
+  const handleReject = (id) => updateCampaignStatus(id, "failed");
+  const handleView = (campaign) => setSelectedCampaign(campaign);
+  const closeModal = () => setSelectedCampaign(null);
 
   const filteredData = campaigns.filter((c) => {
     const searchMatch =
@@ -98,8 +107,6 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const handlePageChange = (page) => setCurrentPage(page);
 
   if (loading) {
     return (
@@ -128,9 +135,9 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
           onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="">Status</option>
-          <option value="pending">Checking Campaign</option>
-          <option value="approved">Campaign Success</option>
-          <option value="rejected">Campaign Failed</option>
+          <option value="on_process">Checking Campaign</option>
+          <option value="success">Campaign Success</option>
+          <option value="failed">Campaign Failed</option>
         </select>
         <select
           className="filter-select"
@@ -197,12 +204,17 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
                     })}
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="action-btn upload-btn">👁</button>
-                      {c.status === "pending" && (
+                    <div className="action-buttons-list">
+                      <button
+                        className="action-btn upload-btn"
+                        onClick={() => handleView(c)}
+                      >
+                        👁
+                      </button>
+                      {c.status === "on_process" && (
                         <>
                           <button
-                            className="action-btn upload-btn"
+                            className="action-btn approve-btn"
                             onClick={() => handleApprove(c.id)}
                           >
                             ✔
@@ -230,6 +242,20 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
         </table>
       </div>
 
+      {/* Modal */}
+      {selectedCampaign && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <CampaignInfo
+              campaign={selectedCampaign}
+              onClose={closeModal}
+              onApprove={handleApprove}
+              onReject={handleReject}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Pagination */}
       <div className="table-footer">
         <div className="text-sm text-gray-500">
@@ -238,7 +264,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
         <div className="pagination">
           <button
             className="page-btn"
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
             ‹
@@ -258,7 +284,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
               <button
                 key={pageNum}
                 className={`page-btn ${pageNum === currentPage ? "active" : ""}`}
-                onClick={() => handlePageChange(pageNum)}
+                onClick={() => setCurrentPage(pageNum)}
               >
                 {pageNum}
               </button>
@@ -267,7 +293,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
           <button
             className="page-btn"
             onClick={() =>
-              handlePageChange(Math.min(totalPages, currentPage + 1))
+              setCurrentPage(Math.min(totalPages, currentPage + 1))
             }
             disabled={currentPage === totalPages}
           >

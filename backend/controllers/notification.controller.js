@@ -32,9 +32,9 @@ exports.createNotification = async (req, res) => {
   }
 
   // Jika scope adalah user tertentu, validasi recipient_id
-  if (user_scope === 'user' && !recipient_id) {
+  if (user_scope === "user" && !recipient_id) {
     return res.status(400).json({
-      error: "recipient_id is required when user_scope is 'user'"
+      error: "recipient_id is required when user_scope is 'user'",
     });
   }
 
@@ -58,7 +58,7 @@ exports.createNotification = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Notification created successfully",
-      notification: newNotification[0]
+      notification: newNotification[0],
     });
   } catch (err) {
     res.status(500).json({
@@ -67,7 +67,6 @@ exports.createNotification = async (req, res) => {
     });
   }
 };
-
 
 // GET all notifications (admin only)
 exports.getAllNotifications = async (req, res) => {
@@ -84,21 +83,23 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
-
 // GET notification by ID
 exports.getNotificationById = async (req, res) => {
   try {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT n.*, u.username as created_by_username 
       FROM notifications n
       LEFT JOIN users u ON n.created_by = u.id
       WHERE n.id = ?
-    `, [req.params.id]);
-    
+    `,
+      [req.params.id]
+    );
+
     if (rows.length === 0) {
       return res.status(404).json({ error: "Notification not found" });
     }
-    
+
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -120,11 +121,8 @@ exports.updateNotification = async (req, res) => {
 
   try {
     // Cek apakah notifikasi ada
-    const [existing] = await db.query(
-      `SELECT id FROM notifications WHERE id = ?`,
-      [notificationId]
-    );
-    
+    const [existing] = await db.query(`SELECT id FROM notifications WHERE id = ?`, [notificationId]);
+
     if (existing.length === 0) {
       return res.status(404).json({ error: "Notification not found" });
     }
@@ -149,7 +147,7 @@ exports.updateNotification = async (req, res) => {
     res.json({
       success: true,
       message: "Notification updated successfully",
-      notification: updatedNotification[0]
+      notification: updatedNotification[0],
     });
   } catch (err) {
     res.status(500).json({
@@ -159,25 +157,51 @@ exports.updateNotification = async (req, res) => {
   }
 };
 
-
 // DELETE notification (admin only)
 exports.deleteNotification = async (req, res) => {
   try {
-    const [result] = await db.query(
-      `DELETE FROM notifications WHERE id = ?`,
-      [req.params.id]
-    );
-    
+    const [result] = await db.query(`DELETE FROM notifications WHERE id = ?`, [req.params.id]);
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Notification not found" });
     }
-    
+
     res.json({
       success: true,
-      message: "Notification deleted successfully"
+      message: "Notification deleted successfully",
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// PATCH mark as read
+exports.markAsRead = async (req, res) => {
+  try {
+    const [result] = await db.query(`UPDATE notifications SET is_read = 1 WHERE id = ? AND (recipient_id = ? OR user_scope IN ('all', ?))`, [req.params.id, req.user.id, req.user.role]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Notification not found" });
+    }
+
+    res.json({ success: true, message: "Notification marked as read" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PATCH mark all as read
+exports.markAllAsRead = async (req, res) => {
+  try {
+    const [result] = await db.query(
+      `UPDATE notifications 
+       SET is_read = 1 
+       WHERE (recipient_id = ? OR user_scope IN ('all', ?))`,
+      [req.user.id, req.user.role]
+    );
+
+    res.json({ success: true, message: "All notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

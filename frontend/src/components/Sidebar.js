@@ -4,6 +4,22 @@ import '../style/Sidebar.css';
 
 const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [role, setRole] = useState("user"); // default user
+
+  useEffect(() => {
+    // Ambil data user dari localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.role) {
+          setRole(parsedUser.role); // set role dari localStorage
+        }
+      } catch (err) {
+        console.error("Error parsing localStorage user:", err);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -32,71 +48,56 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen, onClose, isMobile]);
 
-return (
-  <>
-    {isMobile && isOpen && (
-      <div className="sidebar-overlay active" onClick={onClose} />
-    )}
-    
-    <nav className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+  // MENU LIST untuk USER
+  const userMenu = [
+    { path: "/dashboard", label: "Dashboard", icon: "🏠" },
+    { path: "/campaign", label: "Campaign", icon: "📢" },
+    { path: "/deposits/list", label: "Deposit", icon: "💳" },
+    { path: "/referral", label: "Referral", icon: "👤" },
+    { path: "/support", label: "Contact Support", icon: "🎧" },
+  ];
+
+  // MENU LIST untuk ADMIN
+  const adminMenu = [
+    { path: "/dashboard", label: "Dashboard", icon: "🏠" },
+    { path: "/user-management", label: "User Management", icon: "👥" },
+    { path: "/campaign", label: "Campaign Management", icon: "📢" },
+    { path: "/admin/deposits/list", label: "Deposit Management", icon: "💳" },
+    { path: "/referral-settings", label: "Referral Settings", icon: "⚙️" },
+    { path: "/admin/notifications", label: "Notification Management", icon: "🔔" },
+    { path: "/support", label: "Ticket Support", icon: "🎧" },
+  ];
+
+  // Tentukan menu sesuai role
+  const menuList = role === "admin" ? adminMenu : userMenu;
+
+  return (
+    <>
+      {isMobile && isOpen && (
+        <div className="sidebar-overlay active" onClick={onClose} />
+      )}
+
+      <nav className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <ul className="menu">
-          <li>
-            <NavLink 
-              to="/dashboard" 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onClick={isMobile ? onClose : null}
-            >
-              <span className="icon">🏠</span>
-              {!isCollapsed && 'Dashboard'}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink 
-              to="/campaign" 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onClick={isMobile ? onClose : null}
-            >
-              <span className="icon">📢</span>
-              {!isCollapsed && 'Campaign'}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink 
-              to="/deposit" 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onClick={isMobile ? onClose : null}
-            >
-              <span className="icon">💳</span>
-              {!isCollapsed && 'Deposit'}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink 
-              to="/referral" 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onClick={isMobile ? onClose : null}
-            >
-              <span className="icon">👤</span>
-              {!isCollapsed && 'Referral'}
-            </NavLink>
-          </li>
-          <li>
-            <NavLink 
-              to="/support" 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onClick={isMobile ? onClose : null}
-            >
-              <span className="icon">🎧</span>
-              {!isCollapsed && 'Contact Support'}
-            </NavLink>
-          </li>
+          {menuList.map((item, index) => (
+            <li key={index}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => (isActive ? 'active' : '')}
+                onClick={isMobile ? onClose : null}
+              >
+                <span className="icon">{item.icon}</span>
+                {!isCollapsed && item.label}
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </nav>
     </>

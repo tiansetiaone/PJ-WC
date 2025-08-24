@@ -1,142 +1,82 @@
-.campaign-container {
+.campaign-container-list {
   padding: 20px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-.campaign-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.title {
+  font-size: 18px;
+  font-weight: 600;
   margin-bottom: 15px;
+}
+
+/* Search Box */
+.search-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 16px;
 }
 
 .search-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.campaign-filters select {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.campaign-table {
   width: 100%;
-  border-collapse: collapse;
-}
-
-.campaign-table th {
-  background-color: #0052cc;
-  color: white;
-  padding: 12px;
-  text-align: left;
-}
-
-.campaign-table td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: white;
-}
-
-.status-checking {
-  background: #007bff;
-}
-.status-success {
-  background: #28a745;
-}
-.status-failed {
-  background: #dc3545;
-}
-
-.upload-btn {
-  background: #0052cc;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.upload-btn:hover {
-  background: #003d99;
-}
-
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #777;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-  flex-wrap: wrap;
-}
-
-.pagination {
-  display: flex;
-  gap: 5px;
-}
-
-.page-btn {
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.page-btn.active {
-  background: #0052cc;
-  color: white;
-  border-color: #0052cc;
-}
-
-.cd-card {
-  padding: 20px;
-  background: #fff;
-  border-radius: 10px;
-}
-
-.cd-search {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ccc;
+  padding: 10px 14px 10px 36px; /* padding kiri lebih besar untuk icon */
+  border: 1px solid #ddd;
   border-radius: 8px;
-  margin-bottom: 15px;
+  font-size: 14px;
+  outline: none;
 }
 
-.campaign-filters {
+/* Filters */
+.filter-select {
+  appearance: none;
+  padding: 8px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px; /* pill style */
+  background: #f9fafb;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.filter-select:focus {
+  border-color: #2563eb;
+  background: #eef2ff;
+}
+
+.filters {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
 }
 
-.filter-btn {
+.dropdown {
   position: relative;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
+  font-weight: 500;
+  color: #374151;
   cursor: pointer;
 }
 
-.filter-btn select {
+.dropdown select {
   position: absolute;
   top: 0;
   left: 0;
@@ -150,39 +90,44 @@
   overflow-x: auto;
 }
 
-.cd-table {
+.campaign-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.cd-table th {
-  background-color: #0052cc;
+.campaign-table th {
+  background: #2563eb;
   color: white;
   padding: 12px;
   text-align: left;
+  font-weight: 600;
 }
 
-.cd-table td {
+.campaign-table td {
   padding: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #374151;
 }
 
 .status-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .status-checking {
-  background: #007bff;
+  background: #e0f2fe;
+  color: #0369a1;
 }
 .status-success {
-  background: #28a745;
+  background: #dcfce7;
+  color: #166534;
 }
 .status-failed {
-  background: #dc3545;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .no-data {
@@ -196,35 +141,37 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 15px;
-  flex-wrap: wrap;
 }
 
 .pagination {
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .page-btn {
-  border: 1px solid #ccc;
-  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  width: 32px;
+  height: 32px;
   background: white;
   border-radius: 50%;
   cursor: pointer;
+  font-size: 14px;
 }
+
 .page-btn.active {
-  background: #0052cc;
+  background: #2563eb;
   color: white;
-  border-color: #0052cc;
+  border-color: #2563eb;
 }
+
 .page-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Action buttons styling */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .action-btn {
@@ -233,14 +180,12 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s ease;
 }
 
 .upload-btn {
   background-color: #3b82f6;
   color: white;
 }
-
 .upload-btn:hover {
   background-color: #2563eb;
 }
@@ -249,53 +194,16 @@
   background-color: #ef4444;
   color: white;
 }
-
 .delete-btn:hover {
   background-color: #dc2626;
 }
 
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-
-
-@media (max-width: 1024px) {
-  .campaign-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
 @media (max-width: 768px) {
-  .campaign-container {
-    padding: 15px;
+  .filters {
+    flex-direction: column;
   }
-  .campaign-table th, .campaign-table td {
-    font-size: 14px;
-  }
-  .search-input, .campaign-filters select {
-    width: 100%;
-  }
-    .action-buttons {
+  .action-buttons {
     flex-direction: column;
     gap: 4px;
-  }
-  
-  .action-btn {
-    padding: 4px 6px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .campaign-table th, .campaign-table td {
-    font-size: 12px;
-    padding: 8px;
-  }
-  .upload-btn {
-    font-size: 12px;
-    padding: 4px 8px;
   }
 }

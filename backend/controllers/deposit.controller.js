@@ -1,5 +1,31 @@
 const db = require("../config/db");
 const { validateAddress, generateDepositAddress } = require("../utils/blockchain");
+const multer = require("multer");
+const path = require("path");
+
+// === Konfigurasi Multer ===
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/proofs/"); // simpan di folder /uploads/proofs
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname)); 
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // max 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error("Hanya JPG, PNG, atau PDF yang diizinkan"));
+    }
+    cb(null, true);
+  },
+});
+
 
 // Generate deposit address based on network
 exports.generateDepositAddress = async (req, res) => {
@@ -115,57 +141,42 @@ async function checkReferralCommissions(userId) {
   }
 }
 
-// Submit deposit evidence (tx_hash)
-// Enhanced submit evidence with Etherscan link generation
-// Modify the submitDepositEvidence function to ensure status changes to 'checking'
+// === Controller untuk submit evidence ===
 exports.submitDepositEvidence = async (req, res) => {
   try {
     const { deposit_id, tx_hash } = req.body;
-    const userId = req.user.id;
+    const proofFile = req.file ? req.file.path : null;
 
-    // Validate input
-    if (!deposit_id || !tx_hash) {
-      return res.status(400).json({
-        error: "Deposit ID and TX Hash are required",
-      });
+    if (!deposit_id || !tx_hash || !proofFile) {
+      return res.status(400).json({ message: "Deposit ID, Tx hash, dan file bukti wajib diisi" });
     }
 
-    // Verify deposit belongs to user and is pending
-    const [deposit] = await db.query(
-      `SELECT * FROM deposits 
-       WHERE id = ? AND user_id = ? AND status = 'pending'`,
-      [deposit_id, userId]
-    );
-
-    if (!deposit.length) {
-      return res.status(404).json({
-        error: "Deposit not found or already submitted",
-        code: "DEPOSIT_NOT_FOUND",
-      });
-    }
-
-    // Update deposit with tx_hash and change status to checking
-    await db.query(
+    // Update deposit yang sudah ada
+    const [result] = await db.query(
       `UPDATE deposits 
-       SET tx_hash = ?, 
-           status = 'checking',
-           updated_at = CURRENT_TIMESTAMP
+       SET tx_hash = ?, proof_file = ?, status = 'checking', updated_at = CURRENT_TIMESTAMP 
        WHERE id = ?`,
-      [tx_hash, deposit_id]
+      [tx_hash, proofFile, deposit_id]
     );
 
-    res.json({
-      success: true,
-      message: "Deposit submitted for verification",
-      status: "checking",
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Deposit tidak ditemukan" });
+    }
+
+    res.status(200).json({ 
+      message: "Deposit evidence submitted, waiting for checking", 
+      depositId: deposit_id 
     });
   } catch (err) {
     console.error("Submit evidence error:", err);
-    res.status(500).json({
-      error: "Failed to submit deposit evidence",
-    });
+    res.status(500).json({ message: "Error submitting deposit evidence" });
   }
 };
+
+// Export middleware upload untuk dipakai di routes
+exports.uploadProof = upload.single("file");
+
+
 
 // Enhanced deposit status check
 exports.checkDepositStatus = async (req, res) => {
@@ -280,8 +291,8 @@ function getStatusDisplay(status) {
   const statusMap = {
     pending: "Pending Transaction",
     checking: "Checking Deposit",
-    approved: "Deposit Success",
-    rejected: "Deposit Failed",
+    approved: "success",
+    rejected: "failed",
   };
   return statusMap[status] || status;
 }
@@ -654,17 +665,12 @@ exports.convertCommission = async (req, res) => {
   }
 };
 
-
-
 // Ambil total credit user (semua deposit sukses)
 exports.getTotalCredit = async (req, res) => {
   try {
     const userId = req.user.id; // dari JWT
 
-    const [rows] = await db.query(
-      "SELECT SUM(amount) AS total FROM deposits WHERE user_id = ? AND status = 'approved'",
-      [userId]
-    );
+    const [rows] = await db.query("SELECT SUM(amount) AS total FROM deposits WHERE user_id = ? AND status = 'approved'", [userId]);
 
     res.json({
       success: true,
@@ -675,7 +681,6 @@ exports.getTotalCredit = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 
 // Admin: Get Campaign Stats (Success vs Failed)
 // Admin: Get Deposit Stats (Received vs Failed)
@@ -705,3 +710,136 @@ exports.getDepositStats = async (req, res) => {
   }
 };
 
+exports.checkDepositStatus = async (req, res) => {
+  const { deposit_id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const [deposit] = await db.query(
+      `SELECT 
+        d.id, 
+        d.amount, 
+        d.network, 
+        d.status, 
+        d.tx_hash, 
+        d.created_at, 
+        d.updated_at,
+        d.destination_address as recipient_wallet,
+        d.memo as your_wallet,
+        d.transfer_evidence,
+        d.credit, -- kalau ada kolom credit
+        CASE 
+          WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/transaction/', d.tx_hash)
+          WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/tx/', d.tx_hash)
+          WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/tx/', d.tx_hash)
+          ELSE NULL
+        END as tx_link
+       FROM deposits d
+       WHERE d.id = ? AND d.user_id = ?`,
+      [deposit_id, userId]
+    );
+
+    if (!deposit.length) {
+      return res.status(404).json({
+        error: "Deposit not found",
+        code: "DEPOSIT_NOT_FOUND",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: deposit[0],
+      status_description: getStatusDisplay(deposit[0].status),
+    });
+  } catch (err) {
+    console.error("Check deposit status error:", err);
+    res.status(500).json({
+      error: "Failed to check deposit status",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
+  }
+};
+
+// Get all deposit amounts (active only)
+exports.getDepositAmounts = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT id, value, credits, best FROM deposit_amounts WHERE status = 'active' ORDER BY value ASC"
+    );
+
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (err) {
+    console.error("Get deposit amounts error:", err);
+    res.status(500).json({ error: "Failed to get deposit amounts" });
+  }
+};
+
+
+// Create new deposit amount
+exports.createDepositAmount = async (req, res) => {
+  try {
+    const { value, credits, best } = req.body;
+    await db.query(
+      "INSERT INTO deposit_amounts (value, credits, best) VALUES (?, ?, ?)",
+      [value, credits, best ? 1 : 0]
+    );
+    res.json({ success: true, message: "Deposit amount created" });
+  } catch (err) {
+    console.error("Error creating deposit amount:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Update deposit amount
+exports.updateDepositAmount = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { value, credits, best } = req.body;
+    await db.query(
+      "UPDATE deposit_amounts SET value=?, credits=?, best=? WHERE id=?",
+      [value, credits, best ? 1 : 0, id]
+    );
+    res.json({ success: true, message: "Deposit amount updated" });
+  } catch (err) {
+    console.error("Error updating deposit amount:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Delete deposit amount
+exports.deleteDepositAmount = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query("DELETE FROM deposit_amounts WHERE id=?", [id]);
+    res.json({ success: true, message: "Deposit amount deleted" });
+  } catch (err) {
+    console.error("Error deleting deposit amount:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+// Ambil riwayat commission yang sudah di-convert (Admin view)
+exports.getConvertedHistory = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        c.id, 
+        u.username as user, 
+        CONCAT('$', FORMAT(c.amount, 2)) as amount,
+        DATE_FORMAT(c.converted_at, '%d %M %Y %H:%i') as date
+      FROM commissions c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.converted = 1
+      ORDER BY c.converted_at DESC
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Get converted commissions error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

@@ -1,36 +1,41 @@
 import React from "react";
-import "../styles/NotificationInfo.css";
+import "../../style/admin/NotificationInfo.css";
 
-const NotificationInfo = () => {
+const NotificationInfo = ({ notification, onClose }) => {
+  if (!notification) return null;
+
+  // Format tanggal hanya "DD Month YYYY"
+  const formatDate = (dateString) => {
+    const options = { day: "numeric", month: "long", year: "numeric" };
+    return new Date(dateString).toLocaleDateString("en-GB", options);
+  };
+
   return (
     <div className="notification-info-container">
       <div className="notification-card">
         <h2 className="title">Notification Info</h2>
 
         <div className="section">
-          <h3 className="subtitle">Notification</h3>
+          <h5 className="subtitle">Notification</h5>
           <div className="row">
             <span className="label">Notification Title</span>
-            <span className="value">BLACK FRIDAY!</span>
+            <span className="value">{notification.title}</span>
           </div>
           <div className="row">
             <span className="label">Publish Date</span>
-            <span className="value">24 June 2025</span>
+            <span className="value">{formatDate(notification.created_at)}</span>
           </div>
         </div>
 
         <div className="section">
-          <h3 className="subtitle">Notification Message</h3>
-          <p className="message">
-            🎉 We’re excited to announce that Dark Mode is now available on both
-            web and mobile platforms! You can easily switch themes from your
-            settings and enjoy a more comfortable viewing experience, day or
-            night. Try it now and let us know what you think.
-          </p>
+          <h5 className="subtitle">Notification Message</h5>
+          <p className="message">{notification.content}</p>
         </div>
 
         <div className="actions">
-          <button className="btn-back">Back</button>
+          <button className="btn-back" onClick={onClose}>
+            Back
+          </button>
         </div>
       </div>
     </div>

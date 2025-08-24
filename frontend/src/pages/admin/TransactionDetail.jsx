@@ -1,59 +1,51 @@
 import React from "react";
-import "./TransactionDetail.css";
+import "../../style/admin/TransactionDetail.css";
 
-export default function TransactionDetail() {
+export default function TransactionDetail({ deposit, onClose, onProcess }) {
   return (
-    <div className="transaction-container">
-      <div className="transaction-card">
-        <h3 className="transaction-title">Transaction</h3>
+    <div className="transaction-container" onClick={onClose}>
+      <div className="transaction-card" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>✖</button>
+
+        <h3 className="transaction-title">Transaction Detail</h3>
 
         {/* Status */}
-        <div className="status-badge checking">Checking Deposit</div>
+        <div className={`status-badge ${deposit.status.toLowerCase().replace(" ", "-")}`}>
+          {deposit.status}
+        </div>
 
         {/* Payment Info */}
         <div className="section">
           <h4>Payment</h4>
           <div className="info-row">
             <span>ID Deposit</span>
-            <strong>M4pX****************9TqJ</strong>
+            <strong>{deposit.id}</strong>
           </div>
           <div className="info-row">
             <span>Payment Date</span>
-            <strong>24 June 2025 12:00</strong>
+            <strong>{deposit.top_up_date}</strong>
           </div>
           <div className="info-row">
             <span>Recipient Wallet Address</span>
             <strong>
-              TQ7xJ...Fh9pGp <button className="icon-btn">👁</button>
+              {deposit.recipient_wallet || "N/A"} 
+              <button className="icon-btn">👁</button>
             </strong>
           </div>
           <div className="info-row">
             <span>User’s Wallet Address</span>
             <strong>
-              TPA9k...feuer5 <button className="icon-btn">👁</button>
+              {deposit.user_wallet || "N/A"} 
+              <button className="icon-btn">👁</button>
             </strong>
           </div>
           <div className="info-row">
             <span>Transfer Evidence</span>
-            <a href="#">proof-of-transfer.png ⬇</a>
-          </div>
-          <div className="info-row">
-            <span>Etherscan Transaction Link</span>
-            <a href="#">
-              https://eth...d3e4 ↗
-            </a>
-          </div>
-        </div>
-
-        {/* Top Up & Credit */}
-        <div className="section">
-          <div className="info-row highlight">
-            <span>Top Up</span>
-            <strong>$10.509</strong>
-          </div>
-          <div className="info-row highlight credit">
-            <span>Convert to Credit</span>
-            <strong>1.050.900</strong>
+            {deposit.evidence ? (
+              <a href={deposit.evidence} target="_blank" rel="noreferrer">
+                {deposit.evidence.split("/").pop()} ⬇
+              </a>
+            ) : "-"}
           </div>
         </div>
 
@@ -62,19 +54,35 @@ export default function TransactionDetail() {
           <h4>User’s Request</h4>
           <div className="info-row">
             <span>Full Name</span>
-            <strong>Tio Ramdan</strong>
-          </div>
-          <div className="info-row">
-            <span>Username</span>
-            <strong>@tioramdan</strong>
+            <strong>{deposit.user_request}</strong>
           </div>
         </div>
 
         {/* Buttons */}
         <div className="action-buttons">
-          <button className="btn secondary">Back</button>
-          <button className="btn danger">Reject</button>
-          <button className="btn primary">Approve</button>
+          <button className="btn secondary" onClick={onClose}>Back</button>
+          {deposit.status === "Checking Deposit" && (
+            <>
+              <button
+                className="btn danger"
+                onClick={() => {
+                  onProcess(deposit.id, "reject");
+                  onClose();
+                }}
+              >
+                Reject
+              </button>
+              <button
+                className="btn primary"
+                onClick={() => {
+                  onProcess(deposit.id, "approve");
+                  onClose();
+                }}
+              >
+                Approve
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

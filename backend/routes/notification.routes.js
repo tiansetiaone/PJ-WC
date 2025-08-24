@@ -13,4 +13,10 @@ router.delete("/admin/:id", authMiddleware, authMiddleware.adminOnly, notificati
 // Shared routes (for users and admins)
 router.get("/", authMiddleware, notificationController.getNotifications);
 
+router.patch("/:id/read", authMiddleware, notificationController.markAsRead);
+
+
+router.patch("/read-all", authMiddleware, notificationController.markAllAsRead);
+
+
 module.exports = router;

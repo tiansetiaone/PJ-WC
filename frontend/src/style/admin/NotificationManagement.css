@@ -1,80 +1,38 @@
-/* Layout */
-.notification-container {
-  display: flex;
-  min-height: 100vh;
-  background: #f9f9f9;
-  font-family: "Poppins", sans-serif;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  background: #ffffff;
+/* Container */
+.notification-container-management {
   padding: 20px;
-  border-right: 1px solid #e5e7eb;
+  background: #f8f9fc;
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
 }
 
-.sidebar .logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #2563eb;
-  margin-bottom: 30px;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  padding: 12px 10px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
-}
-
-.sidebar ul li:hover,
-.sidebar ul li.active {
-  background: #2563eb;
-  color: #fff;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  padding: 20px 40px;
-}
-
-.header {
+/* Header */
+.notification-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
-.header .breadcrumb {
-  font-size: 18px;
+.notification-header h2 {
+  font-size: 20px;
   font-weight: 600;
-  color: #111827;
 }
 
-.create-btn {
-  background: #2563eb;
-  color: #fff;
-  padding: 10px 18px;
+.btn-create {
+  background: #004aad;
+  color: white;
+  padding: 10px 16px;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-.create-btn:hover {
-  background: #1d4ed8;
+.btn-create:hover {
+  background: #003a8c;
 }
 
-/* Notification Box */
+/* Empty State */
 .notification-box {
   background: #fff;
   border-radius: 10px;
@@ -106,59 +64,395 @@
   color: #6b7280;
 }
 
-/* Responsive Design */
+/* Table */
+.notification-table {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.table-header input {
+  width: 70%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.table-header select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Table Layout */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #004aad;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+  background: #f5f7fa;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.pagination p {
+  font-size: 14px;
+  color: #666;
+}
+
+.pagination div button {
+  margin: 0 4px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.pagination div button.active {
+  background: #004aad;
+  color: white;
+  border: none;
+}
+
+/* ========================== */
+/* Modal Styles */
+/* ========================== */
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 1rem;
+}
+
+/* Modal Content */
+.modal-content-campaign {
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  animation: fadeIn 0.3s ease-in-out;
+  box-shadow: 0px 4px 16px rgba(0,0,0,0.15);
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 377px;
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+    box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.15);
+    max-height: 518px;
+    height: 100%;
+    margin-top: 5%;
+}
+
+.modal-content h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #2d3748;
+  text-align: center;
+}
+.modal-content-campaign h5 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+  text-align: left;
+}
+
+.modal-content label {
+  display: block;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.modal-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.modal-actions .btn-edit {
+  background: #4caf50;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease-in-out;
+}
+
+.modal-actions .btn-edit:hover {
+  background: #43a047;
+}
+
+.modal-actions .btn-delete {
+  background: #f44336;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease-in-out;
+}
+
+.modal-actions .btn-delete:hover {
+  background: #d32f2f;
+}
+
+/* Animasi Modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Actions column ===== */
+td.actions {
+  white-space: nowrap;
+}
+
+td.actions .btn-edit,
+td.actions .btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Edit */
+td.actions .btn-edit {
+  color: #1d4ed8;
+  background: #eef4ff;
+  border-color: #bfdbfe;
+}
+
+td.actions .btn-edit:hover {
+  background: #e0ecff;
+  border-color: #93c5fd;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.12);
+}
+
+/* Delete */
+td.actions .btn-delete {
+  color: #dc2626;
+  background: #fff1f2;
+  border-color: #fecaca;
+}
+
+td.actions .btn-delete:hover {
+  background: #ffe4e6;
+  border-color: #fca5a5;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12);
+}
+
+td.actions .btn-edit:focus,
+td.actions .btn-delete:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
+}
+td.actions .btn-delete:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25);
+}
+
+/* Cursor clickable row */
+.row-clickable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.row-clickable:hover {
+  background: #f4f6f9;
+}
+.row-clickable td {
+  cursor: pointer;
+}
+
+/* ========================= */
+/* 📱 Responsive Design */
+/* ========================= */
 
 /* Tablet */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 200px;
-    padding: 15px;
+  .table-header input {
+    width: 60%;
   }
-
-  .main-content {
-    padding: 20px;
+  table th:nth-child(3),
+  table td:nth-child(3) {
+    display: none;
   }
-
-  .create-btn {
-    padding: 8px 14px;
+  td.actions .btn-edit,
+  td.actions .btn-delete {
+    padding: 7px 10px;
     font-size: 13px;
   }
 }
 
-/* Mobile */
+/* Tablet Medium */
 @media (max-width: 768px) {
-  .notification-container {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    display: flex;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .sidebar ul {
-    display: flex;
-    gap: 10px;
-  }
-
-  .main-content {
-    padding: 15px;
-  }
-
-  .header {
+  .notification-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+  }
+
+  .table-header {
+    flex-direction: column;
     gap: 10px;
   }
 
-  .create-btn {
-    align-self: flex-start;
+  .table-header input {
+    width: 100%;
   }
 
-  .notification-box {
-    padding: 20px;
+  table th:nth-child(3),
+  table td:nth-child(3),
+  table th:nth-child(4),
+  table td:nth-child(4) {
+    display: none;
+  }
+  td.actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  td.actions .btn-edit,
+  td.actions .btn-delete {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .modal-content {
+    max-width: 90%;
+    padding: 1.5rem;
+  }
+
+  .modal-content h3 {
+    font-size: 1.25rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions .btn-edit,
+  .modal-actions .btn-delete {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .btn-create {
+    width: 100%;
+    text-align: center;
+  }
+
+  table th:nth-child(2),
+  table td:nth-child(2) {
+    font-size: 14px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  td.actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  td.actions .btn-edit,
+  td.actions .btn-delete {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .modal-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-content input,
+  .modal-content textarea,
+  .modal-content select {
+    font-size: 0.9rem;
+    padding: 0.6rem;
   }
 }

@@ -1,10 +1,9 @@
-/* Container */
+/* ------------------ CONTAINER & TITLE ------------------ */
 .deposit-container {
   padding: 20px;
   font-family: Arial, sans-serif;
 }
 
-/* Title */
 .deposit-title {
   font-size: 22px;
   font-weight: bold;
@@ -12,24 +11,46 @@
   color: #222;
 }
 
-/* Card */
+/* ------------------ CARD ------------------ */
 .deposit-card {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
 }
 
-/* Card title */
-.card-title {
+/* Card Header (Title + Filters) */
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-header h3 {
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 15px;
   color: #333;
 }
 
-/* Content */
+/* Filters */
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filters input,
+.filters select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* ------------------ CARD CONTENT (EMPTY STATE) ------------------ */
 .card-content {
   display: flex;
   flex-direction: column;
@@ -56,40 +77,160 @@
   max-width: 400px;
 }
 
-/* --- RESPONSIVE --- */
+/* ------------------ TABLE ------------------ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table thead {
+  background: #0d47a1;
+  color: white;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  border: 1px solid #eee;
+  text-align: left;
+}
+
+.data-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+/* ------------------ STATUS BADGE ------------------ */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.status-badge.deposit-success {
+  background: #e6f8ec;
+  color: #27ae60;
+}
+
+.status-badge.deposit-failed {
+  background: #fdecea;
+  color: #e74c3c;
+}
+
+.status-badge.checking-deposit {
+  background: #eaf3fc;
+  color: #2980b9;
+}
+
+/* ------------------ ACTION BUTTONS ------------------ */
+.action-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+.action-btn-view {
+  background: #0a6cad;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.action-btn.danger {
+  background: #e74c3c;
+}
+
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content-depomanage {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 600px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ------------------ RESPONSIVE ------------------ */
 
 /* Tablet */
-@media (max-width: 768px) {
-  .deposit-container {
-    padding: 15px;
+@media (max-width: 992px) {
+  .filters {
+    flex-direction: column;
+    width: 100%;
   }
 
-  .deposit-title {
-    font-size: 20px;
+  .filters input,
+  .filters select {
+    width: 100%;
   }
 
-  .card-title {
-    font-size: 15px;
-  }
-
-  .empty-text {
-    font-size: 12px;
+  .data-table th,
+  .data-table td {
+    font-size: 13px;
+    padding: 10px;
   }
 }
 
 /* Mobile */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .deposit-container {
     padding: 12px;
   }
 
   .deposit-title {
-    font-size: 18px;
     text-align: center;
+    font-size: 20px;
   }
 
-  .deposit-card {
-    padding: 15px;
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .data-table {
+    font-size: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px;
   }
 
   .card-image {
@@ -101,6 +242,11 @@
   }
 
   .empty-text {
+    font-size: 12px;
+  }
+
+  .action-btn {
+    padding: 4px 8px;
     font-size: 12px;
   }
 }

@@ -18,7 +18,8 @@ const {
   getUserCampaignStats,
   deleteCampaign,
   getAdminCampaignMonthlyStats,
-  getUserCampaignMonthlyStats
+  getUserCampaignMonthlyStats,
+  uploadCampaignNumbersRaw
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -174,6 +175,14 @@ router.get(
   auth,
   auth.adminOnly,
   getAdminCampaignMonthlyStats
+);
+
+
+// Tambahkan route untuk raw text upload
+router.post("/:campaignId/numbers-raw", 
+  auth,
+  express.text({ type: 'text/plain' }), // Middleware untuk parse text/plain
+  uploadCampaignNumbersRaw
 );
 
 module.exports = router;

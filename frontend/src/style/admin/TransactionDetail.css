@@ -1,17 +1,26 @@
 .transaction-container {
+  position: fixed;       /* overlay menempel di viewport */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); /* transparansi */
   display: flex;
   justify-content: center;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  align-items: center;
+  z-index: 9999;         /* pastikan di atas semua konten */
 }
 
 .transaction-card {
-  background: #fff;
-  border-radius: 12px;
+  background-color: #fff;
   padding: 20px;
+  border-radius: 12px;
   max-width: 600px;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  position: relative;
 }
 
 .transaction-title {
@@ -82,11 +91,11 @@
   color: #0d47a1;
 }
 
-/* Buttons */
 .action-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 20px;
 }
 
 .btn {
@@ -120,6 +129,55 @@
   cursor: pointer;
   margin-left: 6px;
 }
+
+
+/* Overlay hitam transparan */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* transparan */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* pastikan di atas elemen lain */
+}
+
+/* Card utama modal */
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Animasi masuk */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  background: none;
+  border: none;
+}
+
 
 /* --- RESPONSIVE --- */
 
