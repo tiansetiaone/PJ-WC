@@ -200,12 +200,6 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
                   <td>
                     <div className="action-buttons">
                       <button
-                        className="action-btn upload-btn"
-                        onClick={() => onUploadNumbers(c.id)}
-                      >
-                        📤
-                      </button>
-                      <button
                         className="action-btn delete-btn"
                         onClick={() => handleDeleteCampaign(c.id)}
                       >

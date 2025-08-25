@@ -28,12 +28,14 @@ import TopUpCredit from "./pages/user/TopUpCredit";
 import TopUpCredit2 from "./pages/user/TopUpCredit2";
 import TopUpCredit3 from "./pages/user/TopUpCredit3";
 import DepositManagement from "./pages/admin/DepositManagement";
-
+import ReferralDashboard from "./pages/user/ReferralDashboard";
 
 import AdminRoute from "./components/Auth/AdminRoute";
 import PrivateRoute from "./components/Auth/PrivateRoute";
 import AccountChecking from "./components/Auth/AccountChecking";
 import VerifyUser from "./pages/admin/VerifyUser";
+import ReferralSettings from "./pages/admin/ReferralSettings";
+
 
 const App = () => {
   return (
@@ -166,6 +168,17 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/referral"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <ReferralDashboard />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
       <Route path="/account-checking" element={<AccountChecking />} />
 
       {/* Admin Routes */}
@@ -254,6 +267,17 @@ const AppRoutes = () => {
           <AdminRoute>
             <MainLayout admin>
               <DepositManagement />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+      
+      <Route
+        path="/admin/referral/list"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <ReferralSettings />
             </MainLayout>
           </AdminRoute>
         }

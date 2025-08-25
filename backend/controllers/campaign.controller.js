@@ -9,9 +9,11 @@ const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TEXT_TYPES = ["text/plain"];
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
+// CREATE CAMPAIGN
 exports.createCampaign = async (req, res) => {
-  const { campaign_name, campaign_date, message, campaign_type, image_url } = req.body;
-  const user_id = req.user.id;
+  const { campaign_name, campaign_date, message, campaign_type } = req.body;
+  const user_id = req.user?.id || 1; // fallback sementara kalau belum ada auth
+  let image_url = null;
 
   try {
     // Validate required fields
@@ -30,12 +32,17 @@ exports.createCampaign = async (req, res) => {
       });
     }
 
-    // Insert campaign (image_url can be null for WhatsApp)
+    // Cek kalau ada file gambar
+    if (req.file) {
+      image_url = `/uploads/${req.file.filename}`;
+    }
+
+    // Insert campaign
     const [result] = await db.query(
       `INSERT INTO campaigns 
        (user_id, campaign_name, campaign_date, message, image_url, campaign_type, status, created_at) 
        VALUES (?, ?, ?, ?, ?, ?, 'on_process', NOW())`,
-      [user_id, campaign_name, campaign_date, message, image_url || null, campaign_type]
+      [user_id, campaign_name, campaign_date, message, image_url, campaign_type]
     );
 
     res.status(201).json({
@@ -51,6 +58,43 @@ exports.createCampaign = async (req, res) => {
     });
   }
 };
+
+// UPLOAD NUMBERS TXT
+exports.uploadNumbers = async (req, res) => {
+  try {
+    const { id } = req.params; // campaign_id
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const filePath = path.join(req.file.destination, req.file.filename);
+    const content = fs.readFileSync(filePath, "utf8");
+
+    // parse numbers (split by newline / space / comma)
+    const numbers = content
+      .split(/[\n, ]+/)
+      .map((n) => n.trim())
+      .filter((n) => n.length > 0);
+
+    // Insert ke campaign_numbers
+    for (let phone of numbers) {
+      await db.query(
+        "INSERT INTO campaign_numbers (campaign_id, phone_number, status) VALUES (?, ?, ?)",
+        [id, phone, "success"]
+      );
+    }
+
+    return res.json({ success: true, inserted: numbers.length });
+  } catch (err) {
+    console.error("Upload numbers error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to upload numbers",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
+  }
+};
+
 
 exports.getUserCampaigns = async (req, res) => {
   try {

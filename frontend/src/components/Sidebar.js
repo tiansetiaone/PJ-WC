@@ -70,7 +70,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
     { path: "/user-management", label: "User Management", icon: "👥" },
     { path: "/campaign", label: "Campaign Management", icon: "📢" },
     { path: "/admin/deposits/list", label: "Deposit Management", icon: "💳" },
-    { path: "/referral-settings", label: "Referral Settings", icon: "⚙️" },
+    { path: "/admin/referral/list", label: "Referral Settings", icon: "⚙️" },
     { path: "/admin/notifications", label: "Notification Management", icon: "🔔" },
     { path: "/support", label: "Ticket Support", icon: "🎧" },
   ];

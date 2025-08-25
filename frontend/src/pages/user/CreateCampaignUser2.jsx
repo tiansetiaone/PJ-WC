@@ -3,29 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { fetchApi } from "../../utils/api";
 import "../../style/user/CreateCampaignUsers2.css";
 
-export default function CreateCampaignUser({ onClose }) {
+export default function CreateCampaignSMS() {
   const [formData, setFormData] = useState({
     campaign_name: "",
     campaign_date: "",
     message: "",
     campaign_type: "sms",
-    image_url: null,
-    numbers_file: null,
+    numbersFile: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [previewImage, setPreviewImage] = useState(null);
 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "image_url" && files && files[0]) {
-      const file = files[0];
-      setPreviewImage(URL.createObjectURL(file));
-      setFormData((prev) => ({ ...prev, [name]: file }));
-    } else if (name === "numbers_file" && files && files[0]) {
-      setFormData((prev) => ({ ...prev, numbers_file: files[0] }));
+    if (name === "numbersFile" && files && files[0]) {
+      setFormData((prev) => ({ ...prev, numbersFile: files[0] }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -43,21 +37,23 @@ export default function CreateCampaignUser({ onClose }) {
       formPayload.append("message", formData.message);
       formPayload.append("campaign_type", formData.campaign_type);
 
-      if (formData.image_url) {
-        formPayload.append("image_url", formData.image_url);
-      }
-      if (formData.numbers_file) {
-        formPayload.append("numbers_file", formData.numbers_file);
-      }
-
       const data = await fetchApi("/campaigns", {
         method: "POST",
         body: formPayload,
       });
 
+      if (data.success && formData.numbersFile) {
+        const numbersPayload = new FormData();
+        numbersPayload.append("numbersFile", formData.numbersFile);
+
+        await fetchApi(`/campaigns/${data.campaign_id}/numbers`, {
+          method: "POST",
+          body: numbersPayload,
+        });
+      }
+
       if (data.success) {
-        onClose();
-        navigate(`/campaigns/${data.campaign_id}/upload`);
+        navigate("/campaign");
       } else {
         throw new Error(data.message || "Failed to create campaign");
       }
@@ -73,7 +69,7 @@ export default function CreateCampaignUser({ onClose }) {
       {/* Form Section */}
       <div className="campaign-form">
         <h2>Create Campaign</h2>
-        <h3>WhatsApp Campaign Form</h3>
+        <h3>SMS Campaign Form</h3>
 
         {error && <p className="error-text">{error}</p>}
 
@@ -107,15 +103,16 @@ export default function CreateCampaignUser({ onClose }) {
           />
 
           <label>
-            Campaign Number <span>*</span>
+            Campaign Numbers File <span>*</span>
           </label>
           <input
             type="file"
-            name="numbers_file"
+            name="numbersFile"
             accept=".txt"
             onChange={handleChange}
+            required
           />
-          <small>Import only TXT file, max. 1 MB</small>
+          <small>TXT max. 1 MB</small>
 
           <label>
             Message <span>*</span>
@@ -137,18 +134,15 @@ export default function CreateCampaignUser({ onClose }) {
 
       {/* Preview Section */}
       <div className="campaign-preview">
-        <div className="phone-frame">
-          {previewImage ? (
-            <img src={previewImage} alt="Preview" />
-          ) : (
-            <img
-              src="https://via.placeholder.com/200x400"
-              alt="WhatsApp Preview"
-            />
-          )}
-          <div className="preview-message">
+        <div className="phone-frame sms-preview">
+          <img
+            src="/mockups/iphone-mockup.png" // <- ganti sesuai lokasi file mockup png yang kamu upload
+            alt="SMS Preview"
+            className="phone-mockup"
+          />
+          <div className="sms-bubble">
             <p className="title">{formData.campaign_name || "Campaign Name"}</p>
-            <p>{formData.message || "Your message will appear here"}</p>
+            <p>{formData.message || "Your SMS message will appear here"}</p>
           </div>
         </div>
       </div>

@@ -573,3 +573,43 @@ exports.getGlobalReferralStats = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// referral.controller.js
+exports.getConvertedHistory = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT 
+         id,
+         amount,
+         converted_at 
+       FROM commissions
+       WHERE user_id = ? AND converted = 1
+       ORDER BY converted_at DESC`,
+      [req.user.id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// referral.controller.js
+
+// Admin: Get all referral roles (for settings history)
+exports.getAllReferralRoles = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden: Admin access required" });
+  }
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM referral_roles ORDER BY updated_at DESC, created_at DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -486,7 +486,7 @@ curl -X POST "http://localhost:5000/api/referrals/convert" \
 
 ####Get Balance
 curl -X GET "http://localhost:5000/api/referrals/balance" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDA5MzA2LCJleHAiOjE3NTU0MTI5MDZ9.69z5u6LDWnmeerpqNyiz0JenlJwVH5HEJKPYw9HGizA" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MTQwNDQ1LCJleHAiOjE3NTYxNDQwNDV9.lklhg5CR3zED758ScjpsJH3_xboZSfgzRWm-L_6CiTc" \
 -H "Content-Type: application/json"
 
 
@@ -494,7 +494,7 @@ curl -X GET "http://localhost:5000/api/referrals/balance" \
 
 ####Admin Endpoints:Get All Referrals
 curl -X GET "http://localhost:5000/api/referrals/all" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwOTQwMywiZXhwIjoxNzU1NDEzMDAzfQ.7vNBYhvM5j7_vqpokFZc3c6_ehrMdMJH4p56ghfPG1k" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MTQwNDQ1LCJleHAiOjE3NTYxNDQwNDV9.lklhg5CR3zED758ScjpsJH3_xboZSfgzRWm-L_6CiTc" \
 -H "Content-Type: application/json"
 
 ####Get Commission Statistics
@@ -530,7 +530,7 @@ curl -X GET "http://localhost:5000/api/referrals/admin/roles" \
 
 ####
 curl -X GET "http://localhost:5000/api/referrals/admin/roles" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxMDc0MywiZXhwIjoxNzU1NDE0MzQzfQ.2Rx3vJCoTo93F7sMfRZny3hoht4IuGy5XpSm9xJ7yQ4" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjE0MTI5NCwiZXhwIjoxNzU2MTQ0ODk0fQ._mznc2_KiYQ3v4cUDs9Enap6fAFPv8vpnT3aYuY-0wo" \
 -H "Content-Type: application/json"
 
 ####Get Specific Referral Role

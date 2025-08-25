@@ -49,3 +49,19 @@ export const fetchApi = async (endpoint, options = {}) => {
 
   return response.json();
 };
+
+
+
+// utils/api.js (lanjutan)
+
+// === Referral APIs (Admin) ===
+export const getAllReferrals = () => fetchApi("/referrals/all");
+export const getReferralRoles = () => fetchApi("/referrals/admin/roles");
+export const createReferralRole = (data) =>
+  fetchApi("/referrals/admin/roles", { method: "POST", body: data });
+export const updateReferralRole = (id, data) =>
+  fetchApi(`/referrals/admin/roles/${id}`, { method: "PUT", body: data });
+export const deleteReferralRole = (id) =>
+  fetchApi(`/referrals/admin/roles/${id}`, { method: "DELETE" });
+export const setDefaultRole = (id) =>
+  fetchApi(`/referrals/admin/roles/${id}/set-default`, { method: "POST" });

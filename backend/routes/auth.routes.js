@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById} = require("../controllers/auth.controller");
+const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById, getProfileWithConversionRules} = require("../controllers/auth.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
 // Hanya aktif di development
@@ -13,6 +13,8 @@ router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/google", googleAuth);
+
+router.get('/conversion-rules', authMiddleware, getProfileWithConversionRules);
 
 router.get(
   "/admin/verify-user/:id",

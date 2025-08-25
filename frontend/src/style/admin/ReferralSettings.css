@@ -1,9 +1,11 @@
+/* --- Container --- */
 .referral-container {
   padding: 20px;
   font-family: Arial, sans-serif;
   color: #222;
 }
 
+/* --- Header --- */
 .referral-header {
   display: flex;
   justify-content: space-between;
@@ -32,21 +34,51 @@
   background: #09337a;
 }
 
-/* Card */
+/* --- Card --- */
 .referral-card {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.card-title {
-  font-size: 16px;
-  font-weight: bold;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
+.card-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* --- Filters --- */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.filters input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.filters select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* --- Empty State --- */
 .empty-state {
   text-align: center;
   padding: 30px 10px;
@@ -72,10 +104,107 @@
   margin: 0 auto;
 }
 
+/* --- Table --- */
+.referral-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.referral-table th {
+  background: #0d47a1;
+  color: #fff;
+  padding: 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.referral-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+/* --- Pagination --- */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+}
+
+.pagination div button {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  margin: 0 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pagination div button.active {
+  background: #0d47a1;
+  color: #fff;
+  border: none;
+}
+
+.pagination div span {
+  margin: 0 4px;
+  color: #999;
+}
+
+/* Overlay modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* Konten modal */
+.modal-content-refmanage {
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Animasi */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95);}
+  to { opacity: 1; transform: scale(1);}
+}
+
+
 /* --- RESPONSIVE --- */
 
 /* Tablet */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filters input,
+  .filters select {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .referral-container {
+    padding: 12px;
+  }
+
   .referral-header {
     flex-direction: column;
     align-items: flex-start;
@@ -86,20 +215,17 @@
     width: 100%;
     text-align: center;
   }
-}
 
-/* Mobile */
-@media (max-width: 480px) {
-  .referral-container {
-    padding: 12px;
+  .referral-table th,
+  .referral-table td {
+    font-size: 12px;
+    padding: 8px;
   }
 
-  .referral-header h2 {
-    font-size: 18px;
-  }
-
-  .card-title {
-    font-size: 14px;
+  .pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
   .empty-title {

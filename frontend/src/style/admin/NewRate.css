@@ -1,140 +1,135 @@
-/* Container utama */
+/* --- Container --- */
 .newrate-container {
-  max-width: 420px;
-  margin: 20px auto;
-  padding: 20px;
-  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  width: 420px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   font-family: Arial, sans-serif;
 }
 
-/* Judul */
+/* --- Title/Header --- */
 .newrate-title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-/* Box Last Rate */
-.last-rate-box {
-  background: #f8fafd;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-.last-rate-label {
-  font-size: 14px;
-  color: #444;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e5e5;
   margin: 0;
 }
-.last-rate-value {
-  font-size: 22px;
-  font-weight: bold;
-  color: #007aff;
-  margin-top: 4px;
+
+/* --- Last Rate Box --- */
+.last-rate-box {
+  background: #f7f9fc;
+  border-radius: 8px;
+  margin: 20px;
+  padding: 16px;
 }
 
-/* Input */
-.input-group {
-  margin-bottom: 20px;
+.last-rate-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
 }
+
+.last-rate-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #0d47a1;
+}
+
+/* --- Input Group --- */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 20px 20px;
+}
+
 .input-label {
   font-size: 14px;
   font-weight: 500;
-  color: #222;
-  display: block;
-  margin-bottom: 8px;
+  color: #e53935; /* merah sesuai tanda required */
 }
+
 .input-wrapper {
   display: flex;
   align-items: center;
   border: 1px solid #ccc;
+  border-radius: 8px;
   padding: 6px 10px;
-  border-radius: 6px;
+  background: #fff;
 }
+
 .currency-symbol {
-  margin-right: 6px;
-  font-weight: bold;
-  color: #555;
+  font-size: 14px;
+  color: #444;
+  margin-right: 4px;
 }
+
 .input-wrapper input {
   border: none;
   outline: none;
   flex: 1;
-  font-size: 15px;
-}
-.input-hint {
-  font-size: 12px;
-  color: #666;
-  margin-top: 6px;
+  font-size: 14px;
+  padding: 6px 4px;
 }
 
-/* Button group */
+.input-hint {
+  font-size: 12px;
+  color: #777;
+}
+
+/* --- Button Group --- */
 .button-group {
   display: flex;
   justify-content: space-between;
-  margin-top: 30px;
+  padding: 14px 20px;
+  border-top: 1px solid #e5e5e5;
+  background: #fafafa;
 }
-.btn-back,
+
+.btn-back {
+  flex: 1;
+  margin-right: 10px;
+  padding: 10px 0;
+  border-radius: 20px;
+  border: 1px solid #0d47a1;
+  background: #fff;
+  color: #0d47a1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-back:hover {
+  background: #e3f2fd;
+}
+
 .btn-save {
-  padding: 10px 24px;
-  font-size: 15px;
+  flex: 1;
+  margin-left: 10px;
+  padding: 10px 0;
   border-radius: 20px;
   border: none;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
+  transition: 0.2s;
 }
-.btn-back {
-  background: #f4f7ff;
-  color: #007aff;
+
+.btn-save:disabled {
+  background: #e0e0e0;
+  color: #9e9e9e;
+  cursor: not-allowed;
 }
-.btn-save {
-  background: #ccc;
+
+.btn-save:not(:disabled) {
+  background: #0d47a1;
   color: #fff;
-  transition: background 0.3s;
-}
-.btn-save:enabled {
-  background: #007aff;
-  cursor: pointer;
 }
 
-/* ===================== Responsive ===================== */
-
-/* Tablet */
-@media (max-width: 768px) {
-  .newrate-container {
-    max-width: 90%;
-    padding: 16px;
-  }
-  .newrate-title {
-    font-size: 18px;
-  }
-  .last-rate-value {
-    font-size: 20px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .newrate-container {
-    max-width: 95%;
-    padding: 14px;
-  }
-  .newrate-title {
-    font-size: 16px;
-  }
-  .last-rate-value {
-    font-size: 18px;
-  }
-  .btn-back,
-  .btn-save {
-    flex: 1;
-    margin: 0 5px;
-    padding: 10px 0;
-    font-size: 14px;
-  }
-  .button-group {
-    gap: 10px;
-  }
+.btn-save:not(:disabled):hover {
+  background: #09337a;
 }

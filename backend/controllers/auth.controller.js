@@ -919,3 +919,29 @@ exports.getUserById = async (req, res) => {
     });
   }
 };
+
+
+exports.getProfileWithConversionRules = async (req, res) => {
+  try {
+    const [user] = await db.query(
+      'SELECT id, name, email, role FROM users WHERE id = ?', 
+      [req.user.id] // req.user.id diisi dari middleware auth
+    );
+
+    if (!user.length) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let min_conversion = 10; // default
+    if (user[0].role === "vip") min_conversion = 5;
+    if (user[0].role === "admin") min_conversion = 0;
+
+    res.json({
+      ...user[0],
+      min_conversion
+    });
+  } catch (err) {
+    console.error("Error fetching user profile with rules", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
