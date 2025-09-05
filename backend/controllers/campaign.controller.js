@@ -10,9 +10,10 @@ const ALLOWED_TEXT_TYPES = ["text/plain"];
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
 // CREATE CAMPAIGN
+// CREATE CAMPAIGN dengan pengecekan saldo
 exports.createCampaign = async (req, res) => {
   const { campaign_name, campaign_date, message, campaign_type } = req.body;
-  const user_id = req.user?.id || 1; // fallback sementara kalau belum ada auth
+  const user_id = req.user?.id;
   let image_url = null;
 
   try {
@@ -29,6 +30,19 @@ exports.createCampaign = async (req, res) => {
       return res.status(400).json({
         error: "Invalid campaign type",
         allowed: ["whatsapp", "sms"],
+      });
+    }
+
+    // CEK SALDO USER sebelum membuat campaign
+    const [userBalance] = await db.query(
+      `SELECT balance FROM users WHERE id = ?`,
+      [user_id]
+    );
+
+    if (!userBalance.length || parseFloat(userBalance[0].balance) <= 0) {
+      return res.status(400).json({
+        error: "Insufficient balance",
+        message: "You don't have enough credit to create a campaign. Please top up first.",
       });
     }
 
@@ -393,20 +407,30 @@ exports.getAllCampaigns = async (req, res) => {
 // Admin - Get Campaign Details
 exports.getCampaignDetails = async (req, res) => {
   const { campaignId } = req.params;
+  const userId = req.user.id;
+  const userRole = req.user.role;
 
   try {
-    const [campaign] = await db.query(
-      `SELECT 
+    let query = `
+      SELECT 
         c.*, 
         u.name as creator_name,
         u.email as creator_email,
         (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id) as total_numbers,
         (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id AND status = 'success') as success_count
-       FROM campaigns c
-       JOIN users u ON c.user_id = u.id
-       WHERE c.id = ?`,
-      [campaignId]
-    );
+      FROM campaigns c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = ?`;
+    
+    let params = [campaignId];
+
+    if (userRole !== "admin") {
+      // kalau user biasa, batasi hanya campaign miliknya
+      query += " AND c.user_id = ?";
+      params.push(userId);
+    }
+
+    const [campaign] = await db.query(query, params);
 
     if (!campaign.length) {
       return res.status(404).json({ error: "Campaign not found" });
@@ -427,7 +451,7 @@ exports.getCampaignDetails = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("Admin get campaign details error:", err);
+    console.error("getCampaignDetails error:", err);
     res.status(500).json({ 
       error: "Failed to fetch campaign details",
       details: process.env.NODE_ENV === 'development' ? err.message : null
@@ -689,3 +713,5 @@ exports.getAdminCampaignMonthlyStats = async (req, res) => {
     });
   }
 };
+
+

@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchApi } from "../utils/api";
 import '../style/Dashboard.css';
 import AdminDashboard from '../components/Admin/AdminDashboard';
+import SelectCampaign from "../pages/user/SelectCampaign";
 
 // Komponen DashboardCredit
 const DashboardCredit = () => {
   const [credit, setCredit] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCredit = async () => {
@@ -38,7 +41,7 @@ const DashboardCredit = () => {
           ? `Your current balance is ${credit}`
           : "You don't have any balance, top up now."}
       </p>
-      <button className="btn-primary">+ Top Up Credit</button>
+      <button className="btn-primary" onClick={() => navigate("/deposits/topup")}>+ Top Up Credit</button>
     </div>
   );
 };
@@ -99,6 +102,9 @@ const UserDashboard = () => {
   const [failedCount, setFailedCount] = useState(0);
   const [onProcessCount, setOnProcessCount] = useState(0);
   const [loadingCampaign, setLoadingCampaign] = useState(true);
+  const navigate = useNavigate();
+   const [showSelectModal, setShowSelectModal] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState(null);
 
   useEffect(() => {
     const fetchCampaignStats = async () => {
@@ -154,13 +160,44 @@ const UserDashboard = () => {
               <span>On Process</span>
             </div>
           </div>
-          <button className="btn-link">View Campaign →</button>
+      <button 
+      className="btn-link" 
+      onClick={() => navigate("/campaign")}>
+      View Campaign →
+    </button>
         </div>
       </div>
 
       {/* What's New Section */}
       <WhatsNew />
-       <button className="btn-primary">+ Create Campaign</button>
+       <button className="btn-primary" onClick={() => setShowSelectModal(true)}>+ Create Campaign</button>
+
+       {showSelectModal && (
+         <div
+           className="sc-overlay"
+           onClick={(e) => {
+             if (e.target === e.currentTarget) {
+               setShowSelectModal(false); // ⬅️ close modal kalau klik di luar
+             }
+           }}
+         >
+           <div className="sc-modal">
+             <SelectCampaign
+               onBack={() => setShowSelectModal(false)}
+               onNext={() => {
+                 if (selectedChannel === "whatsapp") {
+                   navigate("/campaigns/createwa");
+                 } else if (selectedChannel === "sms") {
+                   navigate("/campaigns/createsms");
+                 }
+                 setShowSelectModal(false);
+               }}
+               onSelectChannel={(ch) => setSelectedChannel(ch)}
+               selected={selectedChannel}
+             />
+           </div>
+         </div>
+       )}
     </div>
   );
 };

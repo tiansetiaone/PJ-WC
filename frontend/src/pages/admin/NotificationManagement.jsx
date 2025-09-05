@@ -20,6 +20,10 @@ export default function NotificationManagement() {
     recipient_id: null,
   });
 
+  // ✅ State untuk filter dan search
+  const [searchText, setSearchText] = useState("");
+  const [timeFilter, setTimeFilter] = useState("");
+
   const handleCreateNotification = () => {
     navigate("/admin/create/notifications");
   };
@@ -80,7 +84,12 @@ export default function NotificationManagement() {
     const fetchData = async () => {
       try {
         const data = await getAllNotifications();
-        setNotifications(data);
+        // Tambahkan rawDate untuk filtering
+        const notificationsWithRawDate = data.map(notif => ({
+          ...notif,
+          rawDate: new Date(notif.created_at)
+        }));
+        setNotifications(notificationsWithRawDate);
       } catch (error) {
         console.error("Failed to fetch notifications:", error.message);
       } finally {
@@ -90,6 +99,35 @@ export default function NotificationManagement() {
 
     fetchData();
   }, [navigate]);
+
+  // ✅ Filter notifications berdasarkan search dan time filter
+  const filteredNotifications = notifications.filter(notif => {
+    // Search filter
+    const matchesSearch = searchText === "" || 
+      notif.title.toLowerCase().includes(searchText.toLowerCase()) ||
+      notif.content.toLowerCase().includes(searchText.toLowerCase());
+    
+    // Time filter
+    const now = new Date();
+    let matchesTimeFilter = true;
+    
+    if (timeFilter === "Today") {
+      matchesTimeFilter = 
+        notif.rawDate.getUTCDate() === now.getUTCDate() &&
+        notif.rawDate.getUTCMonth() === now.getUTCMonth() &&
+        notif.rawDate.getUTCFullYear() === now.getUTCFullYear();
+    } else if (timeFilter === "This Week") {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      matchesTimeFilter = notif.rawDate >= oneWeekAgo;
+    } else if (timeFilter === "This Month") {
+      matchesTimeFilter = 
+        notif.rawDate.getUTCMonth() === now.getUTCMonth() && 
+        notif.rawDate.getUTCFullYear() === now.getUTCFullYear();
+    }
+    
+    return matchesSearch && matchesTimeFilter;
+  });
 
   if (loading) {
     return <p className="loading">Loading notifications...</p>;
@@ -122,71 +160,98 @@ export default function NotificationManagement() {
       ) : (
         <div className="notification-table">
           <div className="table-header">
-            <input type="text" placeholder="Search by title or message..." />
-            <select>
-              <option>Month</option>
-              <option>Today</option>
-              <option>This Week</option>
-              <option>This Month</option>
+            <input 
+              type="text" 
+              placeholder="Search by title or message..." 
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <select
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+            >
+              <option value="">All Time</option>
+              <option value="Today">Today</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
             </select>
           </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Title</th>
-                <th>Message</th>
-                <th>Publish Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {notifications.map((notif, index) => (
-                <tr key={notif.id} className="row-clickable">
-                  <td>{index + 1}</td>
-                  <td onClick={() => setSelectedNotification(notif)}>
-                    {notif.title}
-                  </td>
-                  <td onClick={() => setSelectedNotification(notif)}>
-                    {notif.content}
-                  </td>
-                  <td onClick={() => setSelectedNotification(notif)}>
-                    {new Date(notif.created_at).toLocaleString()}
-                  </td>
-                  <td className="actions">
-                    <button
-                      className="btn-edit"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(notif);
-                      }}
-                    >
-                      ✏️ Update
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(notif.id);
-                      }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="pagination">
-            <p>{notifications.length} of {notifications.length} data</p>
-            <div>
-              <button>{"<"}</button>
-              <button className="active">1</button>
-              <button>{">"}</button>
+          {filteredNotifications.length === 0 ? (
+            <div className="empty-state">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                alt="empty"
+              />
+              <h3 className="empty-title">
+                {searchText || timeFilter ? "No matching results" : "No Notifications Yet"}
+              </h3>
+              <p className="empty-subtitle">
+                {searchText || timeFilter 
+                  ? "Try adjusting your search or filter criteria" 
+                  : "There are no notifications recorded yet."}
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              <table>
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Title</th>
+                    <th>Message</th>
+                    <th>Publish Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNotifications.map((notif, index) => (
+                    <tr key={notif.id} className="row-clickable">
+                      <td>{index + 1}</td>
+                      <td onClick={() => setSelectedNotification(notif)}>
+                        {notif.title}
+                      </td>
+                      <td onClick={() => setSelectedNotification(notif)}>
+                        {notif.content}
+                      </td>
+                      <td onClick={() => setSelectedNotification(notif)}>
+                        {new Date(notif.created_at).toLocaleString()}
+                      </td>
+                      <td className="actions">
+                        <button
+                          className="btn-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(notif);
+                          }}
+                        >
+                          ✏️ Update
+                        </button>
+                        <button
+                          className="btn-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(notif.id);
+                          }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="pagination">
+                <p>{filteredNotifications.length} of {notifications.length} data</p>
+                <div>
+                  <button>{"<"}</button>
+                  <button className="active">1</button>
+                  <button>{">"}</button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

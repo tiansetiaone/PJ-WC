@@ -1,5 +1,5 @@
 /* Container */
-.deposit-container {
+.deposit-container-deposit {
   padding: 20px;
   font-family: Arial, sans-serif;
   color: #1e1e1e;
@@ -34,7 +34,7 @@
 }
 
 /* Card */
-.deposit-card {
+.deposit-card-deposit {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -42,7 +42,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.deposit-card h3 {
+.deposit-card-deposit h3 {
   font-weight: bold;
   margin-bottom: 20px;
 }
@@ -372,6 +372,94 @@ th, td {
   background: #a71d2a; /* merah lebih gelap */
 }
 
+/* Items per page selector */
+.items-per-page-selector {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+}
+
+/* Pagination Container */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Pagination Buttons */
+.pagination-btn {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #007bff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(.disabled):not(.active):not(.ellipsis) {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.pagination-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #6c757d;
+}
+
+/* Page Number Buttons */
+.pagination-number {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.pagination-number.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.pagination-number.ellipsis {
+  background: transparent;
+  border: none;
+  cursor: default;
+  color: #6c757d;
+  min-width: auto;
+  width: auto;
+}
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -419,6 +507,27 @@ th, td {
   .payment-section, .amount-section {
     font-size: 13px;
   }
+   .pagination-container {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .pagination-controls {
+    justify-content: center;
+  }
+  
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 35px;
+    height: 35px;
+  }
+  
+  .pagination-number {
+    width: 35px;
+    height: 35px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -446,4 +555,57 @@ th, td {
     width: 100%;
     text-align: center;
   }
+  .pagination-controls {
+    gap: 4px;
+  }
+  
+  .pagination-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 30px;
+    height: 30px;
+  }
+  
+  .pagination-number {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .pagination-info {
+    font-size: 12px;
+  }
+}
+
+/* Animation for active page */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.pagination-number.active {
+  animation: pulse 0.3s ease;
+}
+
+/* Hover effect for page numbers */
+.pagination-number:not(.active):not(.ellipsis):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Search filter adjustments */
+.search-filter {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.search-filter input,
+.search-filter select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
 }

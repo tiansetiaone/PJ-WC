@@ -4,32 +4,33 @@ const auth = require('../middlewares/auth.middleware');
 const profileController = require('../controllers/profile.controller');
 const upload = require('../middlewares/upload.middleware');
 
-// Enhanced form-data handler
+// profile.route.js - Alternatif solusi sederhana
 const handleProfileUpload = (req, res, next) => {
+  // Process the file upload first
   upload.single('profile_image')(req, res, (err) => {
     if (err) {
-      let errorMessage = 'File upload failed';
-      let errorCode = 'UPLOAD_ERROR';
-      
       if (err.code === 'LIMIT_FILE_SIZE') {
-        errorMessage = 'File size exceeds 5MB limit';
-        errorCode = 'FILE_TOO_LARGE';
-      } else if (err.message.includes('Unexpected field')) {
-        errorMessage = 'Invalid file field name';
-        errorCode = 'INVALID_FILE_FIELD';
+        return res.status(400).json({
+          success: false,
+          error: 'File size exceeds 5MB limit',
+          code: 'FILE_TOO_LARGE'
+        });
+      } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        // No file uploaded, continue
+        return next();
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: 'File upload failed',
+          code: 'UPLOAD_ERROR'
+        });
       }
-
-      return res.status(400).json({
-        success: false,
-        error: errorMessage,
-        code: errorCode
-      });
     }
     
-    // Parse text fields from form-data
-    if (req.body) {
-      req.body.name = req.body.name || null;
-      req.body.username = req.body.username || null;
+    // Manually parse form fields from multipart form data
+    if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
+      // Fields are already parsed by multer and available in req.body
+      console.log('Parsed form fields:', req.body);
     }
     
     next();
@@ -47,6 +48,11 @@ router.delete('/', auth, profileController.deactivateAccount);
 router.delete('/:id', auth, auth.adminOnly, profileController.deactivateAccount);
 
 router.get('/stats/users', auth, auth.adminOnly, profileController.getUserStats);
+
+
+// profile.route.js - Tambahkan route untuk change password
+// Tambahkan route untuk perubahan password
+router.post('/change-password', auth, profileController.changePassword);
 
 
 module.exports = router;

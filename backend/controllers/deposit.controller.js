@@ -28,6 +28,7 @@ const upload = multer({
 
 
 // Generate deposit address based on network
+// Generate deposit address based on network
 exports.generateDepositAddress = async (req, res) => {
   const { network, amount } = req.body;
 
@@ -42,16 +43,19 @@ exports.generateDepositAddress = async (req, res) => {
       return res.status(400).json({ error: "Minimum deposit is 10 USDT" });
     }
 
+    // Calculate credit (1 USDT = 100 credit)
+    const credit = parseFloat(amount) * 100;
+
     // Generate address
     const address = generateDepositAddress(network);
     const memo = `UID${req.user.id}`;
 
-    // Create pending deposit record
+    // Create pending deposit record - TAMBAHKAN credit
     const [result] = await db.query(
       `INSERT INTO deposits 
-       (user_id, amount, network, destination_address, memo, status)
-       VALUES (?, ?, ?, ?, ?, 'pending')`,
-      [req.user.id, amount, network, address, memo]
+       (user_id, amount, network, destination_address, memo, status, credit)
+       VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+      [req.user.id, amount, network, address, memo, credit]
     );
 
     res.json({
@@ -61,6 +65,7 @@ exports.generateDepositAddress = async (req, res) => {
       memo,
       note: "Please send exact amount to this address",
       expires_in: 3600, // 1 hour expiration
+      credit: credit // Kirim juga ke frontend
     });
   } catch (err) {
     console.error("Generate address error:", err);
@@ -186,16 +191,39 @@ exports.checkDepositStatus = async (req, res) => {
   try {
     const [deposit] = await db.query(
       `SELECT 
-        id, amount, network, status, 
-        tx_hash, created_at, updated_at,
+        d.id, 
+        d.amount,
+        d.credit, 
+        d.network, 
+        d.status, 
+        d.tx_hash, 
+        d.created_at, 
+        d.updated_at,
+        d.destination_address,
+        d.memo,
+        d.transfer_evidence,
+        d.credit,
+        d.proof_file,
+        d.admin_notes,
+        u.usdt_network as user_usdt_network,
+        u.usdt_address as user_usdt_address,
+        u.name as user_name,
+        u.email as user_email,
         CASE 
-          WHEN network = 'TRC20' THEN CONCAT('https://tronscan.org/#/transaction/', tx_hash)
-          WHEN network = 'ERC20' THEN CONCAT('https://etherscan.io/tx/', tx_hash)
-          WHEN network = 'BEP20' THEN CONCAT('https://bscscan.com/tx/', tx_hash)
+          WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/transaction/', d.tx_hash)
+          WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/tx/', d.tx_hash)
+          WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/tx/', d.tx_hash)
           ELSE NULL
-        END as tx_link
-       FROM deposits 
-       WHERE id = ? AND user_id = ?`,
+        END as tx_link,
+        CASE 
+          WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/address/', d.destination_address)
+          WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/address/', d.destination_address)
+          WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/address/', d.destination_address)
+          ELSE NULL
+        END as address_link
+       FROM deposits d
+       LEFT JOIN users u ON d.user_id = u.id
+       WHERE d.id = ? AND d.user_id = ?`,
       [deposit_id, userId]
     );
 
@@ -206,10 +234,39 @@ exports.checkDepositStatus = async (req, res) => {
       });
     }
 
+    const depositData = deposit[0];
+    
+    // Format response data
+    const responseData = {
+      deposit: {
+        id: depositData.id,
+        amount: depositData.amount,
+        network: depositData.network,
+        status: depositData.status,
+        tx_hash: depositData.tx_hash,
+        destination_address: depositData.destination_address,
+        memo: depositData.memo,
+        transfer_evidence: depositData.transfer_evidence,
+        credit: depositData.credit,
+        proof_file: depositData.proof_file,
+        admin_notes: depositData.admin_notes,
+        created_at: depositData.created_at,
+        updated_at: depositData.updated_at,
+        tx_link: depositData.tx_link,
+        address_link: depositData.address_link
+      },
+      user: {
+        usdt_network: depositData.user_usdt_network,
+        usdt_address: depositData.user_usdt_address,
+        name: depositData.user_name,
+        email: depositData.user_email
+      },
+      status_description: getStatusDisplay(depositData.status)
+    };
+
     res.json({
       success: true,
-      data: deposit[0],
-      status_description: getStatusDisplay(deposit[0].status),
+      data: responseData
     });
   } catch (err) {
     console.error("Check deposit status error:", err);
@@ -445,16 +502,19 @@ exports.initiateDeposit = async (req, res) => {
       });
     }
 
+    // Calculate credit (1 USDT = 100 credit)
+    const credit = parseFloat(amount) * 100;
+
     // Generate deposit address and memo
     const address = generateDepositAddress(network);
     const memo = `UID${req.user.id}`;
 
-    // Create deposit record
+    // Create deposit record - TAMBAHKAN credit
     const [result] = await db.query(
       `INSERT INTO deposits 
-       (user_id, amount, network, destination_address, memo, status)
-       VALUES (?, ?, ?, ?, ?, 'pending')`,
-      [req.user.id, amount, network, address, memo]
+       (user_id, amount, network, destination_address, memo, status, credit)
+       VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+      [req.user.id, amount, network, address, memo, credit]
     );
 
     res.json({
@@ -464,6 +524,7 @@ exports.initiateDeposit = async (req, res) => {
       memo,
       amount,
       network,
+      credit: credit, // Kirim juga ke frontend
       note: "Please send exact amount to this address",
       expires_in: 3600, // 1 hour expiration
     });
@@ -718,7 +779,8 @@ exports.checkDepositStatus = async (req, res) => {
     const [deposit] = await db.query(
       `SELECT 
         d.id, 
-        d.amount, 
+        d.amount,
+        d.credit,
         d.network, 
         d.status, 
         d.tx_hash, 
@@ -726,39 +788,111 @@ exports.checkDepositStatus = async (req, res) => {
         d.updated_at,
         d.destination_address as recipient_wallet,
         d.memo as your_wallet,
+        d.proof_file,
+        d.credit,
         d.transfer_evidence,
-        d.credit, -- kalau ada kolom credit
+        d.admin_notes,
+        u.usdt_network as user_usdt_network,
+        u.usdt_address as user_usdt_address,
+        u.name as user_name,
+        u.email as user_email,
+        u.whatsapp_number as user_whatsapp,
         CASE 
           WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/transaction/', d.tx_hash)
           WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/tx/', d.tx_hash)
           WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/tx/', d.tx_hash)
           ELSE NULL
-        END as tx_link
+        END as tx_link,
+        CASE 
+          WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/address/', d.destination_address)
+          WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/address/', d.destination_address)
+          WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/address/', d.destination_address)
+          ELSE NULL
+        END as address_link,
+        CASE 
+          WHEN d.network = 'TRC20' THEN CONCAT('https://tronscan.org/#/address/', u.usdt_address)
+          WHEN d.network = 'ERC20' THEN CONCAT('https://etherscan.io/address/', u.usdt_address)
+          WHEN d.network = 'BEP20' THEN CONCAT('https://bscscan.com/address/', u.usdt_address)
+          ELSE NULL
+        END as user_address_link
        FROM deposits d
+       LEFT JOIN users u ON d.user_id = u.id
        WHERE d.id = ? AND d.user_id = ?`,
       [deposit_id, userId]
     );
 
     if (!deposit.length) {
       return res.status(404).json({
+        success: false,
         error: "Deposit not found",
         code: "DEPOSIT_NOT_FOUND",
       });
     }
 
+    const depositData = deposit[0];
+    
+    // Format response data dengan struktur yang kompatibel untuk frontend
+    const responseData = {
+      deposit: {
+        id: depositData.id,
+        amount: depositData.amount,
+        network: depositData.network,
+        status: depositData.status,
+        tx_hash: depositData.tx_hash,
+        recipient_wallet: depositData.recipient_wallet,
+        your_wallet: depositData.your_wallet,
+        proof_file: depositData.proof_file,
+        credit: depositData.credit,
+        transfer_evidence: depositData.transfer_evidence,
+        admin_notes: depositData.admin_notes,
+        created_at: depositData.created_at,
+        updated_at: depositData.updated_at,
+        tx_link: depositData.tx_link,
+        address_link: depositData.address_link,
+        // Tambahkan field user di dalam deposit untuk kompatibilitas frontend
+        user: {
+          usdt_address: depositData.recipient_wallet // Menggunakan recipient_wallet untuk usdt_address
+        }
+      },
+      user: {
+        usdt_network: depositData.user_usdt_network,
+        usdt_address: depositData.user_usdt_address,
+        user_address_link: depositData.user_address_link,
+        name: depositData.user_name,
+        email: depositData.user_email,
+        whatsapp_number: depositData.user_whatsapp
+      },
+      status_description: getStatusDescription(depositData.status)
+    };
+
     res.json({
       success: true,
-      data: deposit[0],
-      status_description: getStatusDisplay(deposit[0].status),
+      data: responseData
     });
   } catch (err) {
     console.error("Check deposit status error:", err);
     res.status(500).json({
+      success: false,
       error: "Failed to check deposit status",
       details: process.env.NODE_ENV === "development" ? err.message : null,
     });
   }
 };
+
+// Helper function untuk status description
+function getStatusDescription(status) {
+  const statusMap = {
+    'pending': 'Menunggu konfirmasi',
+    'processing': 'Sedang diproses',
+    'completed': 'Berhasil',
+    'rejected': 'Ditolak',
+    'failed': 'Gagal',
+    'waiting_payment': 'Menunggu pembayaran'
+  };
+  
+  return statusMap[status] || 'Unknown status';
+}
+
 
 // Get all deposit amounts (active only)
 exports.getDepositAmounts = async (req, res) => {
@@ -841,5 +975,249 @@ exports.getConvertedHistory = async (req, res) => {
   } catch (err) {
     console.error("Get converted commissions error:", err);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+// Get user USDT info
+exports.getUserUSDTInfo = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [user] = await db.query(
+      `SELECT 
+        usdt_network, 
+        usdt_address,
+        name,
+        email
+      FROM users 
+      WHERE id = ?`,
+      [userId]
+    );
+
+    if (!user.length) {
+      return res.status(404).json({
+        error: "User not found",
+        code: "USER_NOT_FOUND"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        usdt_network: user[0].usdt_network,
+        usdt_address: user[0].usdt_address,
+        name: user[0].name,
+        email: user[0].email
+      }
+    });
+  } catch (err) {
+    console.error("Get user USDT info error:", err);
+    res.status(500).json({
+      error: "Failed to get user USDT information",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+
+// Di auth.controller.js atau user.controller.js
+exports.updateUserUSDT = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { usdt_network, usdt_address } = req.body;
+
+    // Validasi input
+    if (!usdt_network || !usdt_address) {
+      return res.status(400).json({
+        error: "USDT network and address are required",
+        code: "MISSING_FIELDS"
+      });
+    }
+
+    // Validasi network
+    const allowedNetworks = ["TRC20", "ERC20", "BEP20"];
+    if (!allowedNetworks.includes(usdt_network)) {
+      return res.status(400).json({
+        error: "Invalid USDT network",
+        code: "INVALID_NETWORK",
+        allowed: allowedNetworks
+      });
+    }
+
+    // Update user USDT information
+    await db.query(
+      `UPDATE users 
+       SET usdt_network = ?, usdt_address = ?, updated_at = NOW() 
+       WHERE id = ?`,
+      [usdt_network, usdt_address, userId]
+    );
+
+    res.json({
+      success: true,
+      message: "USDT information updated successfully",
+      data: {
+        usdt_network,
+        usdt_address
+      }
+    });
+  } catch (err) {
+    console.error("Update USDT error:", err);
+    res.status(500).json({
+      error: "Failed to update USDT information",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+// Get admin wallets
+exports.getAdminWallets = async (req, res) => {
+  try {
+    const [wallets] = await db.query(
+      "SELECT * FROM admin_wallets ORDER BY network, is_default DESC, created_at DESC"
+    );
+    
+    res.json({
+      success: true,
+      data: wallets
+    });
+  } catch (err) {
+    console.error("Get admin wallets error:", err);
+    res.status(500).json({
+      error: "Failed to get admin wallets",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Set default wallet
+exports.setDefaultWallet = async (req, res) => {
+  try {
+    const { network, wallet_id } = req.body;
+    
+    // Validasi input
+    if (!network || !wallet_id) {
+      return res.status(400).json({
+        error: "Network and wallet_id are required",
+        code: "MISSING_FIELDS"
+      });
+    }
+    
+    // Mulai transaction
+    await db.query("START TRANSACTION");
+    
+    // Reset semua default wallets untuk network ini
+    await db.query(
+      "UPDATE admin_wallets SET is_default = 0 WHERE network = ?",
+      [network]
+    );
+    
+    // Set wallet yang dipilih sebagai default
+    const [result] = await db.query(
+      "UPDATE admin_wallets SET is_default = 1 WHERE id = ? AND network = ?",
+      [wallet_id, network]
+    );
+    
+    if (result.affectedRows === 0) {
+      await db.query("ROLLBACK");
+      return res.status(404).json({
+        error: "Wallet not found or network mismatch",
+        code: "WALLET_NOT_FOUND"
+      });
+    }
+    
+    await db.query("COMMIT");
+    
+    res.json({
+      success: true,
+      message: "Default wallet updated successfully"
+    });
+  } catch (err) {
+    await db.query("ROLLBACK");
+    console.error("Set default wallet error:", err);
+    res.status(500).json({
+      error: "Failed to set default wallet",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Add admin wallet
+exports.addAdminWallet = async (req, res) => {
+  try {
+    const { network, address } = req.body;
+    
+    // Validasi input
+    if (!network || !address) {
+      return res.status(400).json({
+        error: "Network and address are required",
+        code: "MISSING_FIELDS"
+      });
+    }
+    
+    // Validasi network
+    const allowedNetworks = ["TRC20", "ERC20", "BEP20"];
+    if (!allowedNetworks.includes(network)) {
+      return res.status(400).json({
+        error: "Invalid network",
+        code: "INVALID_NETWORK",
+        allowed: allowedNetworks
+      });
+    }
+    
+    // Insert wallet baru
+    const [result] = await db.query(
+      "INSERT INTO admin_wallets (network, address) VALUES (?, ?)",
+      [network, address]
+    );
+    
+    res.json({
+      success: true,
+      message: "Wallet added successfully",
+      data: {
+        id: result.insertId,
+        network,
+        address
+      }
+    });
+  } catch (err) {
+    console.error("Add admin wallet error:", err);
+    res.status(500).json({
+      error: "Failed to add wallet",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Delete admin wallet
+exports.deleteAdminWallet = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [result] = await db.query(
+      "DELETE FROM admin_wallets WHERE id = ?",
+      [id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        error: "Wallet not found",
+        code: "WALLET_NOT_FOUND"
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: "Wallet deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete admin wallet error:", err);
+    res.status(500).json({
+      error: "Failed to delete wallet",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
   }
 };

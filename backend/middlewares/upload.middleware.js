@@ -1,11 +1,13 @@
+// upload.middleware.js - Sesuaikan dengan struktur existing
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure upload directory exists
-const uploadDir = 'public/uploads/profiles/';
+// Gunakan path yang sesuai dengan static serving yang sudah ada
+const uploadDir = path.join(__dirname, '..', 'uploads', 'profiles');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('Created upload directory:', uploadDir);
 }
 
 const storage = multer.diskStorage({
@@ -14,7 +16,10 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `profile-${req.user.id}-${Date.now()}${ext}`);
+    const filename = `profile-${req.user.id}-${Date.now()}${ext}`;
+    console.log('Saving file to:', uploadDir);
+    console.log('Filename:', filename);
+    cb(null, filename);
   }
 });
 

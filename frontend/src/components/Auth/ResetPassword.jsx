@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import '../../style/Auth/ResetPassword.css';
+import withDeviceRestriction from '../../hocs/withDeviceRestriction';
+import logoImages from "../../assets/logo-blasterc.png";
+import logoImageCheckEmail from "../../assets/verification-sent.png";
 
 const ResetPassword = () => {
   const { token } = useParams(); // Mengambil token dari URL parameter
@@ -90,14 +93,17 @@ const ResetPassword = () => {
     <div className="reset-container">
       {/* Left Side */}
       <div className="reset-left">
-        <h1 className="brand">BLASTERC</h1>
-        <p className="subtitle">Let's Grow Your Business with Us</p>
+        <div className="branding-reset">
+          <img src={logoImages} alt="BLASTERC" className="logo-img" />
+          <p className="tagline">Let's Grow Your Business with Us</p>
+        </div>
       </div>
 
       {/* Right Side */}
       <div className="reset-right">
         {success ? (
           <div className="success-message">
+            <img src={logoImageCheckEmail} alt="Email Sent" className="checkemail-image" />
             <h2>Password Updated Successfully!</h2>
             <p>Your password has been successfully updated.</p>
             <p>You will be redirected to login page shortly...</p>
@@ -113,7 +119,8 @@ const ResetPassword = () => {
 
             <form onSubmit={handleSubmit} className="reset-form">
               {/* New Password Field */}
-              <div className="input-group">
+              <label htmlFor="newpassword">New Password</label>
+              <div className="input-group-reset">
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter new password (min 8 characters)"
@@ -127,12 +134,12 @@ const ResetPassword = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   title={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? '🙈' : '👁'}
+                  {showPassword ? '👁' : '👁'}
                 </span>
               </div>
-
+<label htmlFor="newpass">New Password Confirmation</label>
               {/* Confirm Password Field */}
-              <div className="input-group">
+              <div className="input-group-reset">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm new password"
@@ -146,7 +153,7 @@ const ResetPassword = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   title={showConfirmPassword ? "Hide password" : "Show password"}
                 >
-                  {showConfirmPassword ? '🙈' : '👁'}
+                  {showConfirmPassword ? '👁' : '👁'}
                 </span>
               </div>
 
@@ -190,4 +197,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default withDeviceRestriction(ResetPassword);

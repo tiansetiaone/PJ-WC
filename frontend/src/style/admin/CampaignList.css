@@ -104,7 +104,7 @@
   gap: 8px;
 }
 
-.action-btn {
+.action-btn-campaignlist {
   background: none;
   border: none;
   cursor: pointer;
@@ -117,29 +117,35 @@
   padding: 6px 10px;
   border-radius: 6px;
 }
-.action-btn:hover {
+.action-btn-campaignlist:hover {
   background-color: #0052cc;
   color: white;
 }
 
-.approve-btn{
-  color: #16a34a;
+.approve-btn-campaignlist{
+      color: #16a34a;
 }
 
-.approve-btn:hover{
+.approve-btn-campaignlist:hover{
   color:white;
   background-color: #16a34a;
 }
 
-.delete-btn {
-color: #ef4444;
+.delete-btn-campaignlist {
+    /* padding: 6px 12px; */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    /* font-size: 14px; */
+    transition: 0.3s;
+    color: #dc2626;
 }
-.delete-btn:hover {
+.delete-btn-campaignlist:hover {
   background-color: #dc2626;
   color: white;
 }
 
-.action-btn:disabled {
+.action-btn-campaignlist:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -218,7 +224,7 @@ color: #ef4444;
     gap: 4px;
   }
 
-  .action-btn {
+  .action-btn-campaignlist {
     padding: 4px 6px;
     font-size: 12px;
   }

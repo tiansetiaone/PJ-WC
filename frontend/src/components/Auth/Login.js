@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom'; 
 import GoogleButton from '../GoogleButton';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { useAuth } from '../../context/AuthContext';
 import '../../style/Login.css';
 import logoImage from "../../assets/logo-blasterc.png";
+import withDeviceRestriction from '../../hocs/withDeviceRestriction';
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -13,6 +15,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false); // 👁️ state toggle
   const hCaptchaRef = useRef(null);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -21,7 +24,6 @@ const Login = () => {
   const handleChange = e => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    // Clear error when user types
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -78,7 +80,7 @@ const Login = () => {
     return isValid;
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -107,7 +109,6 @@ const handleSubmit = async (e) => {
           sessionStorage.setItem('user', JSON.stringify(data.user));
         }
 
-        // ⬇️ cek query param redirect
         const params = new URLSearchParams(location.search);
         const redirect = params.get("redirect");
 
@@ -136,13 +137,12 @@ const handleSubmit = async (e) => {
     }
   };
 
-  // Disable button jika form tidak valid atau loading
   const isSubmitDisabled = isLoading || !hCaptchaToken || !form.email || !form.password || form.password.length < 6;
 
   return (
     <div className="login-container">
       <div className="login-left">
-        <div className="branding">
+        <div className="branding-login">
           <img src={logoImage} alt="BLASTERC" className="logo-img" />
           <p className="tagline">Let's Grow Your Business with Us</p>
         </div>
@@ -181,20 +181,29 @@ const handleSubmit = async (e) => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="Type your password..."
-                value={form.password}
-                onChange={handleChange}
-                required
-                minLength="6"
-                className={formErrors.password ? 'input-error' : ''}
-              />
-              {formErrors.password && <span className="error-text">{formErrors.password}</span>}
-            </div>
+  <label htmlFor="password">Password</label>
+  <div className="password-wrapper">
+    <input
+      type={showPassword ? "text" : "password"}
+      id="password"
+      name="password"
+      placeholder="Type your password..."
+      value={form.password}
+      onChange={handleChange}
+      required
+      minLength="6"
+      className={formErrors.password ? "input-error" : ""}
+    />
+    <span
+      className="password-toggle"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </span>
+  </div>
+  {formErrors.password && <span className="error-text">{formErrors.password}</span>}
+</div>
+
 
             <div className="form-options">
               <label className="checkbox-container">
@@ -244,4 +253,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default Login;
+export default withDeviceRestriction(Login);

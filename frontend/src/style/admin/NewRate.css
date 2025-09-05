@@ -9,6 +9,7 @@
   flex-direction: column;
   overflow: hidden;
   font-family: Arial, sans-serif;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 /* --- Title/Header --- */
@@ -18,6 +19,7 @@
   padding: 16px 20px;
   border-bottom: 1px solid #e5e5e5;
   margin: 0;
+  color: #0d47a1;
 }
 
 /* --- Last Rate Box --- */
@@ -61,6 +63,11 @@
   border-radius: 8px;
   padding: 6px 10px;
   background: #fff;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within {
+  border-color: #0d47a1;
 }
 
 .currency-symbol {
@@ -69,12 +76,21 @@
   margin-right: 4px;
 }
 
-.input-wrapper input {
+.input-wrapper input,
+.input-group select {
   border: none;
   outline: none;
   flex: 1;
   font-size: 14px;
   padding: 6px 4px;
+  background: transparent;
+}
+
+.input-group select {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
 }
 
 .input-hint {
@@ -89,47 +105,46 @@
   padding: 14px 20px;
   border-top: 1px solid #e5e5e5;
   background: #fafafa;
+  align-items: center;
+}
+
+.btn-back,
+.btn-save-newrate {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-back {
-  flex: 1;
   margin-right: 10px;
-  padding: 10px 0;
-  border-radius: 20px;
   border: 1px solid #0d47a1;
   background: #fff;
   color: #0d47a1;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
 }
 
 .btn-back:hover {
   background: #e3f2fd;
 }
 
-.btn-save {
-  flex: 1;
+.btn-save-newrate {
   margin-left: 10px;
-  padding: 10px 0;
-  border-radius: 20px;
   border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
 }
 
-.btn-save:disabled {
+.btn-save-newrate:disabled {
   background: #e0e0e0;
   color: #9e9e9e;
   cursor: not-allowed;
 }
 
-.btn-save:not(:disabled) {
+.btn-save-newrate:not(:disabled) {
   background: #0d47a1;
   color: #fff;
 }
 
-.btn-save:not(:disabled):hover {
+.btn-save-newrate:not(:disabled):hover {
   background: #09337a;
 }

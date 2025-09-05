@@ -54,15 +54,10 @@ const Notification = ({ notifications, loading, refreshNotifications }) => {
 
       <div className="notification-list">
         {notifications.map((notif) => (
-          <div
-            key={notif.id}
-            className={`notification-item ${notif.is_read ? "" : "highlight"}`}
-          >
+          <div key={notif.id} className={`notification-item ${notif.is_read ? "" : "highlight"}`}>
             <h3 className="notification-title">{notif.title}</h3>
             <p className="notification-message">{notif.content}</p>
-            <span className="notification-time">
-              {new Date(notif.created_at).toLocaleString()}
-            </span>
+            <span className="notification-time">{new Date(notif.created_at).toLocaleString()}</span>
           </div>
         ))}
       </div>

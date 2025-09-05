@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById, getProfileWithConversionRules} = require("../controllers/auth.controller");
+const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById, getProfileWithConversionRules, getAllUsers, deleteUser,adminResetPassword, getUserBalance} = require("../controllers/auth.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
 // Hanya aktif di development
@@ -35,5 +35,31 @@ router.post(
 router.get('/admin/users/:id', getUserById);
 
 router.get('/account-status', checkAccountStatus);
+
+// ambil semua users
+router.get(
+  "/admin/users",
+  authMiddleware,
+  authMiddleware.adminOnly,
+  getAllUsers
+);
+
+router.delete("/admin/users/:id",
+  authMiddleware,
+  authMiddleware.adminOnly,
+  deleteUser
+);
+
+
+router.post(
+  "/admin/reset-password",
+  authMiddleware,
+  authMiddleware.adminOnly,
+  adminResetPassword
+);
+
+router.get('/balance', authMiddleware, getUserBalance);
+
+
 
 module.exports = router;

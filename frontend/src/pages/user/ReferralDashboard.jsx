@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { fetchApi } from "../../utils/api";
 import "../../style/user/ReferralDashboard.css";
 import ConvertEarnings from "./ConvertEarnings";
+import logoImageCheckEmail from "../../assets/verification-sent.png";
 
 export default function ReferralDashboard() {
   const [referralLink, setReferralLink] = useState("");
@@ -46,13 +47,10 @@ export default function ReferralDashboard() {
 
   return (
     <div className="referral-dashboard">
-      <main className="main-content">
-        <header className="header">
+      <main className="main-content-referral">
+        <header className="header-referral">
           <h1>Referral</h1>
-          <button
-            className="btn-primary"
-            onClick={() => setShowConvertModal(true)}
-          >
+          <button className="btn-primary" onClick={() => setShowConvertModal(true)}>
             Convert Earnings
           </button>
         </header>
@@ -61,24 +59,15 @@ export default function ReferralDashboard() {
         <section className="top-section">
           <div className="card earn-card">
             <h2>Earn with Blasterc</h2>
-            <p>
-              Invite your friends to Blasterc dashboard, if they sign up, you
-              will get commission to be converted to USDT.
-            </p>
+            <p>Invite your friends to Blasterc dashboard, if they sign up, you will get commission to be converted to USDT.</p>
             <div className="steps">
               <div>
                 <strong>Send Invitation</strong>
-                <p>
-                  Send your referral link to friends and let them know how useful
-                  Blasterc is!
-                </p>
+                <p>Send your referral link to friends and let them know how useful Blasterc is!</p>
               </div>
               <div>
                 <strong>Registration</strong>
-                <p>
-                  Let your friends sign up to our services using your personal
-                  referral code!
-                </p>
+                <p>Let your friends sign up to our services using your personal referral code!</p>
               </div>
               <div>
                 <strong>Use Blasterc Hourly</strong>
@@ -89,10 +78,7 @@ export default function ReferralDashboard() {
 
           <div className="card share-card">
             <h2>Share The Referral Link!</h2>
-            <p>
-              Invite your friends to Blasterc dashboard, if they sign up, you
-              will get commission to be converted to USDT.
-            </p>
+            <p>Invite your friends to Blasterc dashboard, if they sign up, you will get commission to be converted to USDT.</p>
             <div className="share-icons">
               <button className="icon-btn">🟢</button>
               <button className="icon-btn">❌</button>
@@ -158,9 +144,7 @@ export default function ReferralDashboard() {
                       <td>{idx + 1}</td>
                       <td>{user.full_name}</td>
                       <td>{user.email}</td>
-                      <td>
-                        {new Date(user.registered_date).toLocaleDateString()}
-                      </td>
+                      <td>{new Date(user.registered_date).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -168,12 +152,9 @@ export default function ReferralDashboard() {
             </>
           ) : (
             <div className="empty-box">
-              <img src="https://via.placeholder.com/150" alt="empty" />
+              <img src={logoImageCheckEmail} alt="Email Sent" className="checkemail-image" />
               <p>No Registered Users Yet</p>
-              <span>
-                There are no users registered to your account at the moment.
-                Please invite or register users to start managing them here.
-              </span>
+              <span>There are no users registered to your account at the moment. Please invite or register users to start managing them here.</span>
             </div>
           )}
         </section>
@@ -205,31 +186,31 @@ export default function ReferralDashboard() {
             </>
           ) : (
             <div className="empty-box">
-              <img src="https://via.placeholder.com/150" alt="empty" />
+             <img src={logoImageCheckEmail} alt="Email Sent" className="checkemail-image" />
               <p>No Convert History Yet</p>
-              <span>
-                You haven’t made any earnings conversions yet. Once you convert
-                your earnings, the history will appear here.
-              </span>
+              <span>You haven’t made any earnings conversions yet. Once you convert your earnings, the history will appear here.</span>
             </div>
           )}
         </section>
       </main>
 
       {/* 🔥 Modal Convert Earnings */}
-      {showConvertModal && (
-        <div className="modal-overlay">
-          <div className="modal-content-referral">
-            <ConvertEarnings />
-            <button
-              className="modal-close"
-              onClick={() => setShowConvertModal(false)}
-            >
-              ✖
-            </button>
-          </div>
-        </div>
-      )}
+{showConvertModal && (
+  <div className="modal-overlay">
+    <div className="modal-content-referral">
+      <ConvertEarnings
+        onClose={() => setShowConvertModal(false)}
+        onSuccess={() => window.location.reload()}
+      />
+      <button
+        className="modal-close"
+        onClick={() => setShowConvertModal(false)}
+      >
+        ✖
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }

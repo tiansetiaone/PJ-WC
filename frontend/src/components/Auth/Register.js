@@ -7,6 +7,8 @@ import HCaptcha from '@hcaptcha/react-hcaptcha';
 import logoImage from "../../assets/logo-blasterc.png";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Eye, EyeOff } from "lucide-react";
+
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -19,10 +21,12 @@ const Register = () => {
         usdt_network: 'TRC20',
         usdt_address: ''
     });
-    const [formErrors, setFormErrors] = useState({});
+  const [formErrors, setFormErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [hCaptchaToken, setHCaptchaToken] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const hCaptchaRef = useRef(null);
     const navigate = useNavigate();
 
@@ -197,182 +201,214 @@ const Register = () => {
         Object.keys(formErrors).length > 0;
 
     return (
-        <div className="register-wrapper">
-            <ToastContainer
-                position="top-center"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-            />
-            
-            <div className="register-left">
-                <div className="branding">
-                   <img src={logoImage} alt="BLASTERC" className="logo-img" />
-                    <p className="tagline">Let's Grow Your Business with Us</p>
+        <>
+            {/* Mobile Restriction Overlay */}
+            <div className="mobile-restriction">
+                <div className="mobile-restriction-content">
+                    <div className="mobile-restriction-icon">📱❌</div>
+                    <h2>System Not Available on Mobile</h2>
+                    <p>This system is not yet supported on mobile devices. Please access this application using a desktop or PC computer.</p>
+                    <p>We apologize for any inconvenience.</p>
                 </div>
             </div>
 
-            <div className="register-right">
-                <div className="register-form">
-                    <h2>Create Your Account Today</h2>
-                    <p className="subtitle">
-                        Join us and experience the convenience of managing WhatsApp and SMS broadcasts in a single, integrated platform.
-                    </p>
-
-                    <div className="google-login">
-                        <GoogleButton />
-                        <div className="separator">
-                            <div className='border1'></div>
-                            <span>or</span>
-                            <div className='border1'></div>
-                        </div>
+            {/* Main Register Content */}
+            <div className="register-wrapper">
+                <ToastContainer
+                    position="top-center"
+                    autoClose={5000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                />
+                
+                <div className="register-left">
+                    <div className="branding">
+                       <img src={logoImage} alt="BLASTERC" className="logo-img" />
+                        <p className="tagline">Let's Grow Your Business with Us</p>
                     </div>
+                </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <div className="form-group">
-                            <input 
-                                type="text" 
-                                name="name" 
-                                placeholder="Full Name" 
-                                value={formData.name} 
-                                onChange={handleChange}
-                                className={formErrors.name ? 'input-error' : ''}
-                            />
-                            {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+                <div className="register-right">
+                    <div className="register-form">
+                        <h2>Create Your Account Today</h2>
+                        <p className="subtitle">
+                            Join us and experience the convenience of managing WhatsApp and SMS broadcasts in a single, integrated platform.
+                        </p>
+
+                        <div className="google-login">
+                            <GoogleButton />
+                            <div className="separator">
+                                <div className='border1'></div>
+                                <span>or</span>
+                                <div className='border1'></div>
+                            </div>
                         </div>
 
-                        <div className="form-group">
-                            <input 
-                                type="text" 
-                                name="username" 
-                                placeholder="Username" 
-                                value={formData.username} 
-                                onChange={handleChange}
-                                className={formErrors.username ? 'input-error' : ''}
-                            />
-                            {formErrors.username && <span className="error-text">{formErrors.username}</span>}
-                        </div>
-
-                        <div className="form-group">
-                            <input 
-                                type="text" 
-                                name="whatsapp_number" 
-                                placeholder="WhatsApp Number (Optional)" 
-                                value={formData.whatsapp_number} 
-                                onChange={handleChange}
-                                className={formErrors.whatsapp_number ? 'input-error' : ''}
-                            />
-                            {formErrors.whatsapp_number && <span className="error-text">{formErrors.whatsapp_number}</span>}
-                        </div>
-                        
-                        <div className="form-group">
-                            <div className="usdt-input-group">
-                                <select 
-                                    name="usdt_network" 
-                                    value={formData.usdt_network} 
-                                    onChange={handleChange}
-                                    className={`usdt-network-select ${formErrors.usdt_address ? 'input-error' : ''}`}
-                                >
-                                    <option value="TRC20">TRC20</option>
-                                    <option value="BEP20">BEP20</option>
-                                    <option value="ERC20">ERC20</option>
-                                </select>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group-register">
                                 <input 
                                     type="text" 
-                                    name="usdt_address" 
-                                    placeholder={`USDT ${formData.usdt_network} Wallet Address (Optional)`} 
-                                    value={formData.usdt_address} 
-                                    onChange={handleChange} 
-                                    className={`usdt-address-input ${formErrors.usdt_address ? 'input-error' : ''}`}
+                                    name="name" 
+                                    placeholder="Full Name" 
+                                    value={formData.name} 
+                                    onChange={handleChange}
+                                    className={formErrors.name ? 'input-error' : ''}
+                                />
+                                {formErrors.name && <span className="error-text">{formErrors.name}</span>}
+                            </div>
+
+                            <div className="form-group-register">
+                                <input 
+                                    type="text" 
+                                    name="username" 
+                                    placeholder="Username" 
+                                    value={formData.username} 
+                                    onChange={handleChange}
+                                    className={formErrors.username ? 'input-error' : ''}
+                                />
+                                {formErrors.username && <span className="error-text">{formErrors.username}</span>}
+                            </div>
+
+                            <div className="form-group-register">
+                                <input 
+                                    type="text" 
+                                    name="whatsapp_number" 
+                                    placeholder="WhatsApp Number (Optional)" 
+                                    value={formData.whatsapp_number} 
+                                    onChange={handleChange}
+                                    className={formErrors.whatsapp_number ? 'input-error' : ''}
+                                />
+                                {formErrors.whatsapp_number && <span className="error-text">{formErrors.whatsapp_number}</span>}
+                            </div>
+                            
+                            <div className="form-group-register-register">
+                                <div className="usdt-input-group">
+                                    <select 
+                                        name="usdt_network" 
+                                        value={formData.usdt_network} 
+                                        onChange={handleChange}
+                                        className={`usdt-network-select ${formErrors.usdt_address ? 'input-error' : ''}`}
+                                    >
+                                        <option value="TRC20">TRC20</option>
+                                        <option value="BEP20">BEP20</option>
+                                        <option value="ERC20">ERC20</option>
+                                    </select>
+                                    <input 
+                                        type="text" 
+                                        name="usdt_address" 
+                                        placeholder={`USDT ${formData.usdt_network} Wallet Address (Optional)`} 
+                                        value={formData.usdt_address} 
+                                        onChange={handleChange} 
+                                        className={`usdt-address-input ${formErrors.usdt_address ? 'input-error' : ''}`}
+                                    />
+                                </div>
+                                {formErrors.usdt_address && <span className="error-text">{formErrors.usdt_address}</span>}
+                            </div>
+
+                            <div className="form-group-register">
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    placeholder="Email" 
+                                    value={formData.email} 
+                                    onChange={handleChange}
+                                    className={formErrors.email ? 'input-error' : ''}
+                                />
+                                {formErrors.email && <span className="error-text">{formErrors.email}</span>}
+                            </div>
+
+                            {/* Password */}
+<div className="form-group-register">
+  <div className="password-wrapper">
+    <input
+      type={showPassword ? "text" : "password"}
+      name="password"
+      placeholder="Password (min 8 characters)"
+      value={formData.password}
+      onChange={handleChange}
+      className={formErrors.password ? 'input-error' : ''}
+    />
+    <span
+      className="password-toggle"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </span>
+  </div>
+  {formErrors.password && <span className="error-text">{formErrors.password}</span>}
+</div>
+
+{/* Confirm Password */}
+<div className="form-group-register">
+  <div className="password-wrapper">
+    <input
+      type={showConfirmPassword ? "text" : "password"}
+      name="password_confirmation"
+      placeholder="Confirm Password"
+      value={formData.password_confirmation}
+      onChange={handleChange}
+      className={formErrors.password_confirmation ? 'input-error' : ''}
+    />
+    <span
+      className="password-toggle"
+      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+    >
+      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+    </span>
+  </div>
+  {formErrors.password_confirmation && (
+    <span className="error-text">{formErrors.password_confirmation}</span>
+  )}
+</div>
+
+
+                            <div className="checkbox-group">
+                                <input 
+                                    type="checkbox" 
+                                    id="acceptTerms"
+                                    checked={acceptTerms}
+                                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                                />
+                                <label htmlFor="acceptTerms">
+                                    I have read and agree to the <a href="/terms" target="_blank">Terms and Conditions</a> of Service.
+                                </label>
+                            </div>
+
+                            <div className="hcaptcha-container">
+                                <HCaptcha
+                                    sitekey={process.env.REACT_APP_HCAPTCHA_SITE_KEY}
+                                    onVerify={handleHCaptchaVerify}
+                                    onExpire={handleHCaptchaExpire}
+                                    onError={handleHCaptchaError}
+                                    ref={hCaptchaRef}
                                 />
                             </div>
-                            {formErrors.usdt_address && <span className="error-text">{formErrors.usdt_address}</span>}
-                        </div>
 
-                        <div className="form-group">
-                            <input 
-                                type="email" 
-                                name="email" 
-                                placeholder="Email" 
-                                value={formData.email} 
-                                onChange={handleChange}
-                                className={formErrors.email ? 'input-error' : ''}
-                            />
-                            {formErrors.email && <span className="error-text">{formErrors.email}</span>}
-                        </div>
+                            <button 
+                                type="submit" 
+                                disabled={isSubmitDisabled} 
+                                className={`submit-btn-register ${isSubmitDisabled ? 'button-disabled' : ''}`}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <span className="spinner"></span> Registering...
+                                    </>
+                                ) : 'Register Now'}
+                            </button>
+                        </form>
 
-<div className="form-group">
-                    <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Password (min 8 characters)" 
-                        value={formData.password} 
-                        onChange={handleChange}
-                        className={formErrors.password ? 'input-error' : ''}
-                    />
-                    {formErrors.password && <span className="error-text">{formErrors.password}</span>}
-                </div>
-
-                <div className="form-group">
-                    <input 
-                        type="password" 
-                        name="password_confirmation" 
-                        placeholder="Confirm Password" 
-                        value={formData.password_confirmation} 
-                        onChange={handleChange}
-                        className={formErrors.password_confirmation ? 'input-error' : ''}
-                    />
-                    {formErrors.password_confirmation && (
-                        <span className="error-text">{formErrors.password_confirmation}</span>
-                    )}
-                </div>
-
-                        <div className="checkbox-group">
-                            <input 
-                                type="checkbox" 
-                                id="acceptTerms"
-                                checked={acceptTerms}
-                                onChange={(e) => setAcceptTerms(e.target.checked)}
-                            />
-                            <label htmlFor="acceptTerms">
-                                I have read and agree to the <a href="/terms" target="_blank">Terms and Conditions</a> of Service.
-                            </label>
-                        </div>
-
-                        <div className="hcaptcha-container">
-                            <HCaptcha
-                                sitekey={process.env.REACT_APP_HCAPTCHA_SITE_KEY}
-                                onVerify={handleHCaptchaVerify}
-                                onExpire={handleHCaptchaExpire}
-                                onError={handleHCaptchaError}
-                                ref={hCaptchaRef}
-                            />
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            disabled={isSubmitDisabled} 
-                            className={`submit-btn ${isSubmitDisabled ? 'button-disabled' : ''}`}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <span className="spinner"></span> Registering...
-                                </>
-                            ) : 'Register Now'}
-                        </button>
-                    </form>
-
-                    <p className="login-link">
-                        Already have an account? <a href="/login">Log in now.</a>
-                    </p>
+                        <p className="login-link">
+                            Already have an account? <a href="/login">Log in now.</a>
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -52,6 +52,8 @@ export const fetchApi = async (endpoint, options = {}) => {
 
 
 
+
+
 // utils/api.js (lanjutan)
 
 // === Referral APIs (Admin) ===
@@ -65,3 +67,108 @@ export const deleteReferralRole = (id) =>
   fetchApi(`/referrals/admin/roles/${id}`, { method: "DELETE" });
 export const setDefaultRole = (id) =>
   fetchApi(`/referrals/admin/roles/${id}/set-default`, { method: "POST" });
+
+// === Profile APIs ===
+export const getProfile = () => fetchApi("/profile");
+
+// Fungsi updateProfile yang diperbaiki
+export const updateProfile = (data) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const headers = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Jika data adalah FormData, biarkan browser yang mengatur Content-Type
+  if (!(data instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  return fetchApi("/profile", {
+    method: "PUT",
+    headers,
+    body: data
+  });
+};
+
+// Fungsi untuk mengubah password
+export const changePassword = (data) => 
+  fetchApi("/profile/change-password", { 
+    method: "POST", 
+    body: data 
+  });
+
+
+// Fungsi untuk mengirim tiket dukungan
+export const createTicket = (data) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const headers = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Pastikan Content-Type adalah application/json jika body bukan FormData
+  if (!(data instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  return fetchApi("/support/tickets", {  // Ganti /tickets dengan /tickets/public untuk public access
+    method: "POST",
+    headers,
+    body: data,
+  });
+};
+
+
+// Fungsi untuk mengirim email
+export const sendEmailResponse = async (ticketId, responseContent) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  const body = JSON.stringify({
+    ticketId,
+    response: responseContent,
+    via: 'email', // Tambahkan metode pengiriman
+    action: 'reply' // Tindakan yang diambil
+  });
+
+  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/respond`, {
+    method: 'POST',
+    headers,
+    body,
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to send email response');
+  }
+
+  return res.json();
+};
+
+// Fungsi untuk mengirim balasan via Telegram
+export const sendTelegramResponse = async (ticketId, phoneNumber, responseContent) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  const body = JSON.stringify({
+    ticketId,
+    phoneNumber,
+    response: responseContent,
+    via: 'telegram', // Metode pengiriman
+    action: 'reply' // Tindakan yang diambil
+  });
+
+  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/respond`, {
+    method: 'POST',
+    headers,
+    body,
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to send Telegram response');
+  }
+
+  return res.json();
+};

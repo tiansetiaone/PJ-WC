@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchApi } from '../../utils/api'; // Import your API utility
+import { fetchApi } from '../../utils/api';
 import '../../style/admin/VerifyUser.css';
 
 const VerifyUser = () => {
@@ -52,18 +52,21 @@ const VerifyUser = () => {
         payload.reason = blockReason;
       }
 
-const response = await fetchApi('/auth/admin/verify-user', {
-  method: 'POST',
-  body: JSON.stringify(payload), // ✅ stringify
-  headers: { 'Content-Type': 'application/json' }
-});
-
+      const response = await fetchApi('/auth/admin/verify-user', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+      });
 
       navigate('/admin/dashboard', {
         state: {
           notification: {
             type: 'success',
-            message: `User ${action === 'approve' ? 'approved' : 'blocked'} successfully`,
+            message: action === 'approve' 
+              ? 'User approved successfully' 
+              : action === 'block' 
+              ? 'User blocked successfully' 
+              : 'User registration marked as failed',
             autoClose: 3000
           }
         }
@@ -134,39 +137,56 @@ const response = await fetchApi('/auth/admin/verify-user', {
         <p>Review user details before taking action</p>
       </div>
 
-      <div className="user-details-card">
-        <div className="detail-grid">
-          <div className="detail-item">
-            <span className="detail-label">User ID:</span>
-            <span className="detail-value">{user.id}</span>
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Name:</span>
-            <span className="detail-value">{user.name}</span>
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Email:</span>
-            <span className="detail-value">{user.email}</span>
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Status:</span>
-            <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-              {user.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </div>
-          <div className="detail-item">
-            <span className="detail-label">Registered:</span>
-            <span className="detail-value">
-{new Date(user.created_at).toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit'
-})}
-            </span>
-          </div>
-        </div>
+      {/* Tabel-style user details */}
+      <div className="user-details-table">
+        <table className="details-table">
+          <tbody>
+            <tr>
+              <td className="detail-label">User ID</td>
+              <td className="detail-value">{user.id}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">Name</td>
+              <td className="detail-value">{user.name}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">Email</td>
+              <td className="detail-value">{user.email}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">WhatsApp Number</td>
+              <td className="detail-value">{user.whatsapp_number || 'Not provided'}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">Status</td>
+              <td className="detail-value">
+                <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                  {user.is_active ? 'Active' : 'Inactive'}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td className="detail-label">USDT Network</td>
+              <td className="detail-value">{user.usdt_network || 'Not provided'}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">USDT Address</td>
+              <td className="detail-value">{user.usdt_address || 'Not provided'}</td>
+            </tr>
+            <tr>
+              <td className="detail-label">Registered</td>
+              <td className="detail-value">
+                {new Date(user.created_at).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div className="verification-actions">
@@ -183,6 +203,26 @@ const response = await fetchApi('/auth/admin/verify-user', {
             </>
           ) : (
             'Approve User'
+          )}
+        </button>
+
+        <button
+          type="button"
+          className={`action-btn failed-btn ${actionLoading ? 'loading' : ''}`}
+          onClick={() => {
+            if (window.confirm('Are you sure you want to mark this registration as failed? This will notify the user that their registration was unsuccessful.')) {
+              handleVerificationAction('failed');
+            }
+          }}
+          disabled={actionLoading}
+        >
+          {actionLoading ? (
+            <>
+              <span className="spinner"></span>
+              Processing...
+            </>
+          ) : (
+            'Mark as Failed'
           )}
         </button>
 

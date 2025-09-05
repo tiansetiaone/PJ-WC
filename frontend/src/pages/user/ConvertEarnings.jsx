@@ -38,35 +38,43 @@ const ConvertEarnings = ({ onClose, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!amount || isNaN(amount)) {
-      setError("Invalid amount");
-      return;
-    }
-    if (amount < minConvert) {
-      setError(`Minimum convert is ${minConvert} USDT`);
-      return;
-    }
-    if (amount > balance.available) {
-      setError("Amount exceeds available balance");
+  if (!amount || isNaN(amount)) {
+    setError("Invalid amount");
+    return;
+  }
+  if (amount < minConvert) {
+    setError(`Minimum convert is ${minConvert} USDT`);
+    return;
+  }
+  if (amount > balance.available) {
+    setError("Amount exceeds available balance");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+    setError("");
+    const res = await fetchApi("/referrals/convert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: Number(amount) }),
+    });
+
+    if (res.error) {
+      setError(res.error);
       return;
     }
 
-    try {
-      setSubmitting(true);
-      setError("");
-      await fetchApi("/referrals/convert", {
-        method: "POST",
-        body: { amount: Number(amount) },
-      });
-      alert(`Successfully converted $${amount}`);
-      if (onSuccess) onSuccess(); // refresh dashboard
-      onClose(); // tutup modal
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    alert(res.message || `Successfully converted $${amount}`);
+    if (onSuccess) onSuccess();
+    if (onClose) onClose();
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (loading) return <div className="convert-earnings-container">Loading...</div>;
 
@@ -105,13 +113,13 @@ const ConvertEarnings = ({ onClose, onSuccess }) => {
 
       <div className="button-group">
         <button className="back-btn" onClick={onClose}>Back</button>
-        <button
-          className="convert-btn"
-          onClick={handleSubmit}
-          disabled={submitting || amount < minConvert || amount > balance.available}
-        >
-          {submitting ? "Converting..." : "Convert"}
-        </button>
+<button
+  className="convert-btn"
+  onClick={handleSubmit}
+  disabled={submitting || amount <= 0}
+>
+  {submitting ? "Processing..." : "Convert"}
+</button>
       </div>
     </div>
   );

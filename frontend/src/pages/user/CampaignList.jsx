@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { fetchApi } from "../../utils/api";
 import { useToast } from "../../components/ui/use-toast";
 import "../../style/user/CampaignList.css";
+import CampaignInfo from "./CampaignInfo"; // import
+import Modal from "../../components/Modal"; // modal component sederhana
 
 export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -13,6 +15,24 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   const [loading, setLoading] = useState(true);
   const pageSize = 10;
   const { addToast } = useToast();
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+   const handleRowClick = async (campaignId) => {
+    try {
+      const response = await fetchApi(`/campaigns/${campaignId}`);
+      const data = response?.data || response; 
+
+      setSelectedCampaign(data);
+      setShowModal(true);
+    } catch (err) {
+      addToast({
+        title: "Error",
+        description: err.message || "Failed to load campaign details",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     fetchCampaigns();
@@ -23,11 +43,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
     try {
       setLoading(true);
       const response = await fetchApi("/campaigns");
-      const data = Array.isArray(response)
-        ? response
-        : response?.data
-        ? response.data
-        : [];
+      const data = Array.isArray(response) ? response : response?.data ? response.data : [];
 
       const validatedData = data.map((campaign) => ({
         id: campaign.id || "",
@@ -73,23 +89,17 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
   };
 
   const filteredData = campaigns.filter((c) => {
-    const nameMatch =
-      c.name?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
+    const nameMatch = c.name?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
     const idMatch = c.id?.toString()?.includes(search) ?? false;
     const channelMatch = channelFilter ? c.channel === channelFilter : true;
     const statusMatch = statusFilter ? c.status === statusFilter : true;
-    const monthMatch = monthFilter
-      ? new Date(c.created_at).getMonth() + 1 === parseInt(monthFilter)
-      : true;
+    const monthMatch = monthFilter ? new Date(c.created_at).getMonth() + 1 === parseInt(monthFilter) : true;
 
     return (nameMatch || idMatch) && channelMatch && statusMatch && monthMatch;
   });
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handlePageChange = (page) => setCurrentPage(page);
 
@@ -102,52 +112,34 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
       <h3 className="title">Campaign Activity</h3>
 
       {/* Search Box */}
-<div className="search-container">
-  <input
-    type="text"
-    placeholder="Search campaign by campaign name or id campaign.."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="search-input"
-  />
-</div>
+      <div className="search-container">
+        <input type="text" placeholder="Search campaign by campaign name or id campaign.." value={search} onChange={(e) => setSearch(e.target.value)} className="search-input" />
+      </div>
 
-{/* Filters */}
-<div className="filters">
-  <select
-    className="filter-select"
-    value={channelFilter}
-    onChange={(e) => setChannelFilter(e.target.value)}
-  >
-    <option value="">Channel</option>
-    <option value="whatsapp">WhatsApp</option>
-    <option value="sms">SMS</option>
-  </select>
+      {/* Filters */}
+      <div className="filters">
+        <select className="filter-select" value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)}>
+          <option value="">Channel</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">SMS</option>
+        </select>
 
-  <select
-    className="filter-select"
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-  >
-    <option value="">Status</option>
-    <option value="on_process">Checking Campaign</option>
-    <option value="completed">Campaign Success</option>
-    <option value="failed">Campaign Failed</option>
-  </select>
+        <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="">Status</option>
+          <option value="on_process">Checking Campaign</option>
+          <option value="completed">Campaign Success</option>
+          <option value="failed">Campaign Failed</option>
+        </select>
 
-  <select
-    className="filter-select"
-    value={monthFilter}
-    onChange={(e) => setMonthFilter(e.target.value)}
-  >
-    <option value="">Month</option>
-    {[...Array(12)].map((_, i) => (
-      <option key={i + 1} value={i + 1}>
-        {new Date(0, i).toLocaleString("default", { month: "long" })}
-      </option>
-    ))}
-  </select>
-</div>
+        <select className="filter-select" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+          <option value="">Month</option>
+          {[...Array(12)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {new Date(0, i).toLocaleString("default", { month: "long" })}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Table */}
       <div className="table-wrapper">
@@ -160,32 +152,20 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
               <th>Channel</th>
               <th>Status</th>
               <th>Campaign Date</th>
-              <th></th>
+              {/* <th></th> */}
             </tr>
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((c, index) => (
-                <tr key={c.id}>
+                <tr key={c.id} onClick={() => handleRowClick(c.id)} className="clickable-row">
                   <td>{(currentPage - 1) * pageSize + index + 1}</td>
-                  <td>{c.id}</td>
+                  <td>{Math.floor(new Date(c.created_at).getTime() / 1000)}</td>
                   <td>{c.name}</td>
                   <td className="capitalize">{c.channel}</td>
                   <td>
-                    <span
-                      className={`status-badge ${
-                        c.status === "on_process"
-                          ? "status-checking"
-                          : c.status === "success"
-                          ? "status-success"
-                          : "status-failed"
-                      }`}
-                    >
-                      {c.status === "on_process"
-                        ? "Checking Campaign"
-                        : c.status === "success"
-                        ? "Campaign Success"
-                        : "Campaign Failed"}
+                    <span className={`status-badge ${c.status === "on_process" ? "status-checking" : c.status === "success" ? "status-success" : "status-failed"}`}>
+                      {c.status === "on_process" ? "Checking Campaign" : c.status === "success" ? "Campaign Success" : "Campaign Failed"}
                     </span>
                   </td>
                   <td>
@@ -197,7 +177,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
                       minute: "2-digit",
                     })}
                   </td>
-                  <td>
+                  {/* <td>
                     <div className="action-buttons">
                       <button
                         className="action-btn delete-btn"
@@ -206,7 +186,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
                         🗑️
                       </button>
                     </div>
-                  </td>
+                  </td> */}
                 </tr>
               ))
             ) : (
@@ -226,11 +206,7 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
           {paginatedData.length} out of {filteredData.length} data
         </div>
         <div className="pagination">
-          <button
-            className="page-btn"
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
+          <button className="page-btn" onClick={() => handlePageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>
             ‹
           </button>
           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -241,26 +217,22 @@ export default function CampaignList({ onUploadNumbers, onCampaignUpdate }) {
             else pageNum = currentPage - 2 + i;
 
             return (
-              <button
-                key={pageNum}
-                className={`page-btn ${pageNum === currentPage ? "active" : ""}`}
-                onClick={() => handlePageChange(pageNum)}
-              >
+              <button key={pageNum} className={`page-btn ${pageNum === currentPage ? "active" : ""}`} onClick={() => handlePageChange(pageNum)}>
                 {pageNum}
               </button>
             );
           })}
-          <button
-            className="page-btn"
-            onClick={() =>
-              handlePageChange(Math.min(totalPages, currentPage + 1))
-            }
-            disabled={currentPage === totalPages}
-          >
+          <button className="page-btn" onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>
             ›
           </button>
         </div>
       </div>
+
+      {showModal && selectedCampaign && (
+  <Modal onClose={() => setShowModal(false)}>
+    <CampaignInfo campaign={selectedCampaign} />
+  </Modal>
+)}
     </div>
   );
 }

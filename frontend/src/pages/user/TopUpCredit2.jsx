@@ -1,51 +1,69 @@
 import React, { useEffect, useState } from "react";
 import "../../style/user/TopUpCredit2.css";
 import { useNavigate } from "react-router-dom";
-
+import { fetchApi } from "../../utils/api"; // Pastikan import fetchApi
 
 export default function TopUpCredit2() {
   const [amount, setAmount] = useState(localStorage.getItem("topupAmount") || 0);
-  const [network, setNetwork] = useState(localStorage.getItem("network") || "TRC20");
+  const [network, setNetwork] = useState(localStorage.getItem("topupCurrency") || "TRC20");
   const [deposit, setDeposit] = useState(null);
+  const [userUSDTInfo, setUserUSDTInfo] = useState(null); // State untuk data USDT user
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const convertedCredit = amount * 100; // contoh: 1 USDT = 100 credit
 
-  const initiateDeposit = async () => {
-    setLoading(true);
+  // Fungsi untuk mendapatkan data USDT user
+  const fetchUserUSDTInfo = async () => {
     try {
-      const token = localStorage.getItem("token"); // JWT token
-      const res = await fetch("http://localhost:5000/api/deposits/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          network,
-          amount,
-          is_custom: false,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setDeposit(data);
-        localStorage.setItem("deposit_id", data.deposit_id);
-        localStorage.setItem("recipient_wallet", data.address);
-        localStorage.setItem("user_wallet", data.memo); // pakai memo
-      } else {
-        alert(data.error || "Failed to initiate deposit");
+      const response = await fetchApi("/deposits/user/usdt-info");
+      if (response.success) {
+        setUserUSDTInfo(response.data);
       }
     } catch (err) {
-      console.error("Error initiating deposit:", err);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching user USDT info:", err);
     }
   };
 
+  const initiateDeposit = async () => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch("http://localhost:5000/api/deposits/initiate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        network,
+        amount,
+        is_custom: false,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      setDeposit(data);
+      localStorage.setItem("deposit_id", data.deposit_id);
+      localStorage.setItem("recipient_wallet", data.address);
+      localStorage.setItem("user_wallet", data.memo);
+      localStorage.setItem("credit_amount", data.credit); // Simpan credit
+    } else {
+      alert(data.error || "Failed to initiate deposit");
+    }
+  } catch (err) {
+    console.error("Error initiating deposit:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   useEffect(() => {
+    // Ambil data USDT user dan initiate deposit
+    fetchUserUSDTInfo();
     initiateDeposit();
     // eslint-disable-next-line
   }, []);
@@ -90,6 +108,25 @@ export default function TopUpCredit2() {
               <div className="transaction-item">
                 <span>Your Wallet (Memo)</span>
                 <span className="wallet">{deposit.memo}</span>
+              </div>
+
+              {/* Tampilkan alamat USDT user jika ada */}
+              <div className="transaction-item">
+                <span>Your Wallet (USDT)</span>
+                <span className="wallet">
+                  {userUSDTInfo && userUSDTInfo.usdt_address 
+                    ? userUSDTInfo.usdt_address 
+                    : "No USDT address set"}
+                </span>
+              </div>
+
+              <div className="transaction-item">
+                <span>Network</span>
+                <span className="wallet">
+                  {userUSDTInfo && userUSDTInfo.usdt_network 
+                    ? userUSDTInfo.usdt_network 
+                    : network}
+                </span>
               </div>
 
               <div className="transaction-item">

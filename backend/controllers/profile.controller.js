@@ -134,7 +134,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update Profile (Enhanced for Dashboard)
+// profile.controller.js - Perbaikan fungsi updateProfile untuk handle FormData
 exports.updateProfile = async (req, res) => {
   try {
     const { id: userId } = req.user;
@@ -144,15 +144,26 @@ exports.updateProfile = async (req, res) => {
       updated_at: new Date()
     };
 
-    // Add fields from form-data
+    // Handle fields from FormData
+    console.log('Request body:', req.body); // Debugging
+    console.log('Request file:', req.file); // Debugging
+
     if (req.body.name) updateData.name = req.body.name;
     if (req.body.username) updateData.username = req.body.username;
-    if (req.file) {
-      updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
-    }
+    if (req.body.whatsapp_number !== undefined) updateData.whatsapp_number = req.body.whatsapp_number;
+    if (req.body.usdt_network) updateData.usdt_network = req.body.usdt_network;
+    if (req.body.usdt_address !== undefined) updateData.usdt_address = req.body.usdt_address;
+    
+    // Handle profile image upload
+if (req.file) {
+  updateData.profile_image = `/uploads/profiles/${req.file.filename}`;
+} else if (req.body.profile_image === null || req.body.profile_image === '') {
+  // Hapus foto profil
+  updateData.profile_image = null;  // Menghapus gambar dari database
+}
 
     // Validate at least one field is being updated
-    if (Object.keys(updateData).length <= 1) {
+    if (Object.keys(updateData).length <= 1 && !req.file) {
       return res.status(400).json({
         success: false,
         error: 'At least one field must be updated',
@@ -184,6 +195,9 @@ exports.updateProfile = async (req, res) => {
     const values = Object.values(updateData);
     values.push(userId);
 
+    console.log('Update query:', `UPDATE users SET ${setClause} WHERE id = ?`); // Debugging
+    console.log('Update values:', values); // Debugging
+
     await db.query(
       `UPDATE users SET ${setClause} WHERE id = ?`,
       values
@@ -191,7 +205,7 @@ exports.updateProfile = async (req, res) => {
 
     // Get updated user data
     const [updatedUser] = await db.query(
-      'SELECT id, name, username, email, profile_image FROM users WHERE id = ?',
+      'SELECT id, name, username, email, profile_image, whatsapp_number, usdt_network, usdt_address FROM users WHERE id = ?',
       [userId]
     );
 
@@ -316,68 +330,32 @@ exports.getProfileSummary = async (req, res) => {
 };
 
 
-// Change Password
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.id;  // Ambil ID user dari token JWT
 
-    // Validasi input
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        error: 'Current password and new password are required',
-        code: 'MISSING_FIELDS'
-      });
+      return res.status(400).json({ error: "Current password and new password are required." });
     }
-
-    // Dapatkan password saat ini dari database
-    const [user] = await db.query(
-      'SELECT password FROM users WHERE id = ?',
-      [userId]
-    );
 
     // Verifikasi password lama
-    const isMatch = await bcrypt.compare(currentPassword, user[0].password);
+    const user = await User.findById(userId);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        error: 'Current password is incorrect',
-        code: 'INVALID_PASSWORD'
-      });
+      return res.status(401).json({ error: "Incorrect current password" });
     }
 
-    // Hash password baru
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    // Hash password baru dan simpan
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
 
-    // Update password di database
-    await db.query(
-      'UPDATE users SET password = ? WHERE id = ?',
-      [hashedPassword, userId]
-    );
-
-    // Audit log
-    await logActivity({
-      userId,
-      action: 'CHANGE_PASSWORD',
-      metadata: {
-        ip: req.ip,
-        userAgent: req.headers['user-agent']
-      }
-    });
-
-    res.json({
-      success: true,
-      message: 'Password changed successfully'
-    });
-
+    await user.save();
+    res.status(200).json({ message: "Password updated successfully" });
   } catch (err) {
-    console.error('[CHANGE PASSWORD ERROR]', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to change password',
-      code: 'SERVER_ERROR'
-    });
+    console.error('Error while changing password:', err);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

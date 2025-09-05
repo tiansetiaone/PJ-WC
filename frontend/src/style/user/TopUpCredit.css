@@ -109,6 +109,23 @@
   margin-bottom: 5px;
 }
 
+.currency-select {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+
+.currency-input {
+  margin-top: 20px;
+}
+
+.currency-input label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
 .custom-input input {
   width: 100%;
   padding: 8px;
@@ -145,11 +162,395 @@
   cursor: not-allowed;
 }
 
+.confirm-btn:not(:disabled):hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* User USDT Info */
+.user-usdt-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.user-usdt-info h3 {
+  margin-top: 0;
+  color: #495057;
+  font-size: 16px;
+}
+
+.usdt-details {
+  font-size: 14px;
+}
+
+.usdt-details p {
+  margin: 5px 0;
+  word-break: break-all;
+}
+
+.btn-change-usdt {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.btn-change-usdt:hover {
+  background: #5a6268;
+}
+
+/* Add USDT Form */
+.add-usdt-form {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.add-usdt-form h3 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.usdt-address-input {
+  width: 100%;
+  padding: 8px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.usdt-address-input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-save {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-save:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* No USDT Info */
+.no-usdt-info {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.no-usdt-info p {
+  margin: 0 0 10px 0;
+  color: #856404;
+}
+
+.btn-add-usdt {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-add-usdt:hover {
+  background: #0056b3;
+}
+
+/* Info text small */
+.info-text-small {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+@keyframes requirementPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.requirement-met {
+  animation: requirementPulse 0.5s ease;
+}
+
+
+/* Disabled state for nominal cards */
+.nominal-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #eee;
+}
+
+.nominal-card.disabled:hover {
+  border-color: #eee;
+  transform: none;
+  box-shadow: none;
+}
+
+.nominal-card.disabled .amount,
+.nominal-card.disabled .credits {
+  color: #999;
+}
+
+/* Disabled state for custom input */
+.custom-input.disabled {
+  opacity: 0.6;
+}
+
+.custom-input.disabled input {
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.custom-input.disabled input:focus {
+  border-color: #e9ecef;
+  outline: none;
+}
+
+.custom-input.disabled label {
+  color: #999;
+}
+
+/* Hover effects for enabled elements only */
+.nominal-card:not(.disabled):hover {
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+}
+
+.custom-input:not(.disabled) input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Best badge styling for disabled state */
+.nominal-card.disabled .best-badge {
+  background: #ccc;
+  opacity: 0.7;
+}
+
+/* Animation for selection */
+.nominal-card.selected {
+  animation: pulse-selection 0.5s ease;
+}
+
+@keyframes pulse-selection {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Visual indicator for selected amount */
+.nominal-card.selected {
+  border-width: 3px;
+  border-color: #28a745;
+  background: #f0fff4;
+}
+
+/* Style untuk nominal card yang tidak dipilih (deselected) */
+.nominal-card.deselected {
+  opacity: 0.7;
+  border-color: #e9ecef;
+  background: #f8f9fa;
+}
+
+.nominal-card.deselected:hover {
+  border-color: #007bff;
+  opacity: 1;
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+}
+
+.nominal-card.deselected .amount,
+.nominal-card.deselected .credits {
+  color: #6c757d;
+}
+
+.nominal-card.deselected:hover .amount,
+.nominal-card.deselected:hover .credits {
+  color: #007bff;
+}
+
+/* Style untuk custom input yang tidak aktif (deselected) */
+.custom-input.deselected {
+  opacity: 0.7;
+}
+
+.custom-input.deselected input {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+}
+
+.custom-input.deselected input:focus {
+  border-color: #007bff;
+  background-color: white;
+  color: #495057;
+  opacity: 1;
+}
+
+.custom-input.deselected input:hover {
+  border-color: #007bff;
+  opacity: 1;
+}
+
+.custom-input.deselected label {
+  color: #6c757d;
+}
+
+/* Style untuk elemen yang aktif/selected */
+.nominal-card.selected {
+  border: 2px solid #28a745;
+  background: #f0fff4;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.nominal-card.selected .amount {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.nominal-card.selected .credits {
+  color: #28a745;
+}
+
+/* Best badge styling */
+.nominal-card .best-badge {
+  background: #ffc107;
+  color: #212529;
+}
+
+.nominal-card.deselected .best-badge {
+  background: #e0a800;
+  opacity: 0.8;
+}
+
+.nominal-card.selected .best-badge {
+  background: #28a745;
+  color: white;
+}
+
+/* Animation untuk selection */
+.nominal-card {
+  transition: all 0.3s ease;
+}
+
+.custom-input {
+  transition: all 0.3s ease;
+}
+
+.nominal-card.selected {
+  animation: pulse-selection 0.5s ease;
+}
+
+@keyframes pulse-selection {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1.02); }
+}
+
+/* Hover effects */
+.nominal-card:not(.selected):hover {
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.1);
+}
+
+.custom-input:not(.deselected) input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.custom-input input:hover {
+  border-color: #007bff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .nominal-card.deselected {
+    opacity: 0.8;
+  }
+  
+  .custom-input.deselected {
+    opacity: 0.8;
+  }
+  
+  .nominal-card.selected {
+    transform: scale(1.01);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .steps {
     flex-direction: column;
     gap: 8px;
+  }
+   .requirements-info {
+    padding: 12px;
+  }
+  
+  .requirements-info li {
+    font-size: 13px;
+  }
+  
+  .usdt-warning {
+    padding: 12px;
+  }
+  
+  .usdt-warning p {
+    font-size: 14px;
   }
 }
 

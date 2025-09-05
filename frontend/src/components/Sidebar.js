@@ -61,18 +61,18 @@ const Sidebar = ({ isOpen, onClose, isCollapsed }) => {
     { path: "/campaign", label: "Campaign", icon: "📢" },
     { path: "/deposits/list", label: "Deposit", icon: "💳" },
     { path: "/referral", label: "Referral", icon: "👤" },
-    { path: "/support", label: "Contact Support", icon: "🎧" },
+    { path: "/contact/user", label: "Contact Support", icon: "🎧" },
   ];
 
   // MENU LIST untuk ADMIN
   const adminMenu = [
     { path: "/dashboard", label: "Dashboard", icon: "🏠" },
-    { path: "/user-management", label: "User Management", icon: "👥" },
+    { path: "/admin/user/list", label: "User Management", icon: "👥" },
     { path: "/campaign", label: "Campaign Management", icon: "📢" },
     { path: "/admin/deposits/list", label: "Deposit Management", icon: "💳" },
     { path: "/admin/referral/list", label: "Referral Settings", icon: "⚙️" },
     { path: "/admin/notifications", label: "Notification Management", icon: "🔔" },
-    { path: "/support", label: "Ticket Support", icon: "🎧" },
+    { path: "/contact/admin", label: "Ticket Support", icon: "🎧" },
   ];
 
   // Tentukan menu sesuai role

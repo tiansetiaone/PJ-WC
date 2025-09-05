@@ -1,23 +1,43 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "../../style/user/TransactionModal.css";
 
 const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
+  const [showProof, setShowProof] = useState(false);
+  const [depositData, setDepositData] = useState(null);
+
+  // Update depositData ketika deposit prop berubah
+  useEffect(() => {
+    if (deposit) {
+      setDepositData(deposit);
+    }
+  }, [deposit]);
+
   if (!show) return null;
 
+  // Banner di atas modal
   const renderStatusBanner = (status) => {
-    if (status === "checking") {
+    const statusMap = {
+      'pending': 'checking',
+      'processing': 'checking',
+      'waiting_payment': 'checking',
+      'completed': 'success',
+      'rejected': 'failed',
+      'failed': 'failed'
+    };
+
+    const currentStatus = statusMap[status] || 'checking';
+
+    if (currentStatus === "checking") {
       return (
         <div className="banner checking">
-          <span>
-            ℹ Your transaction currently under checking in our system, please wait a moment.
-          </span>
+          <span>ℹ Your transaction currently under checking in our system, please wait a moment.</span>
         </div>
       );
     }
-    if (status === "success") {
-      return null; // banner tidak muncul
+    if (currentStatus === "success") {
+      return null;
     }
-    if (status === "failed") {
+    if (currentStatus === "failed") {
       return (
         <div className="banner failed">
           <span>⚠ Your transaction failed because you reached the time limit.</span>
@@ -26,107 +46,236 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
     }
   };
 
+  // Badge kecil di header kanan
   const renderStatusBadge = (status) => {
-    if (status === "checking")
-      return <span className="badge checking">🔍 Checking Deposit</span>;
-    if (status === "success")
-      return <span className="badge success">✔ Deposit Success</span>;
-    if (status === "failed")
-      return <span className="badge failed">✖ Deposit Failed</span>;
-    return null;
+    const statusMap = {
+      'pending': { badge: "checking", text: "🔍 Pending", display: "Pending" },
+      'processing': { badge: "checking", text: "🔍 Processing", display: "Processing" },
+      'waiting_payment': { badge: "checking", text: "⏰ Waiting Payment", display: "Waiting Payment" },
+      'completed': { badge: "success", text: "✔ Completed", display: "Completed" },
+      'rejected': { badge: "failed", text: "✖ Rejected", display: "Rejected" },
+      'failed': { badge: "failed", text: "✖ Failed", display: "Failed" }
+    };
+
+    const statusInfo = statusMap[status] || { badge: "checking", text: "🔍 Checking", display: "Checking" };
+    return <span className={`badge ${statusInfo.badge}`}>{statusInfo.text}</span>;
+  };
+
+  // Helper: generate URL bukti transfer
+  const getProofUrl = (file) => {
+    if (!file) return null;
+    const normalized = file.replace(/\\/g, "/");
+    if (normalized.startsWith("http")) return normalized;
+    return `http://localhost:5000/${normalized.startsWith("uploads/") ? normalized : `uploads/${normalized}`}`;
+  };
+
+  // Helper: format tanggal jadi DD Month YYYY HH:MM
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+
+    const date = new Date(dateString);
+    if (isNaN(date)) return dateString;
+
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Fungsi untuk menampilkan alamat wallet dengan format yang rapi
+  const formatWalletAddress = (address) => {
+    if (!address) return "Not Available";
+    if (address.length <= 12) return address;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          ✖
-        </button>
+    <>
+      {/* Modal utama transaksi */}
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close-transaction" onClick={onClose}>
+            ✖
+          </button>
 
-        {loading && <p>Loading detail...</p>}
-        {error && <p className="error">{error}</p>}
+          {loading && <p className="loading-text">Loading transaction details...</p>}
+          {error && <p className="error">{error}</p>}
 
-        {deposit && (
-          <div className="modal-body">
-            {/* Banner status di atas */}
-            {renderStatusBanner(deposit.status)}
+          {depositData ? (
+            <div className="modal-body">
+              {/* Banner status */}
+              {renderStatusBanner(depositData.deposit?.status || depositData.status)}
 
-            <div className="modal-header">
-              <h2>Transaction</h2>
-              <div className="right-actions">
-                {deposit.status === "success" && (
-                  <button className="btn-download">Download Receipt</button>
-                )}
-                {renderStatusBadge(deposit.status)}
+              {/* Header */}
+              <div className="modal-header">
+                <h2>Transaction Details</h2>
               </div>
-            </div>
 
-            <h3 className="section-title">Payment</h3>
+              <h3 className="section-title">Payment Information</h3>
 
-            <div className="info-row">
-              <span>ID Deposit</span>
-              <span className="value">{deposit.id}</span>
-            </div>
-            <div className="info-row">
-              <span>Payment Date</span>
-              <span className="value">{deposit.updated_at}</span>
-            </div>
-            <div className="info-row">
-              <span>Recipient Wallet Address</span>
-              <span className="value">{deposit.recipient_wallet} 👁</span>
-            </div>
-            <div className="info-row">
-              <span>Your Wallet Address</span>
-              <span className="value">{deposit.your_wallet} 👁</span>
-            </div>
-            <div className="info-row">
-              <span>Transfer Evidence</span>
-              <span className="value">
-                <a
-                  href={deposit.transfer_evidence}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  proof-of-transfer.png ⬇
-                </a>
-              </span>
-            </div>
-            {deposit.tx_link && (
+                <div className="right-actions">
+                  {(depositData.deposit?.status === 'completed' || depositData.status === 'completed') && 
+                    <button className="btn-download">Download Receipt</button>
+                  }
+                  {renderStatusBadge(depositData.deposit?.status || depositData.status)}
+                </div>
+
+              {/* Detail informasi */}
               <div className="info-row">
-                <span>Etherscan Transaction Link</span>
-                <a
-                  href={deposit.tx_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="value link"
-                >
-                  {deposit.tx_link}
-                </a>
+                <span>ID Deposit</span>
+                <span className="value">{depositData.deposit?.masked_id || depositData.masked_id}</span>
               </div>
-            )}
+              
+              <div className="info-row">
+                <span>Payment Date</span>
+                <span className="value">{formatDate(depositData.deposit?.updated_at || depositData.updated_at)}</span>
+              </div>
+              
+              <div className="info-row">
+                <span>Recipient Wallet Address</span>
+                <span className="value wallet-address" title={depositData.deposit?.recipient_wallet || depositData.recipient_wallet}>
+                  {formatWalletAddress(depositData.deposit?.recipient_wallet || depositData.recipient_wallet)} 
+                  <span className="eye-icon"> 👁</span>
+                </span>
+              </div>
+              
+              <div className="info-row">
+                <span>Your Wallet Address</span>
+                <span className="value wallet-address" title={depositData.user?.usdt_address || depositData.deposit?.user?.usdt_address}>
+                  {formatWalletAddress(depositData.user?.usdt_address || depositData.deposit?.user?.usdt_address)} 
+                  <span className="eye-icon"> 👁</span>
+                </span>
+              </div>
 
-            <div className="info-row bold">
-              <span>Top Up</span>
-              <span className="value">${deposit.amount}</span>
-            </div>
-            <div className="info-row bold">
-              <span>Convert to Credit</span>
-              <span className="value credit">{deposit.credit}</span>
-            </div>
+              {/* Link transaksi */}
+              {/* {(depositData.deposit?.tx_link || depositData.tx_link) && (
+                <div className="info-row">
+                  <span>Transaction Link</span>
+                  <a 
+                    href={depositData.deposit?.tx_link || depositData.tx_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="value link"
+                  >
+                    View on Explorer
+                  </a>
+                </div>
+              )} */}
 
-            {/* Footer button */}
-            <div className="modal-footer">
-              <button className="btn-back" onClick={onClose}>
-                Back
-              </button>
-              {(deposit.status === "success" || deposit.status === "failed") && (
-                <button className="btn-primary">Create New Credit</button>
+              {/* Link address wallet user */}
+              {(depositData.user?.user_address_link || depositData.deposit?.user?.user_address_link) && (
+                <div className="info-row">
+                  <span>Etherscan Transaction Link</span>
+                  <a 
+                    href={depositData.user?.user_address_link || depositData.deposit?.user?.user_address_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="value link"
+                  >
+                    {depositData.user?.user_address_link || depositData.deposit?.user?.user_address_link}
+                  </a>
+                </div>
               )}
+
+              {/* Jumlah */}
+              <div className="info-row bold">
+                <span>Top Up</span>
+                <span className="value">${depositData.deposit?.amount || depositData.amount}</span>
+              </div>
+              
+              <div className="info-row bold">
+                <span>Converted to Credit</span>
+                <span className="value credit">{depositData.deposit?.amount * 100 || depositData.amount * 100}</span>
+              </div>
+
+              {/* Informasi tambahan user */}
+              {/* <div className="info-row">
+                <span>USDT Network</span>
+                <span className="value">{depositData.user?.usdt_network || depositData.network}</span>
+              </div>
+              
+              <div className="info-row">
+                <span>Transaction Hash</span>
+                <span className="value tx-hash">{depositData.deposit?.tx_hash || depositData.tx_hash || "Not available"}</span>
+              </div> */}
+
+              {/* Tombol untuk melihat bukti transfer */}
+              {/* {(depositData.deposit?.proof_file || depositData.deposit?.transfer_evidence || depositData.proof_file) && (
+                <div className="info-row">
+                  <span>Transfer Evidence</span>
+                  <button 
+                    className="btn-view-proof" 
+                    onClick={() => setShowProof(true)}
+                  >
+                    View Proof
+                  </button>
+                </div>
+              )} */}
+
+              {/* Footer */}
+              <div className="modal-footer">
+                <button className="btn-back" onClick={onClose}>
+                  Back
+                </button>
+                {(depositData.deposit?.status === 'completed' || depositData.status === 'completed') && 
+                  <button className="btn-primary">Create New Deposit</button>
+                }
+              </div>
+            </div>
+          ) : (
+            <div className="no-data">
+              <p>No transaction data available</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal popup bukti transfer */}
+      {showProof && (
+        <div className="modal-overlay-proof" onClick={() => setShowProof(false)}>
+          <div className="modal-content-proof proof-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-transaction" onClick={() => setShowProof(false)}>
+              ✖
+            </button>
+            <h3>Transfer Evidence</h3>
+            <img
+              src={getProofUrl(
+                depositData?.deposit?.transfer_evidence || 
+                depositData?.deposit?.proof_file || 
+                depositData?.proof_file
+              )}
+              alt="Proof of Transfer"
+              className="proof-image"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://via.placeholder.com/400x300?text=Proof+Not+Found";
+                e.target.alt = "Proof image not available";
+              }}
+            />
+            <div className="proof-actions">
+              <a 
+                href={getProofUrl(
+                  depositData?.deposit?.transfer_evidence || 
+                  depositData?.deposit?.proof_file || 
+                  depositData?.proof_file
+                )} 
+                target="_blank" 
+                rel="noreferrer"
+                className="btn primary"
+              >
+                Open in New Tab
+              </a>
+              <button className="btn secondary" onClick={() => setShowProof(false)}>
+                Close
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 

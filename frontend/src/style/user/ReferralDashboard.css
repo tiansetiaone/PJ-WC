@@ -4,8 +4,11 @@
   font-family: "Poppins", sans-serif;
   background: #f8f9fc;
 }
+.main-content-referral{
+  padding: 0px 18px;
+}
 
-.header {
+.header-referral {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -177,9 +180,9 @@
 
 /* Close Button */
 .modal-close {
-    position: absolute;
-    top: 32px;
-    right: 110px;
+position: absolute;
+    top: 58px;
+    right: 79px;
     background: transparent;
     border: none;
     font-size: 1.4rem;
@@ -221,7 +224,7 @@
   .copy-btn {
     width: 100%;
   }
-  .header {
+  .header-referral {
     flex-direction: column;
     gap: 10px;
     align-items: flex-start;

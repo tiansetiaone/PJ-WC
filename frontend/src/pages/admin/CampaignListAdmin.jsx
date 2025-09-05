@@ -206,7 +206,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
                   <td>
                     <div className="action-buttons-list">
                       <button
-                        className="action-btn upload-btn"
+                        className="action-btn-campaignlist upload-btn"
                         onClick={() => handleView(c)}
                       >
                         👁
@@ -214,13 +214,13 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
                       {c.status === "on_process" && (
                         <>
                           <button
-                            className="action-btn approve-btn"
+                            className="action-btn-campaignlist approve-btn-campaignlist"
                             onClick={() => handleApprove(c.id)}
                           >
                             ✔
                           </button>
                           <button
-                            className="action-btn delete-btn"
+                            className="action-btn-campaignlist delete-btn-campaignlist"
                             onClick={() => handleReject(c.id)}
                           >
                             ✖

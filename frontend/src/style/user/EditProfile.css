@@ -22,7 +22,7 @@
   margin-bottom: 20px;
 }
 
-.avatar {
+.avatar, .avatar-image {
   width: 80px;
   height: 80px;
   border-radius: 50%;
@@ -34,6 +34,27 @@
   font-weight: bold;
   font-size: 1.2rem;
   margin: auto;
+  object-fit: cover;
+}
+
+.avatar-image {
+  background: none;
+}
+
+.btn-upload {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-upload:hover {
+  background: #0b5ed7;
 }
 
 .file-info {
@@ -45,10 +66,21 @@
 .btn-delete-photo {
   margin-top: 8px;
   padding: 8px 14px;
-  background: #f8f9fa;
-  border: 1px solid #ccc;
+  background: #dc3545;
+  color: white;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-delete-photo:hover:not(:disabled) {
+  background: #bb2d3b;
+}
+
+.btn-delete-photo:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 .profile-form {
@@ -78,16 +110,100 @@ input, select {
   font-size: 0.95rem;
 }
 
+input:disabled {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #6c757d;
+}
+
 .btn-save {
   grid-column: span 2;
-  padding: 10px;
-  background: #ccc;
+  padding: 12px;
+  background: #0d6efd;
   border: none;
   border-radius: 6px;
   color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #0b5ed7;
+}
+
+.btn-save:disabled {
+  background: #6c757d;
   cursor: not-allowed;
 }
 
+.alert {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
+}
+
+/* EditProfile.css tambahan */
+.header-with-back {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.btn-back {
+  padding: 8px 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-back:hover {
+  background: #5a6268;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+
+.avatar-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
 /* Tablet */
 @media (max-width: 768px) {
   .profile-form {
@@ -100,7 +216,7 @@ input, select {
   .edit-profile-container {
     padding: 10px;
   }
-  .avatar {
+  .avatar, .avatar-image {
     width: 70px;
     height: 70px;
     font-size: 1rem;

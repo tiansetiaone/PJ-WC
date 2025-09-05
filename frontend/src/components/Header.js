@@ -1,19 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../style/Header.css";
 import { FaBars } from "react-icons/fa";
 import logoImage from "../assets/logo-blasterc-blue.png";
 import Notification from "./Notification-dropdown";
-import { fetchApi } from "../utils/api";
+import { fetchApi, getProfile } from "../utils/api";
+import Profile from "../pages/user/Profile";
 
 const Header = ({ toggleSidebar }) => {
-  const { logout, user } = useAuth();
+  const { logout, user: authUser } = useAuth();
   const navigate = useNavigate();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  // Refs untuk handle click outside
+  const profileRef = useRef(null);
+  const notificationRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -22,20 +31,56 @@ const Header = ({ toggleSidebar }) => {
 
   const toggleNotificationDropdown = () => {
     setShowNotifications((prev) => !prev);
+    setShowProfile(false);
   };
 
-  // Fungsi untuk refresh notifikasi (bisa dipanggil child)
+  const toggleProfileDropdown = () => {
+    setShowProfile((prev) => !prev);
+    setShowNotifications(false);
+  };
+
   const refreshNotifications = () => {
     setLoading(true);
-    fetchApi("/notifications/admin")
-      .then((data) => {
-        setNotifications(data);
-      })
+    let endpoint = "/notifications";
+
+    if (authUser?.role === "admin") {
+      endpoint = "/notifications/admin";
+    }
+
+    fetchApi(endpoint)
+      .then((data) => setNotifications(data))
       .catch((err) => console.error("Error refresh notifications:", err))
       .finally(() => setLoading(false));
   };
 
-  // Fetch notifikasi pertama kali ketika dropdown dibuka
+  // Handle click outside untuk menutup dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfile(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Ambil profil user saat Header mount
+  useEffect(() => {
+    getProfile()
+      .then((res) => {
+        if (res.success) {
+          setProfileData(res.data);
+        }
+      })
+      .catch((err) => console.error("Gagal ambil profil:", err));
+  }, []);
+
   useEffect(() => {
     if (showNotifications) {
       refreshNotifications();
@@ -50,8 +95,10 @@ const Header = ({ toggleSidebar }) => {
         </button>
         <img src={logoImage} alt="BLASTERC" className="logo-img" />
       </div>
+
       <div className="right">
-        <div className="notification-wrapper">
+        {/* Notifikasi */}
+        <div className="notification-wrapper" ref={notificationRef}>
           <button
             className="notification-icon"
             onClick={toggleNotificationDropdown}
@@ -64,18 +111,42 @@ const Header = ({ toggleSidebar }) => {
                 notifications={notifications}
                 loading={loading}
                 refreshNotifications={refreshNotifications}
+                onClose={() => setShowNotifications(false)}
               />
             </div>
           )}
         </div>
 
-        <div className="profile-dropdown">
-          <img src="/profile.jpg" alt="Profile" className="profile-pic" />
-          <div className="dropdown-content">
-            <button onClick={handleLogout} className="logout-button">
-              Logout
-            </button>
+        {/* Profile Dropdown */}
+        <div className="profile-dropdown" ref={profileRef}>
+          <div className="profile-pic-container" onClick={toggleProfileDropdown}>
+            {profileData?.profile_image && !imageError ? (
+              <img
+                src={`http://localhost:5000${profileData.profile_image}`}
+                alt="Profile"
+                className="profile-pic"
+                onError={(e) => {
+                  console.error('Failed to load profile image:', e.target.src);
+                  setImageError(true);
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="profile-fallback">
+                {profileData?.name ? profileData.name.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
           </div>
+          
+          {/* ✅ Dropdown content */}
+          {showProfile && (
+            <div className="profile-dropdown-content">
+              <Profile 
+                logout={handleLogout} 
+                onMenuClick={() => setShowProfile(false)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </header>

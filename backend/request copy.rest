@@ -61,7 +61,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
 -d '{
-  "email": "testing2@example.com",
+  "email": "testing3@example.com",
   "password": "Password123!",
   "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001"
 }'
@@ -71,11 +71,11 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ####
 curl -X POST http://localhost:5000/api/auth/admin/verify-user \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTYxMDg1MiwiZXhwIjoxNzU1NjE0NDUyfQ.qJj_E5zjdvEUM4oWFjKUD3ZseFJ_e3_HgOZWo7sdZ0E" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjY5NjI5NywiZXhwIjoxNzU2Njk5ODk3fQ.QwL_7p-P_66ld0HgswyGi3h-ZRFChEFJZhlulBzq4ck" \
   -H "Content-Type: application/json" \
   -d '{
-    "user_id": 47,
-    "action": "block", 
+    "user_id": 45,
+    "action": "failed", 
     "reason": "Optional reason for blocking"
   }'
 
@@ -93,10 +93,10 @@ curl -X POST http://localhost:5000/api/support/request-verification \
 
 ####For general support (authenticated):
 curl -X POST http://localhost:5000/api/support/tickets \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzYsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1MzU1MTgwLCJleHAiOjE3NTUzNTg3ODB9.skCI-ODDOI60WDjDBoxiSoPz1AacONsvToN3-BvvO_s" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjU3NDM0OCwiZXhwIjoxNzU2NTc3OTQ4fQ.8l2XL-k1JioVtLyw4LwOUfmEatgwU-WvTeWvRaGDet4" \
   -H "Content-Type: application/json" \
   -d '{
-    "subject": "Verification Request",
+    "subject": "Rusak Rusak",
     "message": "Please verify my account",
     "requestType": "verification"
   }'
@@ -109,6 +109,12 @@ curl -X GET "http://localhost:5000/api/auth/account-status?email=testing@example
 ####Get All Tickets (Admin)
 curl -X GET http://localhost:5000/api/support/tickets \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQxNzE5OCwiZXhwIjoxNzU1NDIwNzk4fQ.E13tkia6-CKraX91ftKH0-2VQ1Bw60DYxYoPxd0cJPQ"
+
+####
+curl -X GET http://localhost:5000/api/support/tickets \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjU3NDM0OCwiZXhwIjoxNzU2NTc3OTQ4fQ.8l2XL-k1JioVtLyw4LwOUfmEatgwU-WvTeWvRaGDet4" \
+  -H "Content-Type: application/json"
+
 
 
 ####Get Ticket Details (baru):
@@ -241,12 +247,12 @@ curl -X GET http://localhost:5000/api/campaigns/34/numbers \
 
 ####List User Campaigns:
 curl -X GET http://localhost:5000/api/campaigns \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1Njk1MjQ0LCJleHAiOjE3NTU2OTg4NDR9.erVLzzO8CobTBD2NClIM2-MSyaMpiM6sryGBqRzcWsw"
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NjI5OTU3LCJleHAiOjE3NTY2MzM1NTd9.R64gcPPhJLbNAhvwbR2VRB-vGnGmE18K1TiO4Fp_IsE"
 
 ####
 # Test apakah server menerima file dengan approach berbeda
 curl -X POST http://localhost:5000/api/campaigns/50/numbers-raw \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDAsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1OTY3MDk0LCJleHAiOjE3NTU5NzA2OTR9.ZCxFKL4gf6dSEuoLyhUpJkV5VhBg_GF8auqOfJxZWk0" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NjI5OTU3LCJleHAiOjE3NTY2MzM1NTd9.R64gcPPhJLbNAhvwbR2VRB-vGnGmE18K1TiO4Fp_IsE" \
   -H "Content-Type: text/plain" \
   --data-binary "@numbers.txt"
 
@@ -259,6 +265,11 @@ curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns?status=success&
 ####Get Campaign Details
 curl -X GET "http://localhost:5000/api/campaigns/admin/campaigns/34" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NTQwMDc4MCwiZXhwIjoxNzU1NDA0MzgwfQ.24JNYnyvFKL68kdhdyNrzcgZ9riyFbrSiCDJJmejQXg"
+
+
+####Get Campaign Details
+curl -X GET "http://localhost:5000/api/campaigns/60" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NjI5OTU3LCJleHAiOjE3NTY2MzM1NTd9.R64gcPPhJLbNAhvwbR2VRB-vGnGmE18K1TiO4Fp_IsE"
 
 ####Update Campaign Status
 curl -X PUT "http://localhost:5000/api/campaigns/admin/campaigns/50/status" \
@@ -326,11 +337,11 @@ curl -X GET http://localhost:5000/api/deposits/credit/total \
 
 ####Check Referral Data (User)
 curl -X GET "http://localhost:5000/api/referrals" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4"
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2ODIzNjY3LCJleHAiOjE3NTY4MjcyNjd9.Xu7onxzZ0CK_1-zwqhNbkT0OI0hd4Ex5KsiHZEZI9kg"
 
 ####Convert Commission (User)
 curl -X POST "http://localhost:5000/api/referrals/convert" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU1NDIyNjg1LCJleHAiOjE3NTU0MjYyODV9.ZH3yZnOpjV8Mhu8C3B2VVIzGNrZ2BPs-HSko2aygKf4" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzksInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2ODIzODU3LCJleHAiOjE3NTY4Mjc0NTd9.7-vFJvtMwiYTsUNN54jrJkyF2q9GoH_uyAz4K0p0o-0" \
 -H "Content-Type: application/json" \
 -d '{
   "amount": 5
@@ -666,7 +677,7 @@ curl -X POST http://localhost:5000/notifications/admin \
 #### Get all deposit amounts
 curl -X GET http://localhost:5000/api/deposits/admin/amounts \
 -H "Content-Type: application/json" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2MDQ2NzI4LCJleHAiOjE3NTYwNTAzMjh9.1Cq7A24wVr3HtWx6pi2AKcnZZ52EnALgdjMsvg1nCnE"
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NjgxMjQ0NCwiZXhwIjoxNzU2ODE2MDQ0fQ.ClW52p5evX1Mha5CM2mKgAHSfbtnnzs4eXi6yGgZCtA"
 
 
 #### Create Amount
@@ -695,3 +706,57 @@ curl -X PUT http://localhost:5000/api/deposits/admin/amounts/1 \
 curl -X DELETE http://localhost:5000/api/deposits/admin/amounts/1 \
 -H "Content-Type: application/json" \
 -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+
+
+
+### EDIT PROFILE
+
+####Get Profile
+curl -X GET http://localhost:5000/api/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ0MjY4LCJleHAiOjE3NTY1NDc4Njh9.E0vscbBfVgLrVo9QQtEnAlWwUKoOzrxsNEDly376YNA"
+
+#### Get Profile Summary
+curl -X GET http://localhost:5000/api/profile/summary \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ0MjY4LCJleHAiOjE3NTY1NDc4Njh9.E0vscbBfVgLrVo9QQtEnAlWwUKoOzrxsNEDly376YNA"
+
+#### Update Profile (with File Upload)
+curl -X PUT http://localhost:5000/api/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ0MjY4LCJleHAiOjE3NTY1NDc4Njh9.E0vscbBfVgLrVo9QQtEnAlWwUKoOzrxsNEDly376YNA" \
+  -F "name=New Name" \
+  -F "username=new_username" \
+  -F "profile_image=@path_to_your_file.jpg"
+
+
+#### Test untuk Update Profile Photo (PUT)
+curl -X PUT http://localhost:5000/api/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ3OTc5LCJleHAiOjE3NTY1NTE1Nzl9.yAi413TZ8q4boBt-eMokzNWSLCyh3nDEokXoERYTRw0" \
+  -F "profile_image=@/path/to/your/photo.jpg" \
+  -F "name=Uses Test 1" \
+  -F "username=userstest1" \
+  -F "whatsapp_number=+6281234567890" \
+  -F "usdt_network=TRC20" \
+  -F "usdt_address=TT222222222222"
+
+
+#### edit password untuk admin
+curl -X PUT http://localhost:5000/api/profile/change-password \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ0MjY4LCJleHAiOjE3NTY1NDc4Njh9.E0vscbBfVgLrVo9QQtEnAlWwUKoOzrxsNEDly376YNA" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "currentPassword": "SecurePass123!",
+    "newPassword": "12345678"
+  }'
+
+
+#### edit password untuk user
+curl -X PUT http://localhost:5000/api/profile/change-password-user \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU2NTQ0MjY4LCJleHAiOjE3NTY1NDc4Njh9.E0vscbBfVgLrVo9QQtEnAlWwUKoOzrxsNEDly376YNA" \
+  -d "currentPassword=your_current_password" \
+  -d "newPassword=your_new_password"
+
+
+#### Test endpoint dengan token valid
+curl -X GET "http://localhost:5000/api/campaigns/user/balance" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDEsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3MDg0NjQzLCJleHAiOjE3NTcwODgyNDN9.eQNffsO_F6s1EtzDu86ePMYtPGEVxDRXfjvVsrnIR3c" \
+  -H "Content-Type: application/json"

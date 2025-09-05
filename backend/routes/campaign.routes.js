@@ -136,4 +136,6 @@ router.get("/stats/monthly", auth, getUserCampaignMonthlyStats);
 // Delete campaign
 router.delete("/:campaignId", auth, deleteCampaign);
 
+router.get("/:campaignId", auth, getCampaignDetails);
+
 module.exports = router;

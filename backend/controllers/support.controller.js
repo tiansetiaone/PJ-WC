@@ -167,9 +167,9 @@ exports.requestVerification = async (req, res) => {
 // Admin: Get all tickets
 exports.getAllTickets = async (req, res) => {
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ 
+    return res.status(403).json({
       error: 'Admin access required',
-      code: 'ADMIN_ONLY' 
+      code: 'ADMIN_ONLY'
     });
   }
 
@@ -189,19 +189,20 @@ exports.getAllTickets = async (req, res) => {
 
     res.json(tickets);
   } catch (err) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch tickets',
-      code: 'FETCH_TICKETS_FAILED' 
+      code: 'FETCH_TICKETS_FAILED'
     });
   }
 };
 
+
 // Admin: Respond to ticket
 exports.respondToTicket = async (req, res) => {
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ 
+    return res.status(403).json({
       error: 'Admin access required',
-      code: 'ADMIN_ONLY' 
+      code: 'ADMIN_ONLY'
     });
   }
 
@@ -218,8 +219,7 @@ exports.respondToTicket = async (req, res) => {
           responded_at = NOW(),
           status = 'closed',
           contact_method = 'call'
-        WHERE id = ?
-      `, [ticketId]);
+        WHERE id = ?`, [ticketId]);
 
       return res.json({ 
         success: true,
@@ -244,8 +244,7 @@ exports.respondToTicket = async (req, res) => {
         responded_at = NOW(),
         status = 'closed',
         contact_method = ?
-      WHERE id = ?
-    `, [response, via, ticketId]);
+      WHERE id = ?`, [response, via, ticketId]);
 
     // 2. Get ticket details
     const [[ticket]] = await db.query(`
@@ -256,8 +255,7 @@ exports.respondToTicket = async (req, res) => {
         u.whatsapp_number
       FROM support_tickets t
       JOIN users u ON t.user_id = u.id
-      WHERE t.id = ?
-    `, [ticketId]);
+      WHERE t.id = ?`, [ticketId]);
 
     if (!ticket) {
       return res.status(404).json({
@@ -316,6 +314,7 @@ exports.respondToTicket = async (req, res) => {
     });
   }
 };
+
 
 // Helper functions
 async function notifyAdminAboutNewTicket(ticketId, subject) {
@@ -376,5 +375,72 @@ exports.getTicketDetails = async (req, res) => {
       error: 'Failed to fetch ticket details',
       code: 'FETCH_TICKET_FAILED' 
     });
+  }
+};
+
+
+// Get all contacts
+exports.getContacts = async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM contact_settings ORDER BY id ASC");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: add new contact
+exports.createContact = async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  try {
+    const { type, label, value, description } = req.body;
+    const [result] = await db.query(
+      "INSERT INTO contact_settings (type, label, value, description) VALUES (?, ?, ?, ?)",
+      [type, label, value, description]
+    );
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: update contact
+exports.updateContact = async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  try {
+    const { id } = req.params;
+    const { type, label, value, description } = req.body;
+    await db.query(
+      "UPDATE contact_settings SET type=?, label=?, value=?, description=?, updated_at=NOW() WHERE id=?",
+      [type, label, value, description, id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: delete contact
+exports.deleteContact = async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  try {
+    const { id } = req.params;
+    await db.query("DELETE FROM contact_settings WHERE id=?", [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update active status
+exports.toggleContactActive = async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    await db.query("UPDATE contact_settings SET is_active=? WHERE id=?", [is_active, id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

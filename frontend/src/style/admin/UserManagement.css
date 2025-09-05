@@ -1,4 +1,4 @@
-/* Container Layout */
+/* ===== Layout Global ===== */
 .container {
   display: flex;
   min-height: 100vh;
@@ -6,82 +6,6 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  background: white;
-  border-right: 1px solid #eee;
-  padding: 20px;
-}
-
-.sidebar .logo {
-  color: #007bff;
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 30px;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  cursor: pointer;
-  border-radius: 8px;
-  color: #333;
-  transition: 0.3s;
-}
-
-.sidebar ul li:hover,
-.sidebar ul li.active {
-  background: #007bff;
-  color: white;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  padding: 20px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header span {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.notif {
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.avatar {
-  width: 35px;
-  height: 35px;
-  background: #007bff;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
 
 /* Breadcrumb */
 .breadcrumb {
@@ -90,19 +14,23 @@
   color: gray;
 }
 
-/* Card */
-.card {
+/* card-manage */
+.card-manage {
   background: white;
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  max-width: 1000px;
+  width: 100%;
 }
 
-.card h3 {
+.card-manage h3 {
   font-size: 18px;
   font-weight: bold;
+  margin-bottom: 15px;
 }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   margin-top: 30px;
@@ -124,16 +52,135 @@
   color: gray;
 }
 
-/* Responsive */
+/* ===== User Table ===== */
+.search-filter {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.search-filter input,
+.search-filter select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background: #2563eb;
+  color: white;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.status {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status.failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.status.checking {
+  background: #e0f2fe;
+  color: #2563eb;
+}
+
+.actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  margin: 0 3px;
+  font-size: 16px;
+}
+
+.pagination-user-manage {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.pagination-user-manage button {
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.pagination-user-manage .active {
+  background: #2563eb;
+  color: white;
+  border: none;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.main-content-manage {
+    padding: 0px 15px;
+  }
+
+
+/* ===== Responsive ===== */
 @media (max-width: 992px) {
   .sidebar {
     width: 200px;
   }
 
-  .card {
+  .card-manage {
     padding: 15px;
   }
 }
+
+
 
 @media (max-width: 768px) {
   .container {
@@ -146,8 +193,21 @@
     border-bottom: 1px solid #eee;
   }
 
-  .main-content {
+  .main-content-manage {
     padding: 15px;
+  }
+
+  .search-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  table {
+    font-size: 14px;
+  }
+
+  th, td {
+    padding: 8px;
   }
 }
 
@@ -164,5 +224,33 @@
 
   .empty-state img {
     width: 90px;
+  }
+
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    margin-bottom: 12px;
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  td {
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
   }
 }

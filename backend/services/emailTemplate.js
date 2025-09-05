@@ -129,8 +129,59 @@ const ticketResponseTemplate = (ticketId, response) => `
 </html>
 `;
 
+
+// emailTemplate.js - Tambahkan fungsi-fungsi ini
+
+function registrationUnderReviewTemplate(name) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+        <h2 style="color: #2c3e50; font-weight: bold; text-align: center;">
+          Account Registration Under Checking
+        </h2>
+        
+        <div style="margin: 20px 0; padding: 15px; background-color: #ffffff; border-radius: 4px;">
+          <p>Hey <strong>${name}</strong>,</p>
+          <p>Your account registration is under checking in our system, please wait any moments, it doesn't take long. We'll inform you again if the account successfully registered.</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #777; text-align: center;">
+          <p><strong>Best regards,</strong></p>
+          <p style="font-weight: bold;">Blasterc</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function registrationFailedTemplate(name) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px;">
+        <h2 style="color: #e74c3c; font-weight: bold; text-align: center;">
+          Account Has Been Failed to Register
+        </h2>
+        
+        <div style="margin: 20px 0; padding: 15px; background-color: #ffffff; border-radius: 4px;">
+          <p>Hey <strong>${name}</strong>,</p>
+          <p>Your account has been failed to register.</p>
+          <p>Please make sure and submit a new register account request. Hope this problem doesn't make you a bad day. We will wait your next move to us!</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #777; text-align: center;">
+          <p><strong>Best regards,</strong></p>
+          <p style="font-weight: bold;">Blasterc</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
 module.exports = { 
   registrationEmailTemplate,
   supportTicketTemplate,
-  ticketResponseTemplate 
+  ticketResponseTemplate,
+registrationUnderReviewTemplate,
+  registrationFailedTemplate
 };

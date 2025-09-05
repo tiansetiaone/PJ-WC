@@ -1,4 +1,4 @@
-.campaign-container {
+.campaign-containers {
   display: flex;
   gap: 2rem;
   padding: 20px;
@@ -57,10 +57,16 @@
   margin-top: 20px;
   cursor: pointer;
   font-size: 16px;
+  width: 100%;
 }
 
 .campaign-form button:hover {
   background-color: #0040cc;
+}
+
+.campaign-form button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
 }
 
 .campaign-preview {
@@ -70,15 +76,92 @@
   justify-content: center;
 }
 
-.phone-frame img {
-  max-width: 250px;
+.phone-frame-user {
+  position: relative;
+  max-width: 300px;
+}
+
+.phone-mockup {
+  width: 100%;
+  height: auto;
+}
+
+.screen-content {
+  position: absolute;
+  top: 12%;
+  left: 7.5%;
+  width: 85%;
+  height: 76%;
+  overflow: hidden;
+  background: white;
   border-radius: 20px;
-  border: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-message {
+  padding: 15px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  margin: 10px 0;
+}
+
+.preview-message .title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.img-msg {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* Style untuk informasi saldo */
+.balance-info {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #007bff;
+}
+
+.balance-info p {
+  margin: 5px 0;
+  color: #333;
+}
+
+.balance-info strong {
+  color: #28a745;
+}
+
+.error-text {
+  color: #dc3545;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.error-text a {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.disabled-btn {
+  background-color: #6c757d !important;
+  cursor: not-allowed !important;
 }
 
 /* Tablet */
 @media (max-width: 1024px) {
-  .campaign-container {
+  .campaign-containers {
     flex-direction: column;
     align-items: center;
   }
@@ -106,7 +189,12 @@
     width: 100%;
   }
 
-  .phone-frame img {
-    max-width: 200px;
+  .phone-frame-user {
+    max-width: 250px;
+  }
+  
+  .screen-content {
+    top: 10%;
+    height: 78%;
   }
 }

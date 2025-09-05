@@ -1,9 +1,5 @@
-const nodemailer = require('nodemailer');
-const { 
-  registrationEmailTemplate,
-  supportTicketTemplate,
-  ticketResponseTemplate
-} = require('./emailTemplate');
+const nodemailer = require("nodemailer");
+const { registrationEmailTemplate, supportTicketTemplate, ticketResponseTemplate, registrationFailedTemplate, registrationUnderReviewTemplate } = require("./emailTemplate");
 
 // Transporter tetap sama
 const transporter = nodemailer.createTransport({
@@ -12,16 +8,16 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    pass: process.env.EMAIL_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: process.env.NODE_ENV === 'production'
-  }
+    rejectUnauthorized: process.env.NODE_ENV === "production",
+  },
 });
 
 // Fungsi existing (tidak diubah)
 const sendRegistrationEmail = async (email, name) => {
-  if (process.env.SKIP_EMAIL === 'true') {
+  if (process.env.SKIP_EMAIL === "true") {
     console.log(`[DEV] Skipping email to ${email}`);
     return { skipped: true };
   }
@@ -30,23 +26,23 @@ const sendRegistrationEmail = async (email, name) => {
     const mailOptions = {
       from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: 'Account Has Been Successfully Registered on Blasterc',
+      subject: "Account Has Been Successfully Registered on Blasterc",
       html: registrationEmailTemplate(name),
-      text: `Hey ${name},\n\nYour account has been successfully registered!`
+      text: `Hey ${name},\n\nYour account has been successfully registered!`,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('📧 Registration email sent:', info.messageId);
+    console.log("📧 Registration email sent:", info.messageId);
     return info;
   } catch (error) {
-    console.error('Registration email error:', error);
+    console.error("Registration email error:", error);
     throw error;
   }
 };
 
 // Fungsi baru untuk support ticket
 const notifyNewTicket = async (ticketId, subject, message, userName) => {
-  if (process.env.SKIP_EMAIL === 'true') {
+  if (process.env.SKIP_EMAIL === "true") {
     console.log(`[DEV] Skipping ticket notification for #${ticketId}`);
     return { skipped: true };
   }
@@ -57,14 +53,14 @@ const notifyNewTicket = async (ticketId, subject, message, userName) => {
       to: process.env.EMAIL_USER, // Kirim ke admin email
       subject: `[Ticket #${ticketId}] ${subject}`,
       html: supportTicketTemplate(ticketId, subject, message, userName),
-      text: `New ticket from ${userName}:\n\n${message}`
+      text: `New ticket from ${userName}:\n\n${message}`,
     };
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`📧 Ticket notification sent for #${ticketId}`);
     return info;
   } catch (error) {
-    console.error('Ticket notification error:', error);
+    console.error("Ticket notification error:", error);
     throw error;
   }
 };
@@ -77,14 +73,14 @@ const sendTicketResponse = async (userEmail, ticketId, response) => {
       to: userEmail,
       subject: `Re: Your Support Ticket #${ticketId}`,
       html: ticketResponseTemplate(ticketId, response),
-      text: `Regarding your ticket #${ticketId}:\n\n${response}`
+      text: `Regarding your ticket #${ticketId}:\n\n${response}`,
     };
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`📧 Response sent for ticket #${ticketId}`);
     return info;
   } catch (error) {
-    console.error('Ticket response error:', error);
+    console.error("Ticket response error:", error);
     throw error;
   }
 };
@@ -92,21 +88,20 @@ const sendTicketResponse = async (userEmail, ticketId, response) => {
 // Verifikasi koneksi (existing)
 transporter.verify((error) => {
   if (error) {
-    console.error('❌ SMTP Connection Failed:', error);
-    if (process.env.NODE_ENV === 'production') process.exit(1);
+    console.error("❌ SMTP Connection Failed:", error);
+    if (process.env.NODE_ENV === "production") process.exit(1);
   } else {
-    console.log('✅ SMTP Server Connected');
+    console.log("✅ SMTP Server Connected");
   }
 });
-
 
 // Di services/emailService.js
 async function sendPasswordResetEmail(email, resetToken) {
   try {
     // Gunakan FRONTEND_URL dari environment variable atau default ke localhost
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
-    const appName = process.env.APP_NAME || 'Blasterc';
+    const appName = process.env.APP_NAME || "Blasterc";
 
     const mailOptions = {
       from: `"${appName} Support" <${process.env.EMAIL_FROM}>`,
@@ -148,17 +143,17 @@ ${resetLink}
 
 This link will expire in 30 minutes. If you didn't request a password reset, 
 please ignore this email or contact support if you have concerns.
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`Password reset email sent to ${email}`);
     return { success: true, resetLink };
   } catch (error) {
-    console.error('Error sending password reset email:', {
+    console.error("Error sending password reset email:", {
       error: error.message,
       email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     throw error;
   }
@@ -167,9 +162,9 @@ please ignore this email or contact support if you have concerns.
 // Tambahkan fungsi ini di services/emailService.js
 async function sendPasswordResetConfirmation(email) {
   try {
-    const supportEmail = process.env.SUPPORT_EMAIL || 'support@example.com';
-    const appName = process.env.APP_NAME || 'Our App';
-    
+    const supportEmail = process.env.SUPPORT_EMAIL || "support@example.com";
+    const appName = process.env.APP_NAME || "Our App";
+
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
@@ -202,24 +197,23 @@ If you did not make this change, please contact our support team immediately at:
 ${supportEmail}
 
 This is an automated message. Please do not reply to this email.
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`Password reset confirmation sent to ${email}`);
     return true;
   } catch (error) {
-    console.error('Failed to send password reset confirmation:', error);
+    console.error("Failed to send password reset confirmation:", error);
     throw error;
   }
 }
-
 
 async function sendVerificationRequestEmail(email, ticketId, subject, message) {
   try {
     // Validate required environment variables
     if (!process.env.ADMIN_EMAIL) {
-      throw new Error('ADMIN_EMAIL is not configured');
+      throw new Error("ADMIN_EMAIL is not configured");
     }
 
     const mailOptions = {
@@ -253,23 +247,22 @@ User Email: ${email}
 Message: ${message}
 
 Verify this account: ${process.env.ADMIN_DASHBOARD_URL}/verify-user?email=${encodeURIComponent(email)}&ticket=${ticketId}
-      `
+      `,
     };
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`Verification request email sent for ticket #${ticketId}`);
     return info;
   } catch (error) {
-    console.error('Failed to send verification email:', {
+    console.error("Failed to send verification email:", {
       error: error.message,
       ticketId,
       recipient: process.env.ADMIN_EMAIL,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     throw error;
   }
 }
-
 
 // Tambahkan fungsi-fungsi baru
 async function sendAdminVerificationRequest(email, userId, userName) {
@@ -279,7 +272,7 @@ async function sendAdminVerificationRequest(email, userId, userName) {
     const verificationLink = `${process.env.FRONTEND_URL}/login?redirect=${encodeURIComponent(verificationPath)}`;
 
     const mailOptions = {
-      from: `"${process.env.APP_NAME || 'Blasterc'}" <${process.env.EMAIL_FROM}>`,
+      from: `"${process.env.APP_NAME || "Blasterc"}" <${process.env.EMAIL_FROM}>`,
       to: process.env.ADMIN_EMAIL,
       subject: `[Action Required] New User Verification - ${userName || email}`,
       html: `
@@ -289,7 +282,7 @@ async function sendAdminVerificationRequest(email, userId, userName) {
             
             <div style="margin: 20px 0; padding: 15px; background-color: #e9f7ef; border-radius: 4px;">
               <p><strong>User Email:</strong> ${email}</p>
-              <p><strong>User Name:</strong> ${userName || 'Not provided'}</p>
+              <p><strong>User Name:</strong> ${userName || "Not provided"}</p>
               <p><strong>Action Required:</strong> Please verify this new registration</p>
             </div>
             
@@ -313,35 +306,34 @@ async function sendAdminVerificationRequest(email, userId, userName) {
 New User Verification Required
 
 User Email: ${email}
-User Name: ${userName || 'Not provided'}
+User Name: ${userName || "Not provided"}
 
 Please verify this new registration by logging in:
 ${verificationLink}
 
 This link will expire in 24 hours. If you didn't request this verification, please ignore this email.
-      `
+      `,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent:', {
+    console.log("Verification email sent:", {
       userId,
       email,
       messageId: info.messageId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     return { success: true, verificationLink };
   } catch (error) {
-    console.error('Failed to send verification email:', {
+    console.error("Failed to send verification email:", {
       error: error.message,
       userId,
       email,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     throw error;
   }
 }
-
 
 async function sendAccountApprovalEmail(email, name) {
   try {
@@ -349,7 +341,7 @@ async function sendAccountApprovalEmail(email, name) {
     const mailOptions = {
       from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: 'Your Account Has Been Approved',
+      subject: "Your Account Has Been Approved",
       html: `
         <div style="font-family: Arial, sans-serif;">
           <h2>Welcome to Blasterc, ${name}!</h2>
@@ -361,42 +353,92 @@ async function sendAccountApprovalEmail(email, name) {
           <p>If you have any questions, please contact our support team.</p>
         </div>
       `,
-      text: `Your account has been approved. Login here: ${loginUrl}`
+      text: `Your account has been approved. Login here: ${loginUrl}`,
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`Account approval email sent to ${email}`);
   } catch (error) {
-    console.error('Failed to send account approval email:', error);
+    console.error("Failed to send account approval email:", error);
     throw error;
   }
 }
 
 async function sendAccountBlockedEmail(email, name, reason) {
   try {
-    const supportEmail = process.env.SUPPORT_EMAIL || 'support@blasterc.com';
+    const supportEmail = process.env.SUPPORT_EMAIL || "support@blasterc.com";
     const mailOptions = {
       from: `"Blasterc Support" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: 'Your Account Has Been Blocked',
+      subject: "Your Account Has Been Blocked",
       html: `
         <div style="font-family: Arial, sans-serif;">
           <h2>Account Status Update</h2>
           <p>Dear ${name},</p>
           <p>We regret to inform you that your account has been blocked by our admin team.</p>
-          <p><strong>Reason:</strong> ${reason || 'Violation of terms of service'}</p>
+          <p><strong>Reason:</strong> ${reason || "Violation of terms of service"}</p>
           <p>If you believe this is a mistake, please contact our support team at:</p>
           <a href="mailto:${supportEmail}">${supportEmail}</a>
           <p>Thank you for your understanding.</p>
         </div>
       `,
-      text: `Your account has been blocked. Reason: ${reason || 'Violation of terms of service'}. Contact support at ${supportEmail} if you have questions.`
+      text: `Your account has been blocked. Reason: ${reason || "Violation of terms of service"}. Contact support at ${supportEmail} if you have questions.`,
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`Account blocked notification sent to ${email}`);
   } catch (error) {
-    console.error('Failed to send account blocked email:', error);
+    console.error("Failed to send account blocked email:", error);
+    throw error;
+  }
+}
+
+
+
+async function sendRegistrationUnderReviewEmail(email, name) {
+  if (process.env.SKIP_EMAIL === "true") {
+    console.log(`[DEV] Skipping under review email to ${email}`);
+    return { skipped: true };
+  }
+
+  try {
+    const mailOptions = {
+      from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: "Account Registration Under Review",
+      html: registrationUnderReviewTemplate(name),
+      text: `Hey ${name},\n\nYour account registration is under checking in our system, please wait any moments. We'll inform you again if the account successfully registered.\n\nBest regards,\nBlasterc`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("📧 Registration under review email sent:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("Registration under review email error:", error);
+    throw error;
+  }
+}
+
+async function sendRegistrationFailedEmail(email, name) {
+  if (process.env.SKIP_EMAIL === "true") {
+    console.log(`[DEV] Skipping registration failed email to ${email}`);
+    return { skipped: true };
+  }
+
+  try {
+    const mailOptions = {
+      from: `"Blasterc" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: "Account Registration Failed",
+      html: registrationFailedTemplate(name),
+      text: `Hey ${name},\n\nYour account has been failed to register. Please make sure and submit a new register account request. Hope this problem doesn't make you a bad day. We will wait your next move to us!\n\nBest regards,\nBlasterc`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("📧 Registration failed email sent:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("Registration failed email error:", error);
     throw error;
   }
 }
@@ -406,10 +448,12 @@ module.exports = {
   sendRegistrationEmail,
   notifyNewTicket,
   sendTicketResponse,
-  sendPasswordResetEmail,  // Add this line
+  sendPasswordResetEmail, // Add this line
   sendPasswordResetConfirmation,
   sendVerificationRequestEmail,
   sendAccountApprovalEmail,
   sendAccountBlockedEmail,
-  sendAdminVerificationRequest
+  sendAdminVerificationRequest,
+  sendRegistrationUnderReviewEmail,
+  sendRegistrationFailedEmail
 };

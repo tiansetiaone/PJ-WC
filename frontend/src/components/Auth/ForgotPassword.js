@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 import '../../style/Auth/ForgotPassword.css';
+import withDeviceRestriction from '../../hocs/withDeviceRestriction';
+import logoImages from "../../assets/logo-blasterc.png";
+
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -63,8 +66,10 @@ const ForgotPassword = () => {
     <div className="recover-container">
       {/* Left Side */}
       <div className="recover-left">
-        <div className="logo">BLASTERC</div>
-        <h2 className="tagline">Let's Grow Your Business with Us</h2>
+        <div className="branding-forgot">
+          <img src={logoImages} alt="BLASTERC" className="logo-img" />
+          <p className="tagline">Let's Grow Your Business with Us</p>
+        </div>
       </div>
 
       {/* Right Side */}
@@ -126,7 +131,7 @@ const ForgotPassword = () => {
 
             <button 
               type="submit" 
-              className="btn-send" 
+              className="btn-send-forgot" 
               disabled={isLoading || !hCaptchaToken || email !== confirmEmail || !email}
             >
               {isLoading ? 'Sending...' : 'Send Verification Link'}
@@ -142,4 +147,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default withDeviceRestriction(ForgotPassword);

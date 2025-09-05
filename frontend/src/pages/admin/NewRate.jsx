@@ -6,28 +6,40 @@ export default function NewRate({ onClose }) {
   const [rate, setRate] = useState("");
   const [lastRate] = useState(0.5);
   const [loading, setLoading] = useState(false);
+  const [type, setType] = useState("percent");
+  const [level, setLevel] = useState(1);
 
   const handleChange = (e) => setRate(e.target.value);
 
   const handleSave = async () => {
-    if (!rate || rate >= 5) {
-      alert("Rate must be less than $5");
-      return;
+    // Validasi untuk tipe percent (0-100%) dan flat (kurang dari $5)
+    if (type === "percent") {
+      if (!rate || parseFloat(rate) > 100 || parseFloat(rate) <= 0) {
+        alert("Percent rate must be between 0.01% and 100%");
+        return;
+      }
+    } else {
+      if (!rate || parseFloat(rate) >= 5 || parseFloat(rate) <= 0) {
+        alert("Flat rate must be between $0.01 and $4.99");
+        return;
+      }
     }
 
     try {
       setLoading(true);
 
       const data = {
-        role_name: `referral_rate_${Date.now()}`, // nama unik
+        role_name: `referral_rate_${Date.now()}`,
+        commission_type: type,
         commission_rate: parseFloat(rate),
-        min_conversion: 10, // default min conversion
+        min_conversion: 10,
+        level
       };
 
       const res = await createReferralRole(data);
 
       alert(res.message || "New referral rate created successfully");
-      onClose(); // tutup modal
+      onClose(); // Tutup modal dan trigger refresh
     } catch (err) {
       alert(`Failed to save: ${err.message}`);
     } finally {
@@ -45,20 +57,43 @@ export default function NewRate({ onClose }) {
       </div>
 
       <div className="input-group">
+        <label className="input-label">* Commission Type</label>
+        <select value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="percent">Percent</option>
+          <option value="flat">Flat</option>
+        </select>
+      </div>
+
+      <div className="input-group">
         <label className="input-label">* New Rate</label>
         <div className="input-wrapper">
-          <span className="currency-symbol">$</span>
+          {type === "flat" && <span className="currency-symbol">$</span>}
           <input
             type="number"
-            placeholder="e.g 1"
+            placeholder={type === "percent" ? "e.g 5" : "e.g 1"}
             value={rate}
             onChange={handleChange}
-            min="0"
-            max="5"
+            min="0.01"
+            max={type === "percent" ? "100" : "4.99"}
             step="0.01"
           />
+          {type === "percent" && <span className="currency-symbol">%</span>}
         </div>
-        <small className="input-hint">Input rate less than $5</small>
+        <small className="input-hint">
+          {type === "percent" 
+            ? "Input rate between 0.01% and 100%" 
+            : "Input rate between $0.01 and $4.99"}
+        </small>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">* Level</label>
+        <input
+          type="number"
+          value={level}
+          onChange={(e) => setLevel(Number(e.target.value))}
+          min="1"
+        />
       </div>
 
       <div className="button-group">
@@ -66,8 +101,8 @@ export default function NewRate({ onClose }) {
           Back
         </button>
         <button
-          className="btn-save"
-          disabled={!rate || rate >= 5 || loading}
+          className="btn-save-newrate"
+          disabled={!rate || loading}
           onClick={handleSave}
         >
           {loading ? "Saving..." : "Save"}

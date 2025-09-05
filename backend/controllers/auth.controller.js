@@ -12,7 +12,11 @@ const {
   sendAdminVerificationRequest,
   sendAccountApprovalEmail,
   sendAccountBlockedEmail,
-  sendVerificationRequestEmail
+  sendVerificationRequestEmail,
+  notifyNewTicket,
+  sendRegistrationFailedEmail,
+  sendRegistrationUnderReviewEmail,
+  sendTicketResponse
 } = require('../services/emailService');
 const crypto = require('crypto');
 require('dotenv').config();
@@ -200,30 +204,24 @@ exports.registerUser = async (req, res) => {
       }
     }
 
-// Email notifications
-try {
-  // Send registration email to user
-  await sendRegistrationEmail(email, name);
-  registrationResult.emailSent = true;
+    // Email notifications - MODIFIED SECTION
+    try {
+      // Kirim email ke user bahwa registrasi sedang dalam review
+      await sendRegistrationUnderReviewEmail(email, name);
+      registrationResult.emailSent = true;
 
-  // Send admin verification request if needed
-  if (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') {
-    await sendAdminVerificationRequest(email, registrationResult.userId);
-  } else {
-    // If no verification needed, send welcome email immediately
-    await sendAccountApprovalEmail(email, name);
-  }
-} catch (emailError) {
-  console.error('Email sending failed:', emailError);
-  registrationResult.emailSent = false;
-  registrationResult.emailError = emailError.message;
-}
+      // Kirim permintaan verifikasi ke admin
+      await sendAdminVerificationRequest(email, registrationResult.userId, name);
+      
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      registrationResult.emailSent = false;
+      registrationResult.emailError = emailError.message;
+    }
 
     return res.status(201).json({
       success: true,
-      message: process.env.REQUIRE_ADMIN_VERIFICATION === 'true' 
-        ? 'Registration successful. Waiting for admin approval.' 
-        : 'Registration successful. You can now login.',
+      message: 'Registration successful. Waiting for admin approval.',
       ...registrationResult,
       is_active: registrationResult.is_active,
       captchaVerification: {
@@ -518,6 +516,8 @@ exports.loginUser = async (req, res) => {
 
     // Generate token only if all checks pass
     const token = generateToken(user);
+    
+    // Return user data with balance included
     res.json({ 
       token,
       user: {
@@ -526,7 +526,11 @@ exports.loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         provider: user.provider,
-        is_active: user.is_active
+        is_active: user.is_active,
+        balance: user.balance, // Tambahkan balance di sini
+        username: user.username, // Tambahkan field lainnya jika diperlukan
+        usdt_address: user.usdt_address,
+        usdt_network: user.usdt_network
       }
     });
 
@@ -792,8 +796,7 @@ exports.getVerifyUserPage = async (req, res) => {
   }
 };
 
-// Add this to auth.controller.js
-// Update verifyUser function
+// auth.controller.js - Modifikasi fungsi verifyUser yang sudah ada
 exports.verifyUser = async (req, res) => {
   const { user_id, action, reason } = req.body;
   
@@ -806,6 +809,8 @@ exports.verifyUser = async (req, res) => {
       });
     }
 
+    const userData = user[0];
+    
     if (action === 'approve') {
       await db.query(
         'UPDATE users SET is_active = 1, verified_at = NOW() WHERE id = ?',
@@ -813,7 +818,7 @@ exports.verifyUser = async (req, res) => {
       );
       
       // Kirim email pemberitahuan ke user
-      await sendAccountApprovalEmail(user[0].email, user[0].name);
+      await sendAccountApprovalEmail(userData.email, userData.name);
       
       return res.json({ 
         success: true,
@@ -830,8 +835,8 @@ exports.verifyUser = async (req, res) => {
       
       // Kirim email pemberitahuan ke user
       await sendAccountBlockedEmail(
-        user[0].email, 
-        user[0].name, 
+        userData.email, 
+        userData.name, 
         reason || 'Blocked by admin'
       );
       
@@ -839,6 +844,19 @@ exports.verifyUser = async (req, res) => {
         success: true,
         message: 'User blocked successfully',
         code: 'USER_BLOCKED'
+      });
+    }
+    
+    // Tambahkan case untuk action 'failed'
+    if (action === 'failed') {
+      // Untuk kasus registrasi gagal (tidak perlu update status user, hanya kirim email)
+      // Kirim email pemberitahuan gagal ke user
+      await sendRegistrationFailedEmail(userData.email, userData.name);
+      
+      return res.json({ 
+        success: true,
+        message: 'User registration marked as failed',
+        code: 'REGISTRATION_FAILED'
       });
     }
 
@@ -851,7 +869,8 @@ exports.verifyUser = async (req, res) => {
     console.error('Admin verification error:', err);
     res.status(500).json({ 
       error: 'Verification failed',
-      code: 'VERIFICATION_FAILED'
+      code: 'VERIFICATION_FAILED',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -901,7 +920,7 @@ exports.getUserById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [user] = await db.query('SELECT id, name, email, is_active, created_at FROM users WHERE id = ?', [id]);
+    const [user] = await db.query('SELECT id, name, email, whatsapp_number, usdt_network, usdt_address, is_active, created_at FROM users WHERE id = ?', [id]);
 
     if (!user.length) {
       return res.status(404).json({
@@ -943,5 +962,156 @@ exports.getProfileWithConversionRules = async (req, res) => {
   } catch (err) {
     console.error("Error fetching user profile with rules", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+// controllers/auth.controller.js
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Ambil semua user
+const [users] = await db.query(`
+  SELECT 
+    u.id, 
+    u.name, 
+    u.email, 
+    u.whatsapp_number, 
+    u.is_active, 
+    u.created_at, 
+    u.provider,
+    u.deleted_at,
+    u.verified_at,
+    u.balance,
+    COALESCE(SUM(d.credit), 0) AS total_credit
+  FROM users u
+  LEFT JOIN deposits d ON u.id = d.user_id
+  GROUP BY u.id
+  ORDER BY u.created_at DESC
+`);
+
+    if (!users.length) {
+      return res.status(200).json([]);
+    }
+
+    // Mapping ke format yang lebih rapi untuk frontend
+const mappedUsers = users.map(u => ({
+  id: u.id,
+  name: u.name,
+  email: u.email,
+  phone: u.whatsapp_number || null,
+  status: u.deleted_at 
+    ? "Register Failed"
+    : u.is_active === 1
+      ? "Register Success"
+      : "Checking Register",
+  date: u.created_at,
+  provider: u.provider,
+  verified_at: u.verified_at,
+  balance: u.balance,
+  total_credit: u.total_credit
+}));
+
+    res.json(mappedUsers);
+
+  } catch (err) {
+    console.error("Error fetching all users:", err);
+    res.status(500).json({
+      error: "Failed to fetch users",
+      code: "FETCH_USERS_FAILED",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined
+    });
+  }
+};
+
+
+// Delete user (admin only)
+exports.deleteUser = async (req, res) => {
+  try {
+    // hanya admin yang boleh
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Forbidden: Admin access required" });
+    }
+
+    const { id } = req.params;
+
+    // cek apakah user ada
+    const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // hapus user
+    await db.query("DELETE FROM users WHERE id = ?", [id]);
+
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+// controllers/auth.controller.js
+exports.adminResetPassword = async (req, res) => {
+  const { user_id } = req.body;
+
+  try {
+    const [user] = await db.query("SELECT * FROM users WHERE id = ?", [user_id]);
+    if (!user.length) {
+      return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND" });
+    }
+
+    // Generate password baru random
+    const newPassword = crypto.randomBytes(6).toString("hex"); // contoh: "a3f9b1c4"
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // Update password di DB
+    await db.query("UPDATE users SET password = ? WHERE id = ?", [hashed, user_id]);
+
+    // Kirim email ke user dengan password baru
+    await sendPasswordResetEmail(user[0].email, newPassword);
+
+    return res.json({
+      success: true,
+      message: "Password reset successfully by admin",
+      code: "ADMIN_PASSWORD_RESET",
+    });
+  } catch (err) {
+    console.error("Admin reset password error:", err);
+    res.status(500).json({
+      error: "Admin reset failed",
+      code: "RESET_FAILED",
+    });
+  }
+};
+
+
+// Mendapatkan saldo user
+exports.getUserBalance = async (req, res) => {
+  const user_id = req.user.id;
+
+  try {
+    const [user] = await db.query(
+      `SELECT balance FROM users WHERE id = ?`,
+      [user_id]
+    );
+
+    if (!user.length) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      balance: user[0].balance,
+    });
+  } catch (err) {
+    console.error("Get user balance error:", err);
+    res.status(500).json({
+      error: "Failed to get user balance",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
   }
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import "./TicketInfo.css";
+import "../../style/admin/TicketInfo.css";
 
 const TicketInfo = ({ email, date, message, onBack, onReplyEmail, onReplyTelegram }) => {
   return (

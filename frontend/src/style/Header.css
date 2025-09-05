@@ -1,13 +1,13 @@
 .topnav {
-  position: sticky; /* Membuat header sticky */
-  top: 0; /* Tempel di bagian atas */
-  z-index: 1000; /* Pastikan di atas elemen lain */
+  position: sticky;
+  top: 0;
+  z-index: 800;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background-color: #ffffff; /* Warna background */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Shadow untuk efek depth */
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   width: 100%;
 }
 
@@ -22,6 +22,12 @@
   width: 10rem;
   align-items: center;
   margin-top: 1rem;
+}
+
+.profile-pic-container img {
+  width: 3rem;
+  align-items: center;
+  margin-top: 0.5rem;
 }
 
 .menu-toggle {
@@ -48,46 +54,47 @@
   cursor: pointer;
 }
 
-.profile-dropdown .profile-pic {
-  width: 100%;
-  border-radius: 100%;
+.profile-pic-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
 }
 
+.profile-fallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 18px;
+}
 
-/* Tambahkan ini ke Header.css */
-
+/* Dropdown styles */
 .profile-dropdown {
   position: relative;
 }
 
-.dropdown-content {
-  display: none;
+.profile-dropdown-content {
   position: absolute;
   right: 0;
-  background-color: #f9f9f9;
-  min-width: 120px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-  border-radius: 4px;
-}
-
-.profile-dropdown:hover .dropdown-content {
-  display: block;
-}
-
-.logout-button {
-  width: 100%;
-  padding: 0.5rem;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-}
-
-.logout-button:hover {
-  background-color: #f1f1f1;
+  top: 50px;
+  z-index: 1000;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
 }
 
 /* Responsive */
@@ -105,8 +112,15 @@
     font-size: 18px;
   }
 
-  .profile-pic {
+  .profile-pic,
+  .profile-fallback {
     width: 35px;
     height: 35px;
+    font-size: 16px;
+  }
+  
+  .profile-dropdown-content {
+    top: 40px;
+    right: -10px;
   }
 }

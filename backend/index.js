@@ -3,13 +3,14 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const db = require("./config/db");
+const path = require('path');
 
 
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/auth", require("./routes/auth.routes"));
@@ -62,4 +63,23 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
   next();
+});
+
+
+// Di index.js, tambahkan test route
+app.get('/test-upload', (req, res) => {
+  const testPath = path.join(__dirname, 'uploads', 'profiles');
+  const testFile = path.join(testPath, 'profile-33-1756482455248.jpg');
+  
+  const fs = require('fs');
+  
+  console.log('Upload directory exists:', fs.existsSync(testPath));
+  console.log('Test file exists:', fs.existsSync(testFile));
+  console.log('Upload path:', testPath);
+  
+  if (fs.existsSync(testFile)) {
+    res.send('File exists: ' + testFile);
+  } else {
+    res.status(404).send('File not found: ' + testFile);
+  }
 });

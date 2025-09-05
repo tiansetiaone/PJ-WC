@@ -189,25 +189,30 @@ exports.getBalance = async (req, res) => {
 
 
 // Admin: Create new referral role
+// Admin: Create new referral role
 exports.createReferralRole = async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
 
   try {
-    const { role_name, commission_rate, min_conversion } = req.body;
+    const { role_name, commission_type, commission_rate, min_conversion, level } = req.body;
 
     // Validasi input
-    if (!role_name || !commission_rate || !min_conversion) {
+    if (!role_name || !commission_type || !commission_rate || !min_conversion) {
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (!['flat', 'percent'].includes(commission_type)) {
+      return res.status(400).json({ error: 'Invalid commission_type (flat|percent)' });
     }
 
     // Simpan ke database
     const [result] = await db.query(
       `INSERT INTO referral_roles 
-       (role_name, commission_rate, min_conversion) 
-       VALUES (?, ?, ?)`,
-      [role_name, commission_rate, min_conversion]
+       (role_name, commission_type, commission_rate, min_conversion, level) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [role_name, commission_type, commission_rate, min_conversion, level || 1]
     );
 
     res.status(201).json({
@@ -223,6 +228,7 @@ exports.createReferralRole = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Admin: Get referral role details
 exports.getReferralRole = async (req, res) => {
@@ -325,29 +331,29 @@ exports.updateReferralRole = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { role_name, commission_rate, min_conversion } = req.body;
+    const { role_name, commission_type, commission_rate, min_conversion, level } = req.body;
 
-    // Validate input
-    if (!role_name || !commission_rate || !min_conversion) {
+    if (!role_name || !commission_type || !commission_rate || !min_conversion) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Check if role exists
+    if (!['flat', 'percent'].includes(commission_type)) {
+      return res.status(400).json({ error: 'Invalid commission_type' });
+    }
+
     const [existingRole] = await db.query(
       'SELECT * FROM referral_roles WHERE id = ?',
       [id]
     );
-
     if (!existingRole.length) {
       return res.status(404).json({ error: 'Role not found' });
     }
 
-    // Update role
     await db.query(
       `UPDATE referral_roles 
-       SET role_name = ?, commission_rate = ?, min_conversion = ?, updated_at = NOW()
+       SET role_name = ?, commission_type = ?, commission_rate = ?, min_conversion = ?, level = ?, updated_at = NOW()
        WHERE id = ?`,
-      [role_name, commission_rate, min_conversion, id]
+      [role_name, commission_type, commission_rate, min_conversion, level || 1, id]
     );
 
     res.json({
@@ -356,12 +362,10 @@ exports.updateReferralRole = async (req, res) => {
     });
 
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'Role name already exists' });
-    }
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 // Admin: Delete referral role
@@ -454,7 +458,6 @@ exports.setDefaultRole = async (req, res) => {
 // Add this function to referral.controller.js
 async function checkReferralCommissions(userId) {
   try {
-    // Get the entire referral chain
     const [chain] = await db.query(`
       WITH RECURSIVE referral_chain AS (
         SELECT referrer_id, referred_id, 1 as level
@@ -472,54 +475,53 @@ async function checkReferralCommissions(userId) {
     `, [userId]);
 
     const commissionsAwarded = [];
-    
-    // Process each level in the chain
+
     for (const link of chain) {
       const referrerId = link.referrer_id;
       const level = link.level;
-      
-      // Check if both users have minimum deposit
-      const [referrerDeposit] = await db.query(
-        `SELECT SUM(amount) as total 
-         FROM deposits 
-         WHERE user_id = ? AND status = 'approved'`,
-        [referrerId]
+
+      // Cek role referrer
+      const [role] = await db.query(
+        `SELECT commission_type, commission_rate 
+         FROM referral_roles 
+         WHERE level = ? 
+         ORDER BY updated_at DESC LIMIT 1`,
+        [level]
       );
-      
-      const [referredDeposit] = await db.query(
-        `SELECT SUM(amount) as total 
-         FROM deposits 
-         WHERE user_id = ? AND status = 'approved'`,
-        [userId]
-      );
-      
-      const referrerHasDeposit = referrerDeposit[0]?.total >= 10;
-      const referredHasDeposit = referredDeposit[0]?.total >= 10;
-      
-      if (referrerHasDeposit && referredHasDeposit) {
-        // Calculate commission based on level (higher levels get less)
-        const commissionAmount = (0.5 / level).toFixed(2);
-        
-        // Add commission
+
+      if (!role.length) continue;
+
+      let commissionAmount = 0;
+      const depositAmount = 100; // 👉 nanti ambil dari deposit nyata
+
+      if (role[0].commission_type === 'percent') {
+        commissionAmount = depositAmount * role[0].commission_rate;
+      } else {
+        commissionAmount = role[0].commission_rate;
+      }
+
+      if (commissionAmount > 0) {
         await db.query(
           'INSERT INTO commissions (user_id, amount, level, status) VALUES (?, ?, ?, "pending")',
           [referrerId, commissionAmount, level]
         );
-        
+
         commissionsAwarded.push({
           referrer_id: referrerId,
           amount: commissionAmount,
-          level
+          level,
+          type: role[0].commission_type
         });
       }
     }
-    
+
     return commissionsAwarded;
   } catch (err) {
     console.error('Referral commission error:', err);
     throw err;
   }
 }
+
 
 // Then modify the checkCommissions function to use it:
 exports.checkCommissions = async (req, res) => {

@@ -29,13 +29,17 @@ import TopUpCredit2 from "./pages/user/TopUpCredit2";
 import TopUpCredit3 from "./pages/user/TopUpCredit3";
 import DepositManagement from "./pages/admin/DepositManagement";
 import ReferralDashboard from "./pages/user/ReferralDashboard";
+import EditProfile from "./pages/user/EditProfile";
+import ContactSupport from "./pages/user/ContactSupport";
+import DepositAmountsPage from "./pages/admin/DepositAmountsPage";
 
+import UserManagement from "./pages/admin/UserManagement";
 import AdminRoute from "./components/Auth/AdminRoute";
 import PrivateRoute from "./components/Auth/PrivateRoute";
 import AccountChecking from "./components/Auth/AccountChecking";
 import VerifyUser from "./pages/admin/VerifyUser";
 import ReferralSettings from "./pages/admin/ReferralSettings";
-
+import TicketSupport from "./pages/admin/TicketSupport";
 
 const App = () => {
   return (
@@ -179,6 +183,28 @@ const AppRoutes = () => {
         }
       />
 
+      <Route
+        path="/contact/user"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <ContactSupport />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/edit-profil"
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <EditProfile />
+            </MainLayout>
+          </PrivateRoute>
+        }
+      />
+
       <Route path="/account-checking" element={<AccountChecking />} />
 
       {/* Admin Routes */}
@@ -278,6 +304,39 @@ const AppRoutes = () => {
           <AdminRoute>
             <MainLayout admin>
               <ReferralSettings />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
+            <Route
+        path="/contact/admin"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <TicketSupport />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
+        <Route
+        path="/admin/user/list"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <UserManagement />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
+      <Route
+        path="/admin/create/amount"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <DepositAmountsPage />
             </MainLayout>
           </AdminRoute>
         }

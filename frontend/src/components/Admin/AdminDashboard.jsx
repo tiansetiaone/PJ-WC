@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../style/admin/AdminDashboard.css"; // import css terpisah
 
@@ -13,6 +14,7 @@ const [depositStats, setDepositStats] = useState({ received: 0, failed: 0 });
     total_registered: 0,
     total_visited: 0,
   });
+  const navigate = useNavigate();
 
 
 
@@ -127,77 +129,83 @@ useEffect(() => {
 }, []);
 
 
-
-  // 🔹 Komponen Card
-  const Card = ({ title, stats, link }) => (
-    <div className="card">
-      <div className="card-header">
-        <h3>{title}</h3>
-        <button className="btn-link">{link} →</button>
-      </div>
-      <div className="card-stats">
-        {stats.map((s, i) => (
-          <div key={i} className="stat-block">
-            <p className="stat-label">{s.label}</p>
-            <p className={`stat-value ${s.type}`}>
-              {s.type === "green" ? "✔" : "✖"} {s.value}
-            </p>
-          </div>
-        ))}
-      </div>
+// 🔹 Komponen Card
+const Card = ({ title, stats, link, onClick }) => (
+  <div className="card">
+    <div className="card-header">
+      <h3>{title}</h3>
+      <button className="btn-link" onClick={onClick}>
+        {link} →
+      </button>
     </div>
-  );
+    <div className="card-stats">
+      {stats.map((s, i) => (
+        <div key={i} className="stat-block">
+          <p className="stat-label">{s.label}</p>
+          <p className={`stat-value ${s.type}`}>
+            {s.type === "green" ? "✔" : "✖"} {s.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 
   return (
     <div className="dashboard-container">
       <h1 className="dashboard-title">Dashboard</h1>
 
       {/* 🔹 Grid Statistik */}
-      <div className="grid">
-        <Card
-          title="User"
-          stats={[
-            { label: "Registered", value: userStats.registered, type: "green" },
-            { label: "Failed", value: userStats.failed, type: "red" },
-          ]}
-          link="View User"
-        />
-<Card
-  title="Campaign"
-  stats={[
-    { label: "Success", value: campaignStats.success, type: "green" },
-    { label: "Failed", value: campaignStats.failed, type: "red" },
-  ]}
-  link="View Campaign"
-/>
+<div className="grid">
+  <Card
+    title="User"
+    stats={[
+      { label: "Registered", value: userStats.registered, type: "green" },
+      { label: "Failed", value: userStats.failed, type: "red" },
+    ]}
+    link="View User"
+    onClick={() => navigate("/admin/user/list")}
+  />
 
-<Card
-  title="Deposit"
-  stats={[
-    { label: "Received", value: depositStats.received, type: "green" },
-    { label: "Failed", value: depositStats.failed, type: "red" },
-  ]}
-  link="View Deposit"
-/>
+  <Card
+    title="Campaign"
+    stats={[
+      { label: "Success", value: campaignStats.success, type: "green" },
+      { label: "Failed", value: campaignStats.failed, type: "red" },
+    ]}
+    link="View Campaign"
+    onClick={() => navigate("/campaign")}
+  />
 
-<Card
-  title="Referral"
-  stats={[
-    {
-      label: "Payouts",
-      value: referralStats.converted_earnings,
-      type: "green",
-    },
-    {
-      label: "Visited",
-      value: referralStats.total_visited,
-      type: "red",
-    },
-  ]}
-  link="View Referral"
-/>
+  <Card
+    title="Deposit"
+    stats={[
+      { label: "Received", value: depositStats.received, type: "green" },
+      { label: "Failed", value: depositStats.failed, type: "red" },
+    ]}
+    link="View Deposit"
+    onClick={() => navigate("/admin/deposits/list")}
+  />
 
-      </div>
+  <Card
+    title="Referral"
+    stats={[
+      {
+        label: "Payouts",
+        value: referralStats.converted_earnings,
+        type: "green",
+      },
+      {
+        label: "Visited",
+        value: referralStats.total_visited,
+        type: "red",
+      },
+    ]}
+    link="View Referral"
+    onClick={() => navigate("/admin/referral/list")}
+  />
+</div>
 
       {/* 🔹 What's New Section */}
       <section className="news-section">
@@ -219,7 +227,7 @@ useEffect(() => {
         )}
       </section>
 
-      <button className="btn-primary">+ Create New Notification</button>
+      <button className="btn-primary" onClick={() => navigate("/admin/notifications")}>+ Create New Notification</button>
     </div>
   );
 };

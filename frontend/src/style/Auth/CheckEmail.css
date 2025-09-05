@@ -7,26 +7,36 @@
 
 /* Bagian Kiri */
 .checkemail-left {
-  flex: 1;
-  background: linear-gradient(135deg, #0048ff, #002f8e);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  text-align: center;
+    flex: 1 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    background: radial-gradient(circle at top right, rgba(40, 161, 95, 1) 0%, transparent 40%), radial-gradient(circle at bottom left, rgba(106, 24, 188, 1) 0%, transparent 40%), #123DAF;
+    color: white;
+    position: relative;
+    overflow: hidden;
 }
 
-.checkemail-logo {
-  width: 150px;
-  margin-bottom: 20px;
+.branding-checkemail {
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
-.checkemail-title {
-  font-size: 28px;
-  font-weight: bold;
-  line-height: 1.4;
+.branding-checkemail .logo {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.branding-checkemail .tagline {
+    font-size: 40px;
+    font-weight: 600;
+    max-width: 400px;
+    color: white;
 }
 
 /* Bagian Kanan */
@@ -47,30 +57,28 @@
 }
 
 .checkemail-heading {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: bold;
   margin-bottom: 15px;
   color: #222;
 }
 
 .checkemail-text {
-  font-size: 15px;
-  color: #555;
-  max-width: 400px;
-  margin-bottom: 25px;
-  line-height: 1.6;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 38px;
+    color: #444;
 }
 
 .checkemail-button {
-  background: #0048ff;
-  color: white;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s ease;
+    background: #123DAF;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 69px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
 }
 
 .checkemail-button:hover {

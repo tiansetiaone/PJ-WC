@@ -11,26 +11,40 @@
 
 /* Left side */
 .checking-left {
-  flex: 1;
-  background: var(--gradient-left);
-  color: #fff;
+flex: 1 1;
+    display: flex
+;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    background: radial-gradient(circle at top right, rgba(40, 161, 95, 1) 0%, transparent 40%), radial-gradient(circle at bottom left, rgba(106, 24, 188, 1) 0%, transparent 40%), #123DAF;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Branding */
+.branding-checking {
+  max-width: 500px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 60px;
+  gap: 2rem;
 }
 
-.checking-left .logo {
-  width: 180px;
-  margin-bottom: 40px;
-}
-
-.checking-left .tagline {
-  font-size: 32px;
+.branding-checking .logo {
+  font-size: 42px;
   font-weight: 700;
-  line-height: 1.2;
+  letter-spacing: 2px;
 }
+
+.branding-checking .tagline {
+    font-size: 40px;
+    font-weight: 600;
+    max-width: 400px;
+    color: white;
+}
+
 
 /* Right side */
 .checking-right {
@@ -53,32 +67,31 @@
 }
 
 .title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   margin-bottom: 12px;
 }
 
 .desc {
-  font-size: 15px;
-  color: #555;
-  line-height: 1.5;
-  margin-bottom: 30px;
+font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #444;
 }
 
-.btn-back {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 12px 26px;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
+.btn-back-checking {
+    background: #123DAF;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 69px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
 }
 
-.btn-back:hover {
-  background: #0033aa;
+.btn-back-checking:hover {
+  background: #0036c7;
 }
 
 /* Tablet (≤ 1024px) */
@@ -132,7 +145,7 @@
   .desc {
     font-size: 13px;
   }
-  .btn-back {
+  .btn-back-checking {
     padding: 10px 20px;
     font-size: 13px;
   }

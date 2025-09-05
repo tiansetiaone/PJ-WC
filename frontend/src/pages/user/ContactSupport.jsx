@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import "./ContactSupport.css";
+import React, { useState, useEffect } from "react";
+import { createTicket, fetchApi } from "../../utils/api";  // tambahkan fetchApi
+import "../../style/user/ContactSupport.css";
 
 export default function ContactSupport() {
   const [form, setForm] = useState({
@@ -8,13 +9,55 @@ export default function ContactSupport() {
     problem: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // ✅ Tambahkan state contacts
+  const [contacts, setContacts] = useState([]);
+
+  // ✅ Load contacts dari backend
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const data = await fetchApi("/support"); // GET dari API
+        setContacts(data || []);
+      } catch (err) {
+        console.error("Failed to load contacts:", err);
+      }
+    };
+    loadContacts();
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(form);
+    setLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    const ticketData = {
+      subject: form.problem,
+      message: form.problem,
+      email: form.email,
+      name: form.fullName,
+    };
+
+    try {
+      const response = await createTicket(ticketData);  // Memanggil createTicket
+      if (response.success) {
+        setSuccessMessage("Your ticket has been submitted successfully!");
+        setForm({ fullName: "", email: "", problem: "" }); // Reset form setelah submit
+      }
+    } catch (err) {
+      setError("There was an error submitting your ticket.");
+      console.error("Ticket creation error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,38 +102,36 @@ export default function ContactSupport() {
               <small>Max. 2,000 characters</small>
             </div>
 
-            <button type="submit" className="btn-send" disabled>
-              Send Message
+            {error && <div className="error-message">{error}</div>}
+            {successMessage && <div className="success-message">{successMessage}</div>}
+
+            <button type="submit" className="btn-send" disabled={loading}>
+              {loading ? "Sending..." : "Send Message"}
             </button>
           </form>
         </div>
 
         {/* Right Contact Info */}
-        <div className="contact-info">
-          <div className="info-box">
-            <h4>Email</h4>
-            <p>We'll respond within 24 hours.</p>
-            <a href="mailto:contact@blasterc.id" className="info-link">
-              contact@blasterc.id ↗
-            </a>
-          </div>
-
-          <div className="info-box">
-            <h4>WhatsApp</h4>
-            <p>Mon–Fri from 9am to 6pm.</p>
-            <a href="https://wa.me/6282234567890" className="info-link">
-              +62 822-3456-7890 ↗
-            </a>
-          </div>
-
-          <div className="info-box">
-            <h4>Telegram</h4>
-            <p>Mon–Fri from 9am to 6pm.</p>
-            <a href="#" className="info-link">
-              +62 822-3456-7890 ↗
-            </a>
-          </div>
-        </div>
+<div className="contact-info">
+  {contacts.filter(c => c.is_active === 1).map((c) => (
+    <div className="info-box" key={c.id}>
+      <h4>{c.label}</h4>
+      <p>{c.description}</p>
+      <a
+        href={
+          c.type === "email" ? `mailto:${c.value}` :
+          c.type === "whatsapp" ? `https://wa.me/${c.value.replace(/\D/g, '')}` :
+          c.value
+        }
+        className="info-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {c.value} ↗
+      </a>
+    </div>
+  ))}
+</div>
       </div>
     </div>
   );

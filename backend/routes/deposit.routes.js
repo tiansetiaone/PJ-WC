@@ -20,7 +20,13 @@ const {
   deleteDepositAmount,
   updateDepositAmount,
   uploadProof,
-  getConvertedHistory
+  getConvertedHistory,
+  getUserUSDTInfo,
+  updateUserUSDT,
+  addAdminWallet,
+  deleteAdminWallet,
+  getAdminWallets,
+  setDefaultWallet
 } = require("../controllers/deposit.controller");
 
 // User endpoints
@@ -57,5 +63,18 @@ router.get("/admin/commission/history", auth, auth.adminOnly, getConvertedHistor
 // Endpoint convert commission (user)
 router.post("/convert-commission", auth, convertCommission);
 
+// User USDT info endpoint
+router.get("/user/usdt-info", auth, getUserUSDTInfo);
+
+// Update user USDT information
+router.post("/update-usdt", auth, updateUserUSDT);
+
+
+// Admin wallet management routes
+router.get("/admin/wallets", auth, auth.adminOnly, getAdminWallets);
+router.post("/admin/wallets", auth, auth.adminOnly, addAdminWallet);
+router.delete("/admin/wallets/:id", auth, auth.adminOnly, deleteAdminWallet);
+// Set default wallet route
+router.post("/admin/wallets/set-default", auth, auth.adminOnly, setDefaultWallet);
 
 module.exports = router;
