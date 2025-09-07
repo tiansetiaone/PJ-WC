@@ -461,6 +461,78 @@ th, td {
   width: auto;
 }
 
+
+/* Action Buttons */
+.action-buttons-deposit{
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+.continue-btn, .cancel-btn, .evidence-btn, .view-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.continue-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.continue-btn:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+}
+
+.evidence-btn {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.evidence-btn:hover {
+  background-color: #138496;
+  transform: scale(1.05);
+}
+
+.view-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.view-btn:hover {
+  background-color: #5a6268;
+  transform: scale(1.05);
+}
+
+.status-badge.cancelled {
+  background: #ee2d40a2; /* Merah */
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: inline-block;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .search-filter {

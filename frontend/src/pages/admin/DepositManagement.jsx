@@ -14,21 +14,20 @@ export default function DepositManagement() {
   const [filterMonth, setFilterMonth] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
-  const [showWalletModal, setShowWalletModal] = useState(false); // Modal untuk edit wallet
-  const [adminWallets, setAdminWallets] = useState([]); // Data wallet admin
-  const [newWallet, setNewWallet] = useState({ network: "TRC20", address: "" }); // State untuk wallet baru
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [adminWallets, setAdminWallets] = useState([]);
+  const [newWallet, setNewWallet] = useState({ network: "TRC20", address: "" });
   const navigate = useNavigate();
   const [monthOptions, setMonthOptions] = useState([]);
   const [searchCommission, setSearchCommission] = useState("");
   const [filterCommissionStatus, setFilterCommissionStatus] = useState("");
   const [filterCommissionMonth, setFilterCommissionMonth] = useState("");
   const [commissionMonthOptions, setCommissionMonthOptions] = useState([]);
-  const [showScrollUp, setShowScrollUp] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalDeposits, setTotalDeposits] = useState(0);
+    const [showScrollUp, setShowScrollUp] = useState(false);
 const [showScrollDown, setShowScrollDown] = useState(false);
-const [currentPage, setCurrentPage] = useState(1);
-const [itemsPerPage, setItemsPerPage] = useState(10);
-const [totalDeposits, setTotalDeposits] = useState(0);
-
 
 
 // Fungsi untuk check scroll position seluruh modal
@@ -325,9 +324,33 @@ const handleSetDefaultWallet = async (network, walletId) => {
     navigate("/admin/create/amount");
   };
 
+
+// Fungsi untuk menghapus deposit
+const handleDeleteDeposit = async (depositId) => {
+  if (!window.confirm("Are you sure you want to delete this deposit? This action cannot be undone.")) return;
+
+  try {
+    const response = await fetchApi(`/deposits/admin/delete/${depositId}`, {
+      method: "DELETE"
+    });
+    
+    if (response.success) {
+      alert("Deposit deleted successfully");
+      // Refresh the list
+      getDepositRequests();
+    } else {
+      alert(response.error || "Failed to delete deposit");
+    }
+  } catch (err) {
+    console.error("Delete deposit error:", err);
+    alert("Error deleting deposit");
+  }
+};
+
+
   return (
     <div className="deposit-container-depman">
-
+      {/* Header */}
       <div className="notification-header-deposit">
         <h2 className="deposit-title">Deposit Management</h2>
         <div className="header-buttons">
@@ -343,8 +366,8 @@ const handleSetDefaultWallet = async (network, walletId) => {
         </div>
       </div>
 
-    {/* Modal untuk Edit Wallet Admin */}
-{showWalletModal && (
+
+      {showWalletModal && (
   <div className="modal-overlay">
     <div className="modal-content-depomanage wallet-modal">
       <button className="modal-close" onClick={() => setShowWalletModal(false)}>
@@ -473,134 +496,155 @@ const handleSetDefaultWallet = async (network, walletId) => {
   </div>
 )}
 
+      {/* Modal Wallet (tetap sama) */}
+
       {/* Deposit Requests */}
       <div className="deposit-card-depman">
-  <div className="card-header">
-    <h3>Deposit Requests</h3>
-    <div className="filters">
-      <input
-        type="text"
-        placeholder="Search deposit by user's request..."
-        value={searchDeposit}
-        onChange={(e) => setSearchDeposit(e.target.value)}
-      />
-      <select
-        value={filterStatus}
-        onChange={(e) => setFilterStatus(e.target.value)}
-      >
-        <option value="">Status</option>
-        <option value="approved">Success</option>
-        <option value="rejected">Failed</option>
-        <option value="checking">Checking</option>
-      </select>
-      <select
-        value={filterMonth}
-        onChange={(e) => setFilterMonth(e.target.value)}
-      >
-        <option value="">Month</option>
-        {monthOptions.map((month) => (
-          <option key={month} value={month}>
-            {month}
-          </option>
-        ))}
-      </select>
-      
-      {/* Items per page selector */}
-      <select
-        value={itemsPerPage}
-        onChange={handleItemsPerPageChange}
-        className="items-per-page-selector"
-      >
-        <option value="5">5 per page</option>
-        <option value="10">10 per page</option>
-        <option value="20">20 per page</option>
-        <option value="50">50 per page</option>
-      </select>
-    </div>
-  </div>
+        <div className="card-header">
+          <h3>Deposit Requests</h3>
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="Search deposit by user's request..."
+              value={searchDeposit}
+              onChange={(e) => setSearchDeposit(e.target.value)}
+            />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value="">Status</option>
+              <option value="approved">Success</option>
+              <option value="rejected">Failed</option>
+              <option value="checking">Checking</option>
+              <option value="cancelled">Cancelled</option> {/* Ditambahkan */}
+            </select>
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+            >
+              <option value="">Month</option>
+              {monthOptions.map((month) => (
+                <option key={month} value={month}>
+                  {month}
+                </option>
+              ))}
+            </select>
+            
+            <select
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="items-per-page-selector"
+            >
+              <option value="5">5 per page</option>
+              <option value="10">10 per page</option>
+              <option value="20">20 per page</option>
+              <option value="50">50 per page</option>
+            </select>
+          </div>
+        </div>
 
-  {loadingDeposits ? (
-    <p>Loading deposits...</p>
-  ) : depositData.length === 0 ? (
-    <div className="card-content">
-      <img
-        src="https://via.placeholder.com/120x120.png?text=No+Data"
-        alt="No Deposit"
-        className="card-image"
-      />
-      <h4 className="empty-title">No Deposit Requests Yet</h4>
-      <p className="empty-text">
-        There are no deposit requests at the moment. Any new requests
-        from users will appear here for your review.
-      </p>
-    </div>
-  ) : (
-    <>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>No.</th>
-            <th>User's Request</th>
-            <th>Top Up</th>
-            <th>Evidence</th>
-            <th>Status</th>
-            <th>Top Up Date</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {depositData.map((item, index) => (
-            <tr key={item.id}>
-              <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-              <td>{item.user_request}</td>
-              <td>{item.top_up}</td>
-              <td>
-                {item.evidence ? (
-                  <a href={item.evidence} target="_blank" rel="noreferrer">
-                    {item.evidence.split("/").pop()}
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </td>
-              <td>
-                <span
-                  className={`status-badge ${item.status
-                    .replace(" ", "-")
-                    .toLowerCase()}`}
-                >
-                  {item.status}
-                </span>
-              </td>
-              <td>{item.top_up_date}</td>
-              <td>
-                <button
-                  className="action-btn-view-depman"
-                  onClick={() => handleViewDeposit(item)}
-                >
-                  👁
-                </button>
-                {item.status === "Checking Deposit" && (
-                  <>
-                    <button
-                      className="action-btn-approve-deposit"
-                      onClick={() => handleProcessDeposit(item.id, "approve")}
-                    >
-                      ✔
-                    </button>
-                    <button
-                      className="action-btn-danger-deposit"
-                      onClick={() => handleProcessDeposit(item.id, "reject")}
-                    >
-                      ✖
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {loadingDeposits ? (
+          <p>Loading deposits...</p>
+        ) : depositData.length === 0 ? (
+          <div className="card-content">
+            <img
+              src="https://via.placeholder.com/120x120.png?text=No+Data"
+              alt="No Deposit"
+              className="card-image"
+            />
+            <h4 className="empty-title">No Deposit Requests Yet</h4>
+            <p className="empty-text">
+              There are no deposit requests at the moment. Any new requests
+              from users will appear here for your review.
+            </p>
+          </div>
+        ) : (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>User's Request</th>
+                  <th>Top Up</th>
+                  <th>Evidence</th>
+                  <th>Status</th>
+                  <th>Top Up Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {depositData.map((item, index) => (
+                  <tr key={item.id}>
+                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td>{item.user_request}</td>
+                    <td>{item.top_up}</td>
+                    <td>
+                      {item.evidence ? (
+                        <a href={item.evidence} target="_blank" rel="noreferrer">
+                          {item.evidence.split("/").pop()}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-badge ${(item.status || '')
+                          .toLowerCase()
+                          .replace(" ", "-")
+                          .replace("cancelled", "cancelled")}`} // Diperbarui
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td>{item.top_up_date}</td>
+<td>
+  <div className="action-buttons-depman">
+    <button
+      className="action-btn-view-depman"
+      onClick={() => handleViewDeposit(item)}
+      title="View Details"
+    >
+      👁
+    </button>
+    
+    {/* Tombol untuk deposit dengan status tertentu */}
+    {item.status === "Checking Deposit" && (
+      <>
+        <button
+          className="action-btn-approve-deposit"
+          onClick={() => handleProcessDeposit(item.id, "approve")}
+          title="Approve Deposit"
+        >
+          ✔
+        </button>
+        <button
+          className="action-btn-danger-deposit"
+          onClick={() => handleProcessDeposit(item.id, "reject")}
+          title="Reject Deposit"
+        >
+          ✖
+        </button>
+      </>
+    )}
+    
+    {/* Tombol delete untuk semua status kecuali completed/approved */}
+    {(item.status !== "Deposit Success" && item.status !== "approved") && (
+      <button
+        className="action-btn-delete-deposit"
+        onClick={() => handleDeleteDeposit(item.id)}
+        title="Delete Deposit"
+      >
+        🗑️
+      </button>
+    )}
+  </div>
+</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
@@ -722,13 +766,13 @@ const handleSetDefaultWallet = async (network, walletId) => {
   </table>
 )}
       </div>
-{showModal && selectedDeposit && (
-  <TransactionDetail 
-    deposit={selectedDeposit} 
-    onClose={closeModal} 
-    onProcess={handleProcessDeposit} 
-  />
-)}
+ {showModal && selectedDeposit && (
+        <TransactionDetail 
+          deposit={selectedDeposit} 
+          onClose={closeModal} 
+          onProcess={handleProcessDeposit} 
+        />
+      )}
     </div>
   );
 }

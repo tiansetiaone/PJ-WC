@@ -1,72 +1,68 @@
 import React, { useEffect, useState } from "react";
 import "../../style/user/TopUpCredit2.css";
 import { useNavigate } from "react-router-dom";
-import { fetchApi } from "../../utils/api"; // Pastikan import fetchApi
+import { fetchApi } from "../../utils/api";
 
 export default function TopUpCredit2() {
-  const [amount, setAmount] = useState(localStorage.getItem("topupAmount") || 0);
-  const [network, setNetwork] = useState(localStorage.getItem("topupCurrency") || "TRC20");
+  const [amount, setAmount] = useState(0);
+  const [formattedAmount, setFormattedAmount] = useState("0.00");
+  const [network, setNetwork] = useState("TRC20");
   const [deposit, setDeposit] = useState(null);
-  const [userUSDTInfo, setUserUSDTInfo] = useState(null); // State untuk data USDT user
-  const [loading, setLoading] = useState(false);
+  const [userUSDTInfo, setUserUSDTInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const convertedCredit = amount * 100; // contoh: 1 USDT = 100 credit
-
-  // Fungsi untuk mendapatkan data USDT user
-  const fetchUserUSDTInfo = async () => {
-    try {
-      const response = await fetchApi("/deposits/user/usdt-info");
-      if (response.success) {
-        setUserUSDTInfo(response.data);
-      }
-    } catch (err) {
-      console.error("Error fetching user USDT info:", err);
-    }
-  };
-
-  const initiateDeposit = async () => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:5000/api/deposits/initiate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        network,
-        amount,
-        is_custom: false,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      setDeposit(data);
-      localStorage.setItem("deposit_id", data.deposit_id);
-      localStorage.setItem("recipient_wallet", data.address);
-      localStorage.setItem("user_wallet", data.memo);
-      localStorage.setItem("credit_amount", data.credit); // Simpan credit
-    } else {
-      alert(data.error || "Failed to initiate deposit");
-    }
-  } catch (err) {
-    console.error("Error initiating deposit:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
   useEffect(() => {
-    // Ambil data USDT user dan initiate deposit
-    fetchUserUSDTInfo();
-    initiateDeposit();
-    // eslint-disable-next-line
-  }, []);
+    const loadData = async () => {
+      try {
+        const depositData = JSON.parse(localStorage.getItem("depositData"));
+        const storedAmount = localStorage.getItem("topupAmount");
+        const storedNetwork = localStorage.getItem("topupCurrency");
+        
+        if (depositData && depositData.success) {
+          setDeposit(depositData);
+          setNetwork(storedNetwork || depositData.network || "TRC20");
+          
+          if (storedAmount) {
+            const numValue = parseFloat(storedAmount);
+            if (!isNaN(numValue)) {
+              setAmount(numValue);
+              setFormattedAmount(numValue.toFixed(2));
+            }
+          } else if (depositData.amount) {
+            setAmount(depositData.amount);
+            setFormattedAmount(depositData.amount.toFixed(2));
+          }
+        } else {
+          alert("No deposit data found");
+          navigate("/deposits/topup");
+        }
+
+        // Fetch user USDT info
+        const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
+        if (usdtInfoRes.success) {
+          setUserUSDTInfo(usdtInfoRes.data);
+        }
+      } catch (err) {
+        console.error("Error loading deposit data:", err);
+        alert("Error loading deposit information");
+        navigate("/deposits/topup");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [navigate]);
+
+  const convertedCredit = amount * 100;
+
+  // Format wallet address untuk tampilan
+  const formatWalletAddress = (address) => {
+    if (!address) return "Not Available";
+    if (address.length <= 12) return address;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
+  };
 
   const handleProceed = () => {
     if (!deposit) {
@@ -97,59 +93,61 @@ export default function TopUpCredit2() {
           <h3>Check Transaction</h3>
 
           {loading ? (
-            <p>Loading transaction...</p>
+            <p>Loading transaction details...</p>
           ) : deposit ? (
             <>
               <div className="transaction-item">
                 <span>Recipient Wallet Address</span>
-                <span className="wallet">{deposit.address}</span>
+                <span className="wallet" title={deposit.address}>
+                  {formatWalletAddress(deposit.address)}
+                </span>
               </div>
 
               <div className="transaction-item">
                 <span>Your Wallet (Memo)</span>
-                <span className="wallet">{deposit.memo}</span>
+                <span className="wallet" title={deposit.memo}>
+                  {formatWalletAddress(deposit.memo)}
+                </span>
               </div>
 
-              {/* Tampilkan alamat USDT user jika ada */}
               <div className="transaction-item">
                 <span>Your Wallet (USDT)</span>
-                <span className="wallet">
-                  {userUSDTInfo && userUSDTInfo.usdt_address 
-                    ? userUSDTInfo.usdt_address 
-                    : "No USDT address set"}
+                <span className="wallet" title={userUSDTInfo?.usdt_address}>
+                  {userUSDTInfo?.usdt_address ? formatWalletAddress(userUSDTInfo.usdt_address) : "Not set"}
                 </span>
               </div>
 
               <div className="transaction-item">
                 <span>Network</span>
-                <span className="wallet">
-                  {userUSDTInfo && userUSDTInfo.usdt_network 
-                    ? userUSDTInfo.usdt_network 
-                    : network}
-                </span>
+                <span className="wallet">{network}</span>
               </div>
 
               <div className="transaction-item">
-                <span>Top Up</span>
-                <span className="amount">${amount}</span>
+                <span>Top Up Amount</span>
+                <span className="amount">${formattedAmount}</span>
               </div>
 
               <div className="transaction-item">
                 <span>Convert to Credit</span>
-                <span className="credit">{convertedCredit}</span>
+                <span className="credit">{convertedCredit} credits</span>
+              </div>
+
+              <div className="transaction-item important-note">
+                <span>⚠️ Important</span>
+                <span>Complete transfer within 1 hour</span>
               </div>
 
               <div className="buttons">
-                <button className="btn-back" onClick={() => window.history.back()}>
+                <button className="btn-back" onClick={() => navigate("/deposits/topup")}>
                   Back
                 </button>
                 <button className="btn-proceed" onClick={handleProceed}>
-                  Proceed
+                  Proceed to Payment
                 </button>
               </div>
             </>
           ) : (
-            <p>Unable to load deposit details</p>
+            <p>Unable to load deposit details. Please try again.</p>
           )}
         </div>
       </main>

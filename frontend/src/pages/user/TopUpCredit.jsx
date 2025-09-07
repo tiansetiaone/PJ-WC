@@ -13,6 +13,8 @@ const TopUpCredit = () => {
   const [showAddUSDT, setShowAddUSDT] = useState(false);
   const [newUSDTNetwork, setNewUSDTNetwork] = useState("TRC20");
   const [newUSDTAddress, setNewUSDTAddress] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [adminWalletInfo, setAdminWalletInfo] = useState(null);
   const navigate = useNavigate();
 
   // Available currencies
@@ -21,6 +23,54 @@ const TopUpCredit = () => {
     { value: "ERC20", label: "USDT-ERC20" },
     { value: "BEP20", label: "USDT-BEP20" }
   ];
+
+  // Fungsi untuk mendapatkan admin wallet berdasarkan network
+  const getAdminWalletByNetwork = (network) => {
+    if (!adminWalletInfo) return null;
+    
+    return adminWalletInfo.find(wallet => 
+      wallet.network === network && wallet.is_default === 1
+    );
+  };
+
+  // Fungsi untuk memformat alamat wallet
+  const formatWalletAddress = (address) => {
+    if (!address) return "Not Available";
+    if (address.length <= 12) return address;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
+  };
+
+  // Ambil data nominal, info USDT user, dan info wallet admin dari backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load amounts
+        const amountsRes = await fetchApi("/deposits/admin/amounts");
+        setAmounts(amountsRes.data || []);
+        
+        // Load user USDT info
+        const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
+        setUserUSDTInfo(usdtInfoRes.data);
+        
+        // Load admin wallet info untuk network yang tersedia
+        const walletInfoRes = await fetchApi("/deposits/admin/wallets/user");
+        if (walletInfoRes.success) {
+          setAdminWalletInfo(walletInfoRes.data);
+        }
+        
+        // Set default currency berdasarkan USDT network user jika ada
+        if (usdtInfoRes.data && usdtInfoRes.data.usdt_network) {
+          setCurrency(usdtInfoRes.data.usdt_network);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
 
   // Ambil data nominal dan info USDT user dari backend
   useEffect(() => {
@@ -88,10 +138,34 @@ const TopUpCredit = () => {
     setCustomAmount(""); // Reset custom amount ketika memilih nominal card
   };
 
-  // Handle input custom amount
+  // Handle input custom amount - biarkan user mengetik dengan bebas
   const handleCustomAmountChange = (e) => {
-    setCustomAmount(e.target.value);
-    setSelected(null); // Reset selected card ketika input custom amount
+    const value = e.target.value;
+    
+    // Hanya izinkan angka, titik desimal, dan menghapus nol di depan
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setCustomAmount(value);
+      setSelected(null); // Reset selected card ketika input custom amount
+    }
+  };
+
+  // Format dengan 2 desimal saat input kehilangan fokus
+  const handleCustomAmountBlur = (e) => {
+    let value = e.target.value;
+    
+    if (value) {
+      // Pastikan nilai adalah angka yang valid
+      const numValue = parseFloat(value);
+      
+      if (!isNaN(numValue)) {
+        // Format ke 2 desimal
+        const formattedValue = numValue.toFixed(2);
+        setCustomAmount(formattedValue);
+      } else {
+        // Jika tidak valid, reset ke string kosong
+        setCustomAmount("");
+      }
+    }
   };
 
   // Handle focus pada input custom (reset selected card)
@@ -104,18 +178,20 @@ const TopUpCredit = () => {
     setSelected(null);
   };
 
-  const handleConfirm = () => {
-    let amount;
+  const handleConfirm = async () => {
+    let amountValue;
 
     if (selected !== null && amounts[selected]) {
-      amount = amounts[selected].value;
+      amountValue = parseFloat(amounts[selected].value);
     } else {
-      amount = parseFloat(customAmount);
+      amountValue = parseFloat(customAmount);
     }
 
-    // Validasi minimal $20
-    if (amount < 20) {
-      alert("Minimum top up is $20.00");
+    console.log("Amount value:", amountValue, "Type:", typeof amountValue);
+
+    // Validasi minimal $10
+    if (isNaN(amountValue) || amountValue < 10) {
+      alert("Minimum top up is $10.00");
       return;
     }
 
@@ -125,37 +201,66 @@ const TopUpCredit = () => {
       return;
     }
 
-    // Simpan sementara di localStorage SAJA (belum masuk database)
-    localStorage.setItem("topupAmount", amount);
-    localStorage.setItem("topupCurrency", currency);
-    localStorage.setItem("topupCredit", amount * 100); // Hitung credit
+    setGenerating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5000/api/deposits/generate-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          network: currency,
+          amount: amountValue
+        }),
+      });
 
-    // Pindah ke step berikutnya
-    navigate("/deposits/topup2");
+      const data = await response.json();
+      
+      if (data.success) {
+        // Simpan semua data ke localStorage
+        localStorage.setItem("depositData", JSON.stringify(data));
+        localStorage.setItem("topupAmount", amountValue.toString());
+        localStorage.setItem("topupCurrency", currency);
+        localStorage.setItem("topupCredit", data.credit.toString());
+        localStorage.setItem("deposit_id", data.deposit_id.toString());
+        
+        // Pindah ke step berikutnya
+        navigate("/deposits/topup2");
+      } else {
+        alert(data.error || "Failed to generate deposit address");
+      }
+    } catch (err) {
+      console.error("Error generating address:", err);
+      alert("Error generating deposit address");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   // Fungsi untuk mengecek apakah form valid
   const isFormValid = () => {
-    let amount;
+    let amountValue;
 
     if (selected !== null && amounts[selected]) {
-      amount = amounts[selected].value;
+      amountValue = parseFloat(amounts[selected].value);
     } else {
-      amount = parseFloat(customAmount);
+      amountValue = parseFloat(customAmount);
     }
 
-    // Validasi amount minimal $20
-    const isAmountValid = amount >= 20;
+    // Validasi amount minimal $10
+    const isAmountValid = !isNaN(amountValue) && amountValue >= 10;
     
     // Validasi USDT information harus terisi
     const isUSDTValid = userUSDTInfo?.usdt_network && userUSDTInfo?.usdt_address;
 
-    return isAmountValid && isUSDTValid;
+    return isAmountValid && isUSDTValid && !generating;
   };
 
   if (loading) return <p>Loading...</p>;
 
-  return (
+return (
     <div className="topup-container">
       <div className="breadcrumb">Deposit &gt; Top Up Credit</div>
       <h1 className="title">Top Up Credit</h1>
@@ -168,6 +273,40 @@ const TopUpCredit = () => {
         <div className="step">2 <span>Check Payment</span></div>
         <div className="step">3 <span>Payment Instruction</span></div>
       </div>
+
+      {/* Tampilkan info admin wallet untuk network yang dipilih */}
+      {adminWalletInfo && (
+        <div className="admin-wallet-info">
+          <h3>Recipient Wallet Information</h3>
+          <div className="wallet-network-selector">
+            <label>Select Network for Transfer:</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="currency-select"
+            >
+              {availableCurrencies.map((curr) => (
+                <option key={curr.value} value={curr.value}>
+                  {curr.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="wallet-details">
+            <p><strong>Recipient Network:</strong> {currency}</p>
+            <p>
+              <strong>Recipient Address:</strong> 
+              <span className="wallet-address" title={getAdminWalletByNetwork(currency)?.address}>
+                {formatWalletAddress(getAdminWalletByNetwork(currency)?.address)}
+              </span>
+            </p>
+            <p className="wallet-note">
+              ⚠️ Please ensure you send funds to this exact address on the {currency} network
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Tampilkan info USDT user jika ada */}
       {userUSDTInfo && userUSDTInfo.usdt_address && (
@@ -276,16 +415,15 @@ const TopUpCredit = () => {
         <div className={`custom-input ${selected !== null ? "deselected" : ""}`}>
           <label>Input Another Nominal</label>
           <input
-            type="number"
-            placeholder="More than $20,00..."
+            type="text" // Menggunakan type="text" agar lebih mudah mengontrol format
+            placeholder="More than $10.00..."
             value={customAmount}
             onChange={handleCustomAmountChange}
+            onBlur={handleCustomAmountBlur} // Format saat kehilangan fokus
             onFocus={handleCustomInputFocus}
             onClick={handleCustomInputClick}
           />
         </div>
-
-        <p className="info-text">ⓘ Every $1 will get 100 credits</p>
         
         {/* Info requirements */}
         <div className="requirements-info">
@@ -294,8 +432,8 @@ const TopUpCredit = () => {
             <li className={userUSDTInfo?.usdt_network && userUSDTInfo?.usdt_address ? "requirement-met" : "requirement-not-met"}>
               ✓ USDT information set up
             </li>
-            <li className={(selected !== null && amounts[selected]?.value >= 20) || (customAmount && parseFloat(customAmount) >= 20) ? "requirement-met" : "requirement-not-met"}>
-              ✓ Minimum amount $20.00
+            <li className={(selected !== null && parseFloat(amounts[selected]?.value) >= 10) || (customAmount && parseFloat(customAmount) >= 10) ? "requirement-met" : "requirement-not-met"}>
+              ✓ Minimum amount $10.00
             </li>
           </ul>
         </div>
@@ -305,7 +443,7 @@ const TopUpCredit = () => {
           disabled={!isFormValid()}
           onClick={handleConfirm}
         >
-          Confirm
+          {generating ? "Generating Address..." : "Confirm"}
         </button>
       </div>
     </div>

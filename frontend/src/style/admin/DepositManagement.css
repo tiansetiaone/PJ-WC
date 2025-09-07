@@ -452,6 +452,40 @@
   background: linear-gradient(to top, white 0%, transparent 100%);
 }
 
+.status-badge.cancelled {
+  background: #dc3545;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: inline-block;
+}
+
+
+/* Tombol Delete */
+.action-btn-delete-deposit {
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 5px;
+  background-color: #ffffff;
+}
+
+.action-btn-delete-deposit:hover {
+  background: #dcb035;
+}
+
+/* Container untuk action buttons */
+.action-buttons-depman {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+
 /* Responsive Design for Modal */
 @media (max-width: 768px) {
   .wallet-modal {

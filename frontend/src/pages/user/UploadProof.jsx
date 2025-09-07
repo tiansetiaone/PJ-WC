@@ -8,15 +8,16 @@ export default function UploadProof({ depositId, onClose }) {
   const [file, setFile] = useState(null);
   const [etherscanLink, setEtherscanLink] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
     if (!validTypes.includes(selectedFile.type)) {
-      setError("File harus berupa PNG atau JPG");
+      setError("File harus berupa PNG, JPG, atau PDF");
       setFile(null);
       setFileName("");
       return;
@@ -36,20 +37,28 @@ export default function UploadProof({ depositId, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    if (!file || !etherscanLink) {
-      setError("File dan link etherscan wajib diisi.");
+    // Validasi: minimal salah satu harus diisi
+    if (!file && !etherscanLink) {
+      setError("Harap isi minimal salah satu: bukti transfer atau link etherscan");
+      setIsSubmitting(false);
       return;
     }
 
-    const userId = localStorage.getItem("user_id"); // ambil dari localStorage
-
     const formData = new FormData();
-    formData.append("file", file);          // ⬅️ harus sama dengan backend (upload.single("file"))
-    formData.append("tx_hash", etherscanLink);
-    formData.append("user_id", userId);
-    formData.append("deposit_id", depositId);
     
+    // Hanya append file jika ada
+    if (file) {
+      formData.append("file", file);
+    }
+    
+    // Hanya append tx_hash jika ada
+    if (etherscanLink) {
+      formData.append("tx_hash", etherscanLink);
+    }
+    
+    formData.append("deposit_id", depositId);
 
     try {
       const res = await axios.post(
@@ -63,41 +72,44 @@ export default function UploadProof({ depositId, onClose }) {
         }
       );
 
-      alert("Bukti berhasil dikirim!");
+      alert("Data berhasil dikirim! Status deposit sekarang: Checking");
+      if (onClose) onClose();
       navigate("/deposits/list");
     } catch (error) {
       console.error("Upload gagal:", error.response?.data || error.message);
-      alert("Upload gagal, coba lagi.");
+      setError(error.response?.data?.message || "Upload gagal, coba lagi.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="upload-container">
-      <h2 className="upload-title">Upload Proof of Transaction</h2>
-
+      <h2 className="upload-title">Upload Proof of Transaction (Optional)</h2>
+  
       <div className="form-group">
-        <label className="required">Transfer Evidence</label>
+        <label>Transfer Evidence (Optional)</label>
         <div className="file-input-wrapper">
           <input
             type="file"
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, image/jpg, application/pdf"
             id="transferEvidence"
             onChange={handleFileChange}
           />
           <label htmlFor="transferEvidence" className="file-label">
-            {fileName || "Choose file"}
+            {fileName || "Choose file (optional)"}
           </label>
         </div>
-        <small>Import only PNG/JPG/JPEG file, max. 5 MB</small>
+        <small>PNG, JPG, atau PDF, max. 5 MB</small>
       </div>
 
       <div className="form-group">
-        <label className="required">Etherscan Transaction Link</label>
+        <label>Etherscan Transaction Link (Optional)</label>
         <div className="input-with-icon">
           <span className="link-icon">🔗</span>
           <input
             type="url"
-            placeholder="https://etherscan.io/tx/..."
+            placeholder="https://etherscan.io/tx/... (optional)"
             value={etherscanLink}
             onChange={(e) => setEtherscanLink(e.target.value)}
           />
@@ -108,11 +120,15 @@ export default function UploadProof({ depositId, onClose }) {
       {error && <p className="error-message">{error}</p>}
 
       <div className="btn-group">
-        <button className="btn-back" onClick={onClose}>
+        <button className="btn-back" onClick={onClose} disabled={isSubmitting}>
           Back
         </button>
-        <button className="btn-submit" onClick={handleSubmit}>
-          Submit
+        <button 
+          className="btn-submit" 
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Submit"}
         </button>
       </div>
     </div>

@@ -23,27 +23,32 @@ const Deposit = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
 
-  // Load list deposit dengan pagination
-  useEffect(() => {
-    const fetchDeposits = async () => {
-      try {
-        setLoading(true);
-        let endpoint = `/deposits/history?page=${currentPage}&limit=${itemsPerPage}`;
-        if (search) endpoint += `&search=${search}`;
-        if (statusFilter) endpoint += `&status=${statusFilter}`;
-        if (monthFilter) endpoint += `&month=${monthFilter}`;
-        
-        const res = await fetchApi(endpoint);
-        setDeposits(res.data || []);
-        setTotalDeposits(res.meta?.total || 0);
-      } catch (err) {
-        console.error("Fetch deposits error:", err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDeposits();
-  }, [currentPage, itemsPerPage, search, statusFilter, monthFilter]);
+useEffect(() => {
+  const fetchDeposits = async () => {
+    try {
+      setLoading(true);
+      let endpoint = `/deposits/history?page=${currentPage}&limit=${itemsPerPage}`;
+      if (search) endpoint += `&search=${search}`;
+      if (statusFilter) endpoint += `&status=${statusFilter}`;
+      if (monthFilter) endpoint += `&month=${monthFilter}`;
+      
+      console.log("API Endpoint:", endpoint); // Debug: lihat endpoint yang dipanggil
+      
+      const res = await fetchApi(endpoint);
+      console.log("API Response:", res); // Debug: lihat response dari API
+      
+      setDeposits(res.data || []);
+      setTotalDeposits(res.meta?.total || 0);
+    } catch (err) {
+      console.error("Fetch deposits error:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchDeposits();
+}, [currentPage, itemsPerPage, search, statusFilter, monthFilter]);
+
+
 
   // Handle view detail
   const handleView = async (depositId) => {
@@ -62,6 +67,54 @@ const Deposit = () => {
       setDetailError(err.message);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  // Handle continue process untuk deposit pending
+  const handleContinueProcess = (deposit) => {
+    // Debug: console.log untuk melihat struktur data deposit
+    console.log("Deposit data:", deposit);
+    
+    // Simpan data deposit ke localStorage untuk melanjutkan proses
+    localStorage.setItem("depositData", JSON.stringify({
+      success: true,
+      deposit_id: deposit.id,
+      address: deposit.destination_address || deposit.recipient_wallet,
+      memo: deposit.memo || deposit.user_wallet_memo,
+      amount: deposit.amount,
+      network: deposit.network || deposit.currency_type,
+      credit: deposit.credit || (deposit.amount * 100) // Fallback calculation
+    }));
+    
+    localStorage.setItem("topupAmount", deposit.amount);
+    localStorage.setItem("topupCurrency", deposit.network || deposit.currency_type);
+    localStorage.setItem("topupCredit", deposit.credit || (deposit.amount * 100));
+    localStorage.setItem("deposit_id", deposit.id);
+
+    // Navigasi ke step 3 (Payment Instruction)
+    navigate("/deposits/topup-credit-3");
+  };
+
+  // Handle cancel deposit pending
+  const handleCancelDeposit = async (depositId) => {
+    if (window.confirm("Are you sure you want to cancel this deposit? This action cannot be undone.")) {
+      try {
+        const response = await fetchApi(`/deposits/cancel/${depositId}`, {
+          method: "POST"
+        });
+        
+        if (response.success) {
+          alert("Deposit cancelled successfully");
+          // Refresh the list
+          const res = await fetchApi(`/deposits/history?page=${currentPage}&limit=${itemsPerPage}`);
+          setDeposits(res.data || []);
+        } else {
+          alert(response.error || "Failed to cancel deposit");
+        }
+      } catch (err) {
+        console.error("Cancel deposit error:", err);
+        alert("Error cancelling deposit");
+      }
     }
   };
 
@@ -154,24 +207,32 @@ const Deposit = () => {
     return matchesSearch && matchesStatus && matchesMonth;
   });
 
+
+  // Juga tambahkan di filteredData
+console.log("Filtered Data:", filteredData);
+console.log("Status Filter:", statusFilter);
+ 
   // ✅ Badge status
-  const renderStatusBadge = (statusRaw) => {
-    const status = (statusRaw || "").toLowerCase();
+const renderStatusBadge = (statusRaw) => {
+  const status = (statusRaw || "").toLowerCase();
 
-    if (status.includes("checking"))
-      return <span className="status-badge checking">🔍 Checking Deposit</span>;
+  if (status.includes("checking"))
+    return <span className="status-badge checking">🔍 Checking Deposit</span>;
 
-    if (status.includes("success"))
-      return <span className="status-badge success">✔ Deposit Success</span>;
+  if (status.includes("approved")) // Fokus hanya pada "approved"
+    return <span className="status-badge success">✔ Deposit Success</span>;
 
-    if (status.includes("fail"))
-      return <span className="status-badge failed">✖ Deposit Failed</span>;
+  if (status.includes("rejected")) // Fokus hanya pada "rejected"
+    return <span className="status-badge failed">✖ Deposit Failed</span>;
 
-    if (status.includes("pending"))
-      return <span className="status-badge pending">⏱ Pending Transaction</span>;
+  if (status.includes("pending"))
+    return <span className="status-badge pending">⏱ Pending Transaction</span>;
 
-    return <span className="status-badge">{statusRaw}</span>;
-  };
+  if (status.includes("cancelled"))
+    return <span className="status-badge cancelled">✖ Cancel Transaction</span>;
+
+  return <span className="status-badge">{statusRaw}</span>;
+};
 
   // ✅ Navigasi ke halaman top up
   const handleTopUp = () => {
@@ -207,20 +268,9 @@ const Deposit = () => {
 
         {loading ? (
           <p>Loading...</p>
-        ) : deposits.length === 0 ? (
-          <div className="empty-state">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
-              alt="No history"
-            />
-            <h4>No Deposit History Yet</h4>
-            <p>
-              You haven't made any deposits yet. Once you make your first
-              deposit, the details will be displayed here.
-            </p>
-          </div>
         ) : (
           <>
+            {/* Search dan Filter Section - TAMPIL SELALU */}
             <div className="search-filter">
               <input
                 type="text"
@@ -229,16 +279,17 @@ const Deposit = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="success">Success</option>
-                <option value="pending">Pending</option>
-                <option value="checking">Checking</option>
-                <option value="failed">Failed</option>
-              </select>
+<select
+  value={statusFilter}
+  onChange={(e) => setStatusFilter(e.target.value)}
+>
+  <option value="">All Status</option>
+  <option value="approved">Success</option> {/* Ubah value menjadi "approved" */}
+  <option value="pending">Pending</option>
+  <option value="checking">Checking</option>
+  <option value="rejected">Failed</option>
+  <option value="cancelled">Cancelled</option>
+</select>
 
               <select
                 value={monthFilter}
@@ -272,79 +323,121 @@ const Deposit = () => {
               </select>
             </div>
 
-            <table>
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>ID Deposit</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Top Up Date</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((d, i) => (
-                  <tr key={d.id}>
-                    <td>{(currentPage - 1) * itemsPerPage + i + 1}</td>
-                    <td>{d.masked_id}</td>
-                    <td>{d.amount}</td>
-                    <td>{renderStatusBadge(d.status)}</td>
-                    <td>{formatDate(d.top_up_date)}</td>
-                    <td>
-                      <button
-                        className="view-btn"
-                        onClick={() => handleView(d.id)}
-                      >
-                        👁
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="pagination-container">
-                <div className="pagination-info">
-                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalDeposits)} of {totalDeposits} entries
-                </div>
-                
-                <div className="pagination-controls">
-                  {/* Previous Button */}
-                  <button
-                    className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    ← Previous
-                  </button>
-
-                  {/* Page Numbers */}
-                  {getPageNumbers().map((page, index) => (
-                    <button
-                      key={index}
-                      className={`pagination-btn pagination-number ${
-                        page === currentPage ? 'active' : ''
-                      } ${page === '...' ? 'ellipsis' : ''}`}
-                      onClick={() => handlePageChange(page)}
-                      disabled={page === '...'}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  {/* Next Button */}
-                  <button
-                    className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next →
-                  </button>
-                </div>
+            {/* Tampilkan empty state jika tidak ada data setelah filter */}
+            {filteredData.length === 0 ? (
+              <div className="empty-state">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                  alt="No results"
+                />
+                <h4>No Deposit Found</h4>
+                <p>
+                  {deposits.length === 0 
+                    ? "You haven't made any deposits yet. Once you make your first deposit, the details will be displayed here."
+                    : "No deposits match your search criteria. Try adjusting your filters."
+                  }
+                </p>
               </div>
+            ) : (
+              <>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>ID Deposit</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Top Up Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map((d, i) => (
+                      <tr key={d.id}>
+                        <td>{(currentPage - 1) * itemsPerPage + i + 1}</td>
+                        <td>{d.masked_id}</td>
+                        <td>{d.amount}</td>
+                        <td>{renderStatusBadge(d.status)}</td>
+                        <td>{formatDate(d.top_up_date)}</td>
+                        <td>
+                          <div className="action-buttons-deposit">
+                            <button
+                              className="view-btn"
+                              onClick={() => handleView(d.id)}
+                              title="View Details"
+                            >
+                              👁
+                            </button>
+                            
+                            {/* Tombol Continue untuk deposit pending - dengan pengecekan case insensitive */}
+                            {(d.status.toLowerCase().includes('pending')) && (
+                              <>
+                                <button
+                                  className="continue-btn"
+                                  onClick={() => handleContinueProcess(d)}
+                                  title="Continue Deposit Process"
+                                >
+                                  ➡️
+                                </button>
+                                <button
+                                  className="cancel-btn"
+                                  onClick={() => handleCancelDeposit(d.id)}
+                                  title="Cancel Deposit"
+                                >
+                                  ❌
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="pagination-container">
+                    <div className="pagination-info">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalDeposits)} of {totalDeposits} entries
+                    </div>
+                    
+                    <div className="pagination-controls">
+                      {/* Previous Button */}
+                      <button
+                        className={`pagination-btn ${currentPage === 1 ? 'disabled' : ''}`}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        ← Previous
+                      </button>
+
+                      {/* Page Numbers */}
+                      {getPageNumbers().map((page, index) => (
+                        <button
+                          key={index}
+                          className={`pagination-btn pagination-number ${
+                            page === currentPage ? 'active' : ''
+                          } ${page === '...' ? 'ellipsis' : ''}`}
+                          onClick={() => handlePageChange(page)}
+                          disabled={page === '...'}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      {/* Next Button */}
+                      <button
+                        className={`pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

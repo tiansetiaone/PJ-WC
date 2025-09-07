@@ -27,8 +27,7 @@ const upload = multer({
 });
 
 
-// Generate deposit address based on network
-// Generate deposit address based on network
+// Generate deposit address based on network - USING ADMIN WALLETS
 exports.generateDepositAddress = async (req, res) => {
   const { network, amount } = req.body;
 
@@ -46,11 +45,25 @@ exports.generateDepositAddress = async (req, res) => {
     // Calculate credit (1 USDT = 100 credit)
     const credit = parseFloat(amount) * 100;
 
-    // Generate address
-    const address = generateDepositAddress(network);
+    // Get default wallet address from admin_wallets for the specified network
+    const [wallet] = await db.query(
+      `SELECT address FROM admin_wallets 
+       WHERE network = ? AND is_default = 1 
+       ORDER BY created_at DESC LIMIT 1`,
+      [network]
+    );
+
+    if (!wallet.length) {
+      return res.status(400).json({
+        error: `No default wallet configured for ${network} network`,
+        code: "NO_DEFAULT_WALLET"
+      });
+    }
+
+    const address = wallet[0].address;
     const memo = `UID${req.user.id}`;
 
-    // Create pending deposit record - TAMBAHKAN credit
+    // Create pending deposit record
     const [result] = await db.query(
       `INSERT INTO deposits 
        (user_id, amount, network, destination_address, memo, status, credit)
@@ -65,7 +78,7 @@ exports.generateDepositAddress = async (req, res) => {
       memo,
       note: "Please send exact amount to this address",
       expires_in: 3600, // 1 hour expiration
-      credit: credit // Kirim juga ke frontend
+      credit: credit
     });
   } catch (err) {
     console.error("Generate address error:", err);
@@ -147,21 +160,44 @@ async function checkReferralCommissions(userId) {
 }
 
 // === Controller untuk submit evidence ===
+// === Controller untuk submit evidence (opsional) ===
 exports.submitDepositEvidence = async (req, res) => {
   try {
     const { deposit_id, tx_hash } = req.body;
     const proofFile = req.file ? req.file.path : null;
 
-    if (!deposit_id || !tx_hash || !proofFile) {
-      return res.status(400).json({ message: "Deposit ID, Tx hash, dan file bukti wajib diisi" });
+    // Validasi: minimal salah satu harus diisi
+    if (!deposit_id || (!tx_hash && !proofFile)) {
+      return res.status(400).json({ 
+        message: "Deposit ID wajib diisi, dan minimal salah satu: Tx hash atau file bukti" 
+      });
     }
 
-    // Update deposit yang sudah ada
+    // Cek apakah deposit exists dan status masih pending
+    const [depositCheck] = await db.query(
+      `SELECT status FROM deposits WHERE id = ?`,
+      [deposit_id]
+    );
+
+    if (!depositCheck.length) {
+      return res.status(404).json({ message: "Deposit tidak ditemukan" });
+    }
+
+    if (depositCheck[0].status !== 'pending') {
+      return res.status(400).json({ 
+        message: "Deposit sudah diproses, tidak dapat mengupload bukti lagi" 
+      });
+    }
+
+    // Update deposit - langsung ke status 'checking'
     const [result] = await db.query(
       `UPDATE deposits 
-       SET tx_hash = ?, proof_file = ?, status = 'checking', updated_at = CURRENT_TIMESTAMP 
+       SET tx_hash = ?, 
+           proof_file = ?, 
+           status = 'checking', 
+           updated_at = CURRENT_TIMESTAMP 
        WHERE id = ?`,
-      [tx_hash, proofFile, deposit_id]
+      [tx_hash || null, proofFile || null, deposit_id]
     );
 
     if (result.affectedRows === 0) {
@@ -170,7 +206,8 @@ exports.submitDepositEvidence = async (req, res) => {
 
     res.status(200).json({ 
       message: "Deposit evidence submitted, waiting for checking", 
-      depositId: deposit_id 
+      depositId: deposit_id,
+      status: 'checking'
     });
   } catch (err) {
     console.error("Submit evidence error:", err);
@@ -480,7 +517,7 @@ exports.processDeposit = async (req, res) => {
   }
 };
 
-// Enhanced deposit controller methods
+// Enhanced deposit controller methods - USING ADMIN WALLETS
 exports.initiateDeposit = async (req, res) => {
   const { network, amount, is_custom = false } = req.body;
 
@@ -494,7 +531,7 @@ exports.initiateDeposit = async (req, res) => {
     }
 
     // Validate amount
-    const minAmount = is_custom ? 10.0 : 10.0; // Custom minimum for custom amounts
+    const minAmount = is_custom ? 10.0 : 10.0;
     if (parseFloat(amount) < minAmount) {
       return res.status(400).json({
         error: `Minimum deposit is ${minAmount} USDT`,
@@ -505,11 +542,25 @@ exports.initiateDeposit = async (req, res) => {
     // Calculate credit (1 USDT = 100 credit)
     const credit = parseFloat(amount) * 100;
 
-    // Generate deposit address and memo
-    const address = generateDepositAddress(network);
+    // Get default wallet address from admin_wallets for the specified network
+    const [wallet] = await db.query(
+      `SELECT address FROM admin_wallets 
+       WHERE network = ? AND is_default = 1 
+       ORDER BY created_at DESC LIMIT 1`,
+      [network]
+    );
+
+    if (!wallet.length) {
+      return res.status(400).json({
+        error: `No default wallet configured for ${network} network`,
+        code: "NO_DEFAULT_WALLET"
+      });
+    }
+
+    const address = wallet[0].address;
     const memo = `UID${req.user.id}`;
 
-    // Create deposit record - TAMBAHKAN credit
+    // Create deposit record
     const [result] = await db.query(
       `INSERT INTO deposits 
        (user_id, amount, network, destination_address, memo, status, credit)
@@ -524,9 +575,9 @@ exports.initiateDeposit = async (req, res) => {
       memo,
       amount,
       network,
-      credit: credit, // Kirim juga ke frontend
+      credit: credit,
       note: "Please send exact amount to this address",
-      expires_in: 3600, // 1 hour expiration
+      expires_in: 3600,
     });
   } catch (err) {
     console.error("Deposit initiation error:", err);
@@ -1218,6 +1269,164 @@ exports.deleteAdminWallet = async (req, res) => {
     res.status(500).json({
       error: "Failed to delete wallet",
       details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+
+// di deposit.controller.js
+exports.cancelDeposit = async (req, res) => {
+  const { deposit_id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    // Cek apakah deposit milik user dan status masih pending
+    const [deposit] = await db.query(
+      `SELECT * FROM deposits WHERE id = ? AND user_id = ? AND status = 'pending'`,
+      [deposit_id, userId]
+    );
+
+    if (!deposit.length) {
+      return res.status(404).json({
+        error: "Deposit not found or cannot be cancelled",
+        code: "DEPOSIT_NOT_CANCELLABLE"
+      });
+    }
+
+    // Update status menjadi cancelled
+    await db.query(
+      `UPDATE deposits SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [deposit_id]
+    );
+
+    res.json({
+      success: true,
+      message: "Deposit cancelled successfully"
+    });
+  } catch (err) {
+    console.error("Cancel deposit error:", err);
+    res.status(500).json({
+      error: "Failed to cancel deposit",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+// Admin: Delete deposit
+exports.deleteDeposit = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Validasi input
+    if (!id) {
+      return res.status(400).json({
+        error: "Deposit ID is required",
+        code: "MISSING_DEPOSIT_ID"
+      });
+    }
+
+    // Cek apakah deposit exists
+    const [deposit] = await db.query(
+      `SELECT * FROM deposits WHERE id = ?`,
+      [id]
+    );
+
+    if (!deposit.length) {
+      return res.status(404).json({
+        error: "Deposit not found",
+        code: "DEPOSIT_NOT_FOUND"
+      });
+    }
+
+    const depositData = deposit[0];
+
+    // Validasi: jangan izinkan menghapus deposit yang sudah approved/completed
+    if (depositData.status === 'approved' || depositData.status === 'completed') {
+      return res.status(400).json({
+        error: "Cannot delete approved/completed deposits",
+        code: "CANNOT_DELETE_APPROVED_DEPOSIT"
+      });
+    }
+
+    // Mulai transaction untuk memastikan konsistensi data
+    await db.query("START TRANSACTION");
+
+    try {
+      // Hapus deposit
+      const [result] = await db.query(
+        `DELETE FROM deposits WHERE id = ?`,
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        await db.query("ROLLBACK");
+        return res.status(404).json({
+          error: "Deposit not found",
+          code: "DEPOSIT_NOT_FOUND"
+        });
+      }
+
+      // Jika deposit memiliki bukti transfer, hapus file-nya (opsional)
+      if (depositData.proof_file) {
+        const fs = require('fs');
+        const path = require('path');
+        
+        const filePath = path.join(__dirname, '..', depositData.proof_file);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
+      await db.query("COMMIT");
+
+      res.json({
+        success: true,
+        message: "Deposit deleted successfully",
+        deleted_deposit_id: id
+      });
+
+    } catch (error) {
+      await db.query("ROLLBACK");
+      throw error;
+    }
+
+  } catch (err) {
+    console.error("Delete deposit error:", err);
+    res.status(500).json({
+      error: "Failed to delete deposit",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+      code: "DELETE_DEPOSIT_ERROR"
+    });
+  }
+};
+
+
+// Middleware untuk check wallet availability
+exports.checkWalletAvailability = async (req, res, next) => {
+  const { network } = req.body;
+  
+  try {
+    const [wallet] = await db.query(
+      `SELECT COUNT(*) as count FROM admin_wallets 
+       WHERE network = ? AND is_default = 1`,
+      [network]
+    );
+    
+    if (wallet[0].count === 0) {
+      return res.status(400).json({
+        error: `No wallet available for ${network} network. Please contact admin.`,
+        code: "WALLET_NOT_AVAILABLE"
+      });
+    }
+    
+    next();
+  } catch (err) {
+    console.error("Check wallet availability error:", err);
+    res.status(500).json({
+      error: "Failed to check wallet availability",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
     });
   }
 };

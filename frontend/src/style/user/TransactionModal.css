@@ -50,10 +50,14 @@ position: absolute;
 
 /* Header */
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+    display: flex
+;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    flex-direction: column;
+    align-content: center;
+    gap: 1rem;
 }
 .modal-header h2 {
   margin: 0;
@@ -220,4 +224,50 @@ position: absolute;
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+
+/* Banner Status untuk Cancelled */
+.banner.cancelled {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Badge Status untuk Cancelled */
+.badge.cancelled {
+  background: #dc3545;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Badge lainnya (pastikan konsisten) */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.badge.checking {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge.failed {
+  background: #f8d7da;
+  color: #721c24;
 }

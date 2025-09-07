@@ -4,7 +4,6 @@ import "../../style/admin/TransactionDetail.css";
 export default function TransactionDetail({ deposit, onClose, onProcess }) {
   const [showProofModal, setShowProofModal] = useState(false);
   
-  // Pastikan deposit tidak null/undefined
   if (!deposit) return null;
 
   // Helper: generate URL bukti transfer
@@ -29,7 +28,7 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
     });
   };
 
-  return (
+ return (
     <>
       <div className="transaction-container" onClick={onClose}>
         <div className="transaction-card" onClick={(e) => e.stopPropagation()}>
@@ -37,8 +36,11 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
 
           <h3 className="transaction-title">Transaction Detail</h3>
 
-          {/* Status */}
-          <div className={`status-badge ${(deposit.status || '').toLowerCase().replace(" ", "-")}`}>
+          {/* Status Badge dengan support cancelled */}
+          <div className={`status-badge ${(deposit.status || '')
+            .toLowerCase()
+            .replace(" ", "-")
+            .replace("cancelled", "cancelled")}`}>
             {deposit.status || 'Unknown Status'}
           </div>
 
@@ -140,7 +142,7 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
           )}
 
           {/* Buttons */}
-          <div className="action-buttons">
+      <div className="action-buttons-tr-detail">
             <button className="btn secondary" onClick={onClose}>Back</button>
             {(deposit.status === "Checking Deposit" || deposit.status === "checking") && (
               <>

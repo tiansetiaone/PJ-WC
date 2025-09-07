@@ -16,6 +16,16 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
 
   // Banner di atas modal
   const renderStatusBanner = (status) => {
+    const statusLower = (status || "").toLowerCase();
+    
+    if (statusLower.includes("cancelled") || statusLower.includes("cancel")) {
+      return (
+        <div className="banner cancelled">
+          <span>❌ Your transaction has been cancelled.</span>
+        </div>
+      );
+    }
+    
     const statusMap = {
       'pending': 'checking',
       'processing': 'checking',
@@ -25,7 +35,7 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
       'failed': 'failed'
     };
 
-    const currentStatus = statusMap[status] || 'checking';
+    const currentStatus = statusMap[statusLower] || 'checking';
 
     if (currentStatus === "checking") {
       return (
@@ -48,6 +58,12 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
 
   // Badge kecil di header kanan
   const renderStatusBadge = (status) => {
+    const statusLower = (status || "").toLowerCase();
+    
+    if (statusLower.includes("cancelled") || statusLower.includes("cancel")) {
+      return <span className="badge cancelled">✖ Cancel Transaction</span>;
+    }
+    
     const statusMap = {
       'pending': { badge: "checking", text: "🔍 Pending", display: "Pending" },
       'processing': { badge: "checking", text: "🔍 Processing", display: "Processing" },
@@ -57,7 +73,7 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
       'failed': { badge: "failed", text: "✖ Failed", display: "Failed" }
     };
 
-    const statusInfo = statusMap[status] || { badge: "checking", text: "🔍 Checking", display: "Checking" };
+    const statusInfo = statusMap[statusLower] || { badge: "checking", text: "🔍 Checking", display: "Checking" };
     return <span className={`badge ${statusInfo.badge}`}>{statusInfo.text}</span>;
   };
 
@@ -112,16 +128,15 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
               {/* Header */}
               <div className="modal-header">
                 <h2>Transaction Details</h2>
-              </div>
-
-              <h3 className="section-title">Payment Information</h3>
-
                 <div className="right-actions">
                   {(depositData.deposit?.status === 'completed' || depositData.status === 'completed') && 
                     <button className="btn-download">Download Receipt</button>
                   }
                   {renderStatusBadge(depositData.deposit?.status || depositData.status)}
                 </div>
+              </div>
+
+              <h3 className="section-title">Payment Information</h3>
 
               {/* Detail informasi */}
               <div className="info-row">
@@ -150,21 +165,6 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
                 </span>
               </div>
 
-              {/* Link transaksi */}
-              {/* {(depositData.deposit?.tx_link || depositData.tx_link) && (
-                <div className="info-row">
-                  <span>Transaction Link</span>
-                  <a 
-                    href={depositData.deposit?.tx_link || depositData.tx_link} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="value link"
-                  >
-                    View on Explorer
-                  </a>
-                </div>
-              )} */}
-
               {/* Link address wallet user */}
               {(depositData.user?.user_address_link || depositData.deposit?.user?.user_address_link) && (
                 <div className="info-row">
@@ -190,30 +190,6 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
                 <span>Converted to Credit</span>
                 <span className="value credit">{depositData.deposit?.amount * 100 || depositData.amount * 100}</span>
               </div>
-
-              {/* Informasi tambahan user */}
-              {/* <div className="info-row">
-                <span>USDT Network</span>
-                <span className="value">{depositData.user?.usdt_network || depositData.network}</span>
-              </div>
-              
-              <div className="info-row">
-                <span>Transaction Hash</span>
-                <span className="value tx-hash">{depositData.deposit?.tx_hash || depositData.tx_hash || "Not available"}</span>
-              </div> */}
-
-              {/* Tombol untuk melihat bukti transfer */}
-              {/* {(depositData.deposit?.proof_file || depositData.deposit?.transfer_evidence || depositData.proof_file) && (
-                <div className="info-row">
-                  <span>Transfer Evidence</span>
-                  <button 
-                    className="btn-view-proof" 
-                    onClick={() => setShowProof(true)}
-                  >
-                    View Proof
-                  </button>
-                </div>
-              )} */}
 
               {/* Footer */}
               <div className="modal-footer">

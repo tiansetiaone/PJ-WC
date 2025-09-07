@@ -26,12 +26,15 @@ const {
   addAdminWallet,
   deleteAdminWallet,
   getAdminWallets,
-  setDefaultWallet
+  setDefaultWallet,
+  cancelDeposit,
+  deleteDeposit,
+  checkWalletAvailability
 } = require("../controllers/deposit.controller");
 
 // User endpoints
-router.post("/generate-address", auth, generateDepositAddress);
-router.post("/initiate", auth, initiateDeposit);
+router.post("/generate-address", auth, checkWalletAvailability, generateDepositAddress);
+router.post("/initiate", auth, checkWalletAvailability, initiateDeposit);
 router.post("/submit-evidence", auth, uploadProof, submitDepositEvidence);
 router.get("/status/:deposit_id", auth, checkDepositStatus);
 router.get("/history", auth, getUserDeposits);
@@ -70,11 +73,27 @@ router.get("/user/usdt-info", auth, getUserUSDTInfo);
 router.post("/update-usdt", auth, updateUserUSDT);
 
 
+router.get("/admin/wallets/user", auth, getAdminWallets);
+
 // Admin wallet management routes
 router.get("/admin/wallets", auth, auth.adminOnly, getAdminWallets);
 router.post("/admin/wallets", auth, auth.adminOnly, addAdminWallet);
 router.delete("/admin/wallets/:id", auth, auth.adminOnly, deleteAdminWallet);
 // Set default wallet route
 router.post("/admin/wallets/set-default", auth, auth.adminOnly, setDefaultWallet);
+
+
+// di deposit.routes.js
+router.post('/cancel/:deposit_id', auth, cancelDeposit);
+
+
+// DELETE /api/deposits/admin/delete/:id - Hapus deposit (admin only)
+router.delete(
+  "/admin/delete/:id",
+  auth,
+  auth.adminOnly,
+  deleteDeposit
+);
+
 
 module.exports = router;
