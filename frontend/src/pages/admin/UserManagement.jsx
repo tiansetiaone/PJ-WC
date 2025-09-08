@@ -213,6 +213,7 @@ const UserManagement = () => {
                     <th>Full Name</th>
                     <th>Email</th>
                     <th>WhatsApp Number</th>
+                    <th>Referral Code</th>
                     <th>Credit</th>
                     <th>Balance</th>
                     <th>Status</th>
@@ -227,6 +228,7 @@ const UserManagement = () => {
                       <td>{u.name}</td>
                       <td>{u.email}</td>
                       <td>{u.phone || "-"}</td>
+                      <td>{u.referral || "-"}</td>
                       <td>{u.total_credit || "0.00"}</td>
                       <td>{u.balance || "-"}</td>
                       <td>

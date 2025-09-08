@@ -615,3 +615,218 @@ exports.getAllReferralRoles = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// Admin: Create new commission setting
+exports.createCommissionSetting = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { name, commission_type, commission_value, min_deposit, is_active } = req.body;
+
+    if (!name || !commission_type || !commission_value || !min_deposit) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (!['flat', 'percent'].includes(commission_type)) {
+      return res.status(400).json({ error: "Invalid commission_type" });
+    }
+
+    if (is_active) {
+      // Reset setting aktif lain
+      await db.query("UPDATE referral_commission_settings SET is_active = 0 WHERE is_active = 1");
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO referral_commission_settings 
+        (name, commission_type, commission_value, min_deposit, is_active) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, commission_type, commission_value, min_deposit, is_active ? 1 : 0]
+    );
+
+    res.json({ success: true, id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: Get all settings
+exports.getCommissionSettings = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const [rows] = await db.query("SELECT * FROM referral_commission_settings ORDER BY updated_at DESC, created_at DESC");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: Set active commission setting
+exports.setActiveCommissionSetting = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { id } = req.params;
+
+    // Reset
+    await db.query("UPDATE referral_commission_settings SET is_active = 0 WHERE is_active = 1");
+
+    // Set yang baru
+    await db.query("UPDATE referral_commission_settings SET is_active = 1 WHERE id = ?", [id]);
+
+    res.json({ success: true, message: "Active commission setting updated" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+async function awardSingleLevelCommission(userId, depositAmount) {
+  try {
+    // Cari siapa referrer user
+    const [user] = await db.query("SELECT referred_by FROM users WHERE id = ?", [userId]);
+    if (!user.length || !user[0].referred_by) return null;
+
+    const referrerId = user[0].referred_by;
+
+    // Ambil setting aktif
+    const [setting] = await db.query("SELECT * FROM referral_commission_settings WHERE is_active = 1 LIMIT 1");
+    if (!setting.length) return null;
+
+    const { commission_type, commission_value, min_deposit } = setting[0];
+
+    if (depositAmount < min_deposit) return null;
+
+    let commissionAmount = 0;
+    if (commission_type === "percent") {
+      commissionAmount = depositAmount * commission_value;
+    } else {
+      commissionAmount = commission_value;
+    }
+
+    if (commissionAmount > 0) {
+      await db.query(
+        "INSERT INTO commissions (user_id, amount, level, status) VALUES (?, ?, 1, 'pending')",
+        [referrerId, commissionAmount]
+      );
+    }
+
+    return { referrerId, commissionAmount };
+  } catch (err) {
+    console.error("awardSingleLevelCommission error:", err);
+    throw err;
+  }
+}
+
+
+
+// Admin: Update commission setting
+exports.updateCommissionSetting = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { id } = req.params;
+    const { name, commission_type, commission_value, min_deposit, is_active } = req.body;
+
+    // Validasi input
+    if (!name || !commission_type || !commission_value || !min_deposit) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    if (!['flat', 'percent'].includes(commission_type)) {
+      return res.status(400).json({ error: "Invalid commission_type" });
+    }
+
+    // Cek apakah setting exists
+    const [existingSetting] = await db.query(
+      "SELECT * FROM referral_commission_settings WHERE id = ?",
+      [id]
+    );
+
+    if (!existingSetting.length) {
+      return res.status(404).json({ error: "Commission setting not found" });
+    }
+
+    // Jika mengaktifkan setting ini, nonaktifkan yang lain
+    if (is_active) {
+      await db.query("UPDATE referral_commission_settings SET is_active = 0 WHERE is_active = 1");
+    }
+
+    // Update setting
+    await db.query(
+      `UPDATE referral_commission_settings 
+       SET name = ?, commission_type = ?, commission_value = ?, min_deposit = ?, is_active = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [name, commission_type, commission_value, min_deposit, is_active ? 1 : 0, id]
+    );
+
+    res.json({ 
+      success: true, 
+      message: "Commission setting updated successfully" 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: Delete commission setting
+exports.deleteCommissionSetting = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { id } = req.params;
+
+    // Cek apakah setting exists
+    const [existingSetting] = await db.query(
+      "SELECT * FROM referral_commission_settings WHERE id = ?",
+      [id]
+    );
+
+    if (!existingSetting.length) {
+      return res.status(404).json({ error: "Commission setting not found" });
+    }
+
+    // Cek apakah setting sedang aktif
+    if (existingSetting[0].is_active === 1) {
+      return res.status(400).json({ 
+        error: "Cannot delete active commission setting. Please activate another setting first." 
+      });
+    }
+
+    // Hapus setting
+    await db.query(
+      "DELETE FROM referral_commission_settings WHERE id = ?",
+      [id]
+    );
+
+    res.json({ 
+      success: true, 
+      message: "Commission setting deleted successfully" 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Admin: Get single commission setting by ID
+exports.getCommissionSettingById = async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      "SELECT * FROM referral_commission_settings WHERE id = ?",
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: "Commission setting not found" });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

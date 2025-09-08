@@ -46,7 +46,6 @@ router.get("/admin/details/:deposit_id", auth, auth.adminOnly, getDepositDetails
 router.post("/admin/process", auth, auth.adminOnly, processDeposit);
 router.get("/admin/report", auth, auth.adminOnly, generateDepositReport);
 
-// Admin: Campaign Stats
 // Admin: Deposit Stats
 router.get("/admin/deposit-stats", auth, auth.adminOnly, getDepositStats);
 // User: get deposit amounts

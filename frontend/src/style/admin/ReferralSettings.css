@@ -182,7 +182,104 @@
   to { opacity: 1; transform: scale(1);}
 }
 
+/* Tambahkan di ReferralSettings.css */
+.action-buttons-referral {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
+.btn-set-active {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-set-active:hover {
+  background-color: #218838;
+}
+
+.btn-edit:hover {
+  background-color: #e0a800;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
+
+/* Tambahan CSS untuk fitur baru */
+.results-info {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.btn-clear-filters {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.btn-clear-filters:hover {
+  background: #5a6268;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.action-buttons-referral button {
+  margin: 2px;
+}
 /* --- RESPONSIVE --- */
 
 /* Tablet */

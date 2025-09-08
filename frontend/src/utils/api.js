@@ -1,174 +1,143 @@
+import axios from "axios";
+
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000/api';
 
+// Buat instance axios dengan konfigurasi default
+const apiClient = axios.create({
+  baseURL: API_BASE,
+  timeout: 10000,
+});
+
+// Interceptor untuk menambahkan token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor untuk handle token expired
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Token expired atau invalid
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      window.location.href = '/login'; // Redirect ke login
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Fungsi fetchApi yang diperbaiki
 export const fetchApi = async (endpoint, options = {}) => {
   const url = `${API_BASE}${endpoint}`;
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-
-  // Default method = GET
-  const method = options.method || 'GET';
 
   const headers = {
     ...(options.headers || {})
   };
 
-  // Tambahkan Authorization hanya kalau token ada
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Handle FormData (untuk file upload)
+  // Handle FormData
   if (options.body instanceof FormData) {
-    // Jangan set Content-Type untuk FormData, browser otomatis atur boundary
     delete headers['Content-Type'];
-  } else if (
-    options.body &&
-    typeof options.body === 'object' &&
-    !(options.body instanceof FormData)
-  ) {
+  } else if (options.body && typeof options.body === 'object') {
     headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(url, {
-    ...options,
-    method,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  // Kalau error, coba ambil detail error dari response
-  if (!response.ok) {
-    let errorMessage = `Error ${response.status}: ${response.statusText}`;
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorData.error || errorMessage;
-    } catch (e) {
-      // Kalau bukan JSON, biarin default message
+    if (!response.ok) {
+      let errorMessage = `Error ${response.status}: ${response.statusText}`;
+      
+      // Handle token expired
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        // Biarkan errorMessage default
+      }
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
+
+    return response.json();
+  } catch (error) {
+    console.error('Fetch API error:', error);
+    throw error;
   }
-
-  return response.json();
 };
-
-
-
-
-
-// utils/api.js (lanjutan)
 
 // === Referral APIs (Admin) ===
-export const getAllReferrals = () => fetchApi("/referrals/all");
-export const getReferralRoles = () => fetchApi("/referrals/admin/roles");
-export const createReferralRole = (data) =>
-  fetchApi("/referrals/admin/roles", { method: "POST", body: data });
-export const updateReferralRole = (id, data) =>
-  fetchApi(`/referrals/admin/roles/${id}`, { method: "PUT", body: data });
-export const deleteReferralRole = (id) =>
-  fetchApi(`/referrals/admin/roles/${id}`, { method: "DELETE" });
-export const setDefaultRole = (id) =>
-  fetchApi(`/referrals/admin/roles/${id}/set-default`, { method: "POST" });
+export const getAllReferrals = () => apiClient.get("/referrals/all");
+export const getReferralRoles = () => apiClient.get("/referrals/admin/roles");
+export const createReferralRole = (data) => apiClient.post("/referrals/admin/roles", data);
+export const updateReferralRole = (id, data) => apiClient.put(`/referrals/admin/roles/${id}`, data);
+export const deleteReferralRole = (id) => apiClient.delete(`/referrals/admin/roles/${id}`);
+export const setDefaultRole = (id) => apiClient.post(`/referrals/admin/roles/${id}/set-default`);
 
 // === Profile APIs ===
-export const getProfile = () => fetchApi("/profile");
-
-// Fungsi updateProfile yang diperbaiki
+export const getProfile = () => apiClient.get("/profile");
 export const updateProfile = (data) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const headers = {};
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (data instanceof FormData) {
+    return apiClient.put("/profile", data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   }
-
-  // Jika data adalah FormData, biarkan browser yang mengatur Content-Type
-  if (!(data instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  return fetchApi("/profile", {
-    method: "PUT",
-    headers,
-    body: data
-  });
+  return apiClient.put("/profile", data);
 };
+export const changePassword = (data) => apiClient.post("/profile/change-password", data);
 
-// Fungsi untuk mengubah password
-export const changePassword = (data) => 
-  fetchApi("/profile/change-password", { 
-    method: "POST", 
-    body: data 
-  });
+// === Commission Settings APIs ===
+export const createCommissionSetting = (data) => apiClient.post("/referrals/admin/settings", data);
+export const getCommissionSettings = () => apiClient.get("/referrals/admin/settings");
+export const setActiveCommissionSetting = (id) => apiClient.post(`/referrals/admin/settings/${id}/activate`);
+export const getCommissionSettingById = (id) => apiClient.get(`/referrals/admin/settings/${id}`);
+export const updateCommissionSetting = (id, data) => apiClient.put(`/referrals/admin/settings/${id}`, data);
+export const deleteCommissionSetting = (id) => apiClient.delete(`/referrals/admin/settings/${id}`);
 
-
-// Fungsi untuk mengirim tiket dukungan
+// === Support APIs ===
 export const createTicket = (data) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const headers = {};
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (data instanceof FormData) {
+    return apiClient.post("/support/tickets", data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   }
-
-  // Pastikan Content-Type adalah application/json jika body bukan FormData
-  if (!(data instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-  }
-
-  return fetchApi("/support/tickets", {  // Ganti /tickets dengan /tickets/public untuk public access
-    method: "POST",
-    headers,
-    body: data,
-  });
+  return apiClient.post("/support/tickets", data);
 };
 
-
-// Fungsi untuk mengirim email
-export const sendEmailResponse = async (ticketId, responseContent) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
-  const body = JSON.stringify({
-    ticketId,
+export const sendEmailResponse = (ticketId, responseContent) => 
+  apiClient.post(`/support/tickets/${ticketId}/respond`, {
     response: responseContent,
-    via: 'email', // Tambahkan metode pengiriman
-    action: 'reply' // Tindakan yang diambil
+    via: 'email',
+    action: 'reply'
   });
 
-  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/respond`, {
-    method: 'POST',
-    headers,
-    body,
-  });
-
-  if (!res.ok) {
-    throw new Error('Failed to send email response');
-  }
-
-  return res.json();
-};
-
-// Fungsi untuk mengirim balasan via Telegram
-export const sendTelegramResponse = async (ticketId, phoneNumber, responseContent) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
-  const body = JSON.stringify({
-    ticketId,
+export const sendTelegramResponse = (ticketId, phoneNumber, responseContent) => 
+  apiClient.post(`/support/tickets/${ticketId}/respond`, {
     phoneNumber,
     response: responseContent,
-    via: 'telegram', // Metode pengiriman
-    action: 'reply' // Tindakan yang diambil
+    via: 'telegram',
+    action: 'reply'
   });
-
-  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/respond`, {
-    method: 'POST',
-    headers,
-    body,
-  });
-
-  if (!res.ok) {
-    throw new Error('Failed to send Telegram response');
-  }
-
-  return res.json();
-};

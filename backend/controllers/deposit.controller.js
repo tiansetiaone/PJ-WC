@@ -90,26 +90,29 @@ exports.generateDepositAddress = async (req, res) => {
 };
 
 // Process approved deposits and trigger referral commissions
+// Process approved deposits and trigger referral commissions
 async function processApprovedDeposit(depositId, userId, amount) {
   try {
-    // Update user balance - change 'usdt_balance' to your actual column name
+    // Update user balance
     await db.query(
       `UPDATE users SET balance = COALESCE(balance, 0) + ? 
        WHERE id = ?`,
       [amount, userId]
     );
 
-    // Check if this deposit qualifies user for referral commissions
+    // Check if this deposit qualifies user for referral commissions (single-level)
     const [user] = await db.query(`SELECT referred_by FROM users WHERE id = ?`, [userId]);
 
     if (user[0]?.referred_by) {
-      await checkReferralCommissions(userId);
+      await checkReferralCommissions(userId, amount);
     }
   } catch (err) {
     console.error("Deposit processing error:", err);
     throw err;
   }
 }
+
+
 
 // Check and award referral commissions
 async function checkReferralCommissions(userId) {

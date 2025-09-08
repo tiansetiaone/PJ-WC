@@ -11,16 +11,18 @@ import { Eye, EyeOff } from "lucide-react";
 
 
 const Register = () => {
-    const [formData, setFormData] = useState({
-        name: '',
-        username: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-        whatsapp_number: '',
-        usdt_network: 'TRC20',
-        usdt_address: ''
-    });
+const [formData, setFormData] = useState({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    whatsapp_number: '',
+    usdt_network: 'TRC20',
+    usdt_address: '',
+    referral_code: ''   // <--- baru
+});
+
   const [formErrors, setFormErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
@@ -87,6 +89,11 @@ const Register = () => {
             errors.name = 'Full name is required';
             isValid = false;
         }
+
+        if (formData.referral_code && !/^[A-Z0-9]{8,12}$/.test(formData.referral_code)) {
+    errors.referral_code = 'Referral code must be 8-12 alphanumeric characters';
+    isValid = false;
+}
 
         if (!formData.username.trim()) {
             errors.username = 'Username is required';
@@ -365,6 +372,21 @@ const Register = () => {
     <span className="error-text">{formErrors.password_confirmation}</span>
   )}
 </div>
+
+<div className="form-group-register">
+  <input 
+    type="text" 
+    name="referral_code" 
+    placeholder="Referral Code (Optional)" 
+    value={formData.referral_code} 
+    onChange={handleChange}
+    className={formErrors.referral_code ? 'input-error' : ''} 
+  />
+  {formErrors.referral_code && (
+    <span className="error-text">{formErrors.referral_code}</span>
+  )}
+</div>
+
 
 
                             <div className="checkbox-group">

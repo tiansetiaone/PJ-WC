@@ -17,6 +17,12 @@ const {
   getGlobalReferralStats,
   getConvertedHistory,
   getAllReferralRoles,
+  createCommissionSetting,
+  getCommissionSettings,
+  setActiveCommissionSetting,
+  updateCommissionSetting,
+  deleteCommissionSetting,
+  getCommissionSettingById
 } = require("../controllers/referral.controller");
 
 // Public endpoint
@@ -36,9 +42,16 @@ router.get("/admin/roles/:id", auth, getReferralRole);
 router.put("/admin/roles/:id", auth, updateReferralRole);
 router.delete("/admin/roles/:id", auth, deleteReferralRole);
 router.post("/admin/roles/:id/set-default", auth, setDefaultRole);
-// router.get('/admin/roles', auth, getReferralRole);
+router.get("/admin/roles", auth, getAllReferralRoles);
 router.post("/admin/check-commissions/:id", auth, checkCommissions);
 router.get("/admin/global-stats", auth, getGlobalReferralStats);
-router.get("/admin/roles", auth, getAllReferralRoles);
+
+// Commission Settings endpoints
+router.post("/admin/settings", auth, createCommissionSetting);
+router.get("/admin/settings", auth, getCommissionSettings);
+router.get("/admin/settings/:id", auth, getCommissionSettingById); // Get single setting
+router.put("/admin/settings/:id", auth, updateCommissionSetting); // Update setting
+router.delete("/admin/settings/:id", auth, deleteCommissionSetting); // Delete setting
+router.post("/admin/settings/:id/activate", auth, setActiveCommissionSetting);
 
 module.exports = router;

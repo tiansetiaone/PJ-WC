@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import "../../style/admin/NewRate.css";
-import { createReferralRole } from "../../utils/api";
+import { createCommissionSetting } from "../../utils/api";
 
 export default function NewRate({ onClose }) {
   const [rate, setRate] = useState("");
   const [lastRate] = useState(0.5);
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState("percent");
-  const [level, setLevel] = useState(1);
+  const [minDeposit, setMinDeposit] = useState(10);
+  const [isActive, setIsActive] = useState(false);
 
   const handleChange = (e) => setRate(e.target.value);
 
   const handleSave = async () => {
-    // Validasi untuk tipe percent (0-100%) dan flat (kurang dari $5)
     if (type === "percent") {
       if (!rate || parseFloat(rate) > 100 || parseFloat(rate) <= 0) {
         alert("Percent rate must be between 0.01% and 100%");
@@ -29,17 +29,17 @@ export default function NewRate({ onClose }) {
       setLoading(true);
 
       const data = {
-        role_name: `referral_rate_${Date.now()}`,
+        name: `setting_${Date.now()}`,
         commission_type: type,
-        commission_rate: parseFloat(rate),
-        min_conversion: 10,
-        level
+        commission_value: parseFloat(rate),
+        min_deposit: parseFloat(minDeposit),
+        is_active: isActive,
       };
 
-      const res = await createReferralRole(data);
+      const res = await createCommissionSetting(data);
 
-      alert(res.message || "New referral rate created successfully");
-      onClose(); // Tutup modal dan trigger refresh
+      alert(res.message || "New referral setting created successfully");
+      onClose();
     } catch (err) {
       alert(`Failed to save: ${err.message}`);
     } finally {
@@ -80,19 +80,28 @@ export default function NewRate({ onClose }) {
           {type === "percent" && <span className="currency-symbol">%</span>}
         </div>
         <small className="input-hint">
-          {type === "percent" 
-            ? "Input rate between 0.01% and 100%" 
+          {type === "percent"
+            ? "Input rate between 0.01% and 100%"
             : "Input rate between $0.01 and $4.99"}
         </small>
       </div>
 
       <div className="input-group">
-        <label className="input-label">* Level</label>
+        <label className="input-label">* Minimum Deposit</label>
         <input
           type="number"
-          value={level}
-          onChange={(e) => setLevel(Number(e.target.value))}
+          value={minDeposit}
+          onChange={(e) => setMinDeposit(Number(e.target.value))}
           min="1"
+        />
+      </div>
+
+      <div className="input-group">
+        <label className="input-label">Set as Active</label>
+        <input
+          type="checkbox"
+          checked={isActive}
+          onChange={(e) => setIsActive(e.target.checked)}
         />
       </div>
 

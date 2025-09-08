@@ -760,3 +760,55 @@ curl -X PUT http://localhost:5000/api/profile/change-password-user \
 curl -X GET "http://localhost:5000/api/campaigns/user/balance" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDEsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3MDg0NjQzLCJleHAiOjE3NTcwODgyNDN9.eQNffsO_F6s1EtzDu86ePMYtPGEVxDRXfjvVsrnIR3c" \
   -H "Content-Type: application/json"
+
+
+#### SIMULASI MENDAPATKAN REFERRAL KOMISI
+#### Register User (dengan referral code)
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "User Baru",
+    "username": "userbaru",
+    "email": "baru@example.com",
+    "password": "Password123",
+    "password_confirmation": "Password123",
+    "acceptTerms": true,
+    "hCaptchaToken": "10000000-ffff-ffff-ffff-000000000001",
+    "referral_code": "UNVE6E3A"
+  }'
+
+#### Login User
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "baru@example.com",
+    "password": "Password123"
+  }'
+
+#### User yang direferensikan melakukan top up.
+curl -X POST http://localhost:5000/api/deposits/generate-address \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTcsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3MzE4Njc2LCJleHAiOjE3NTczMjIyNzZ9.Kvx1Ii4lzGQ_rgYiNE7c3zZS6FHbuLR_bODmZhjilRw" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount_id": 1,
+    "network": "TRC20"
+  }'
+
+
+#### Admin Approve Deposit
+curl -X POST http://localhost:5000/api/deposits/admin/process \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1NzMxOTA3MSwiZXhwIjoxNzU3MzIyNjcxfQ._eFlkoJOLyXduANyrSYgEXuRypZvhxkvgnHqN3L9OQA" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deposit_id": 165,
+    "status": "approve"
+  }'
+
+
+#### Referrer Cek Referral Dashboard
+curl -X GET http://localhost:5000/api/referrals \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3MzE5MjkxLCJleHAiOjE3NTczMjI4OTF9.gA7mkhS7_FEzgqUyaVOBTbate5MevZuExb8pBbY5mcM"
+
+####
+curl -X GET http://localhost:5000/api/auth/balance \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzMsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3MzE5MjkxLCJleHAiOjE3NTczMjI4OTF9.gA7mkhS7_FEzgqUyaVOBTbate5MevZuExb8pBbY5mcM"

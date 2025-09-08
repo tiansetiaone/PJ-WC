@@ -976,7 +976,8 @@ const [users] = await db.query(`
     u.id, 
     u.name, 
     u.email, 
-    u.whatsapp_number, 
+    u.whatsapp_number,
+    u.referral_code, 
     u.is_active, 
     u.created_at, 
     u.provider,
@@ -1000,6 +1001,7 @@ const mappedUsers = users.map(u => ({
   name: u.name,
   email: u.email,
   phone: u.whatsapp_number || null,
+  referral : u.referral_code,
   status: u.deleted_at 
     ? "Register Failed"
     : u.is_active === 1
