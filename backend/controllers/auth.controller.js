@@ -153,7 +153,9 @@ exports.registerUser = async (req, res) => {
     }
 
     // Check referral code
+     // Check referral code
     let referrer_id = null;
+    let referrer_data = null;
     if (referral_code) {
       const [referrer] = await db.query(
         'SELECT id FROM users WHERE referral_code = ?', 
@@ -167,6 +169,7 @@ exports.registerUser = async (req, res) => {
         });
       }
       referrer_id = referrer[0].id;
+      referrer_data = referrer[0];
     }
 
     // User registration
@@ -181,28 +184,24 @@ exports.registerUser = async (req, res) => {
       referrer_id
     });
 
-    // Record referral if valid code was provided
-    if (referrer_id) {
-      try {
-        await db.query(
-          'INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)',
-          [referrer_id, registrationResult.userId]
-        );
-        
-        await db.query(
-          'INSERT INTO commissions (user_id, amount) VALUES (?, ?)',
-          [referrer_id, 0.5]
-        );
+// Record referral if valid code was provided
+if (referrer_id) {
+  try {
+    await db.query(
+      'INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)',
+      [referrer_id, registrationResult.userId]
+    );
+    
+    registrationResult.referral = {
+      referrer_id,
+      recorded: true
+    };
+  } catch (err) {
+    console.error('Failed to record referral:', err);
+    registrationResult.referral_error = err.message;
+  }
+}
 
-        registrationResult.referral = {
-          referrer_id,
-          commission_added: 0.5
-        };
-      } catch (err) {
-        console.error('Failed to record referral:', err);
-        registrationResult.referral_error = err.message;
-      }
-    }
 
     // Email notifications - MODIFIED SECTION
     try {

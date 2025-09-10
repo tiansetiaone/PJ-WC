@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 exports.getReferralData = async (req, res) => {
   try {
-    // Get referral list with user details (sesuai struktur tabel)
+    // Get referral list with user details
     const [refList] = await db.query(`
       SELECT 
         u2.name as full_name, 
@@ -15,10 +15,10 @@ exports.getReferralData = async (req, res) => {
       ORDER BY r.created_at DESC
     `, [req.user.id]);
 
-    // Get commission data
+    // Get commission data - hanya yang eligible
     const [commission] = await db.query(`
       SELECT 
-        SUM(CASE WHEN converted = 0 THEN amount ELSE 0 END) as current_earnings,
+        SUM(CASE WHEN converted = 0 AND status = 'eligible' THEN amount ELSE 0 END) as current_earnings,
         SUM(CASE WHEN converted = 1 THEN amount ELSE 0 END) as converted_earnings
       FROM commissions 
       WHERE user_id = ?
@@ -48,70 +48,58 @@ exports.getReferralData = async (req, res) => {
   }
 };
 
+// Modified convertCommission function
 exports.convertCommission = async (req, res) => {
   try {
     const { amount } = req.body;
-    
-    // Input validation
+
     if (!amount || isNaN(amount)) {
-      return res.status(400).json({ error: 'Invalid amount' });
+      return res.status(400).json({ error: "Invalid amount" });
     }
 
-    // Get user's role details
-    const [role] = await db.query(
-      'SELECT commission_rate, min_conversion FROM referral_roles WHERE role_name = ?',
-      [req.user.role]
+    // Get available balance with status 'eligible'
+    const [rows] = await db.query(
+      `SELECT SUM(amount) as total 
+       FROM commissions 
+       WHERE user_id = ? AND status = 'eligible' AND converted = 0`,
+      [req.user.id]
     );
 
-    const minConversion = role[0]?.min_conversion || 10;
-    const commissionRate = role[0]?.commission_rate || 0.5;
-
-    // Get available balance
-    const [rows] = await db.query(`
-      SELECT SUM(amount) as total 
-      FROM commissions 
-      WHERE user_id = ? AND converted = 0
-    `, [req.user.id]);
-    
     const available = rows[0]?.total || 0;
-    
-    // Validate amount
+
     if (amount > available) {
-      return res.status(400).json({ 
-        error: 'Amount exceeds available balance',
+      return res.status(400).json({
+        error: "Amount exceeds available balance",
         available_balance: available,
-        requested_amount: amount
-      });
-    }
-    
-    if (amount < minConversion) {
-      return res.status(400).json({ 
-        error: `Minimum convert is ${minConversion} USDT`,
-        min_conversion: minConversion
+        requested_amount: amount,
       });
     }
 
-    // Mark as converted
-    await db.query(`
-      UPDATE commissions 
-      SET converted = 1, 
-          converted_at = CURRENT_TIMESTAMP
-      WHERE user_id = ? AND converted = 0
-      LIMIT ?
-    `, [req.user.id, Math.floor(amount / commissionRate)]);
+    // Mark as converted (prioritaskan komisi tertua)
+    await db.query(
+      `UPDATE commissions 
+       SET converted = 1, 
+           converted_at = CURRENT_TIMESTAMP,
+           status = 'converted'
+       WHERE user_id = ? AND status = 'eligible' AND converted = 0
+       ORDER BY created_at ASC
+       LIMIT ?`,
+      [req.user.id, Math.ceil(amount / 0.5)] // Adjust based on typical commission amounts
+    );
 
     // Update user balance
-    await db.query(`
-      UPDATE users 
-      SET usdt_balance = COALESCE(usdt_balance, 0) + ?
-      WHERE id = ?
-    `, [amount, req.user.id]);
+    await db.query(
+      `UPDATE users 
+       SET usdt_balance = COALESCE(usdt_balance, 0) + ?
+       WHERE id = ?`,
+      [amount, req.user.id]
+    );
 
-    res.json({ 
+    res.json({
       success: true,
       message: `Successfully converted ${amount} USDT`,
       new_balance: available - amount,
-      converted_amount: amount
+      converted_amount: amount,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -171,10 +159,10 @@ exports.getBalance = async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT 
-        SUM(CASE WHEN converted = 0 THEN amount ELSE 0 END) as available_balance,
+        SUM(CASE WHEN converted = 0 AND status = 'eligible' THEN amount ELSE 0 END) as available_balance,
         SUM(CASE WHEN converted = 1 THEN amount ELSE 0 END) as converted_balance
        FROM commissions 
-       WHERE user_id = ?`, 
+       WHERE user_id = ?`,
       [req.user.id]
     );
     
@@ -828,5 +816,148 @@ exports.getCommissionSettingById = async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+
+// Updated processReferralCommission function
+exports.processReferralCommission = async (userId, depositAmount) => {
+  try {
+    // Cari siapa referrer user
+    const [user] = await db.query(
+      'SELECT referred_by FROM users WHERE id = ?', 
+      [userId]
+    );
+    
+    console.log('User data for referral commission:', user[0]);
+    
+    if (!user.length || !user[0].referred_by) {
+      console.log('No referrer found for user:', userId);
+      return null;
+    }
+    
+    const referrerId = user[0].referred_by;
+    console.log('Referrer found:', { userId, referrerId });
+    
+    // Dapatkan setting komisi aktif
+    const [activeSetting] = await db.query(
+      'SELECT * FROM referral_commission_settings WHERE is_active = 1 LIMIT 1'
+    );
+    
+    if (activeSetting.length === 0) {
+      console.log('No active commission setting found');
+      return null;
+    }
+    
+    const setting = activeSetting[0];
+    console.log('Active commission setting:', setting);
+    
+    // Cek apakah deposit memenuhi minimum
+    if (depositAmount < setting.min_deposit) {
+      console.log(`Deposit amount ${depositAmount} is less than minimum ${setting.min_deposit}`);
+      return null;
+    }
+    
+    // Cek apakah kedua user (referrer dan referred) memiliki minimal deposit $10
+    const [referrerDeposits] = await db.query(
+      'SELECT SUM(amount) as total_deposit FROM deposits WHERE user_id = ? AND status = "approved"',
+      [referrerId]
+    );
+    
+    const [referredDeposits] = await db.query(
+      'SELECT SUM(amount) as total_deposit FROM deposits WHERE user_id = ? AND status = "approved"',
+      [userId]
+    );
+    
+    const referrerTotalDeposit = referrerDeposits[0]?.total_deposit || 0;
+    const referredTotalDeposit = referredDeposits[0]?.total_deposit || 0;
+    
+    // Syarat: kedua user harus memiliki minimal $10 deposit yang disetujui
+    if (referrerTotalDeposit < 10 || referredTotalDeposit < 10) {
+      console.log('Minimum deposit requirement not met for both users');
+      console.log(`Referrer (${referrerId}) total deposit: $${referrerTotalDeposit}`);
+      console.log(`Referred (${userId}) total deposit: $${referredTotalDeposit}`);
+      return null;
+    }
+    
+    let commissionAmount = 0;
+    
+    // Hitung komisi berdasarkan type
+    if (setting.commission_type === 'percent') {
+      commissionAmount = depositAmount * setting.commission_value;
+      console.log(`Percent commission: ${depositAmount} * ${setting.commission_value} = ${commissionAmount}`);
+    } else {
+      commissionAmount = setting.commission_value;
+      console.log(`Flat commission: ${commissionAmount}`);
+    }
+    
+    if (commissionAmount > 0) {
+      // Status awal adalah 'pending', akan diubah menjadi 'eligible' jika syarat terpenuhi
+      const status = 'eligible'; // Langsung eligible karena sudah cek syarat di atas
+      
+      // Buat komisi baru
+      const [result] = await db.query(
+        'INSERT INTO commissions (user_id, referred_user_id, amount, commission_setting_id, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
+        [referrerId, userId, commissionAmount, setting.id, status]
+      );
+      console.log('Created new commission record:', result.insertId);
+      
+      return {
+        referrerId,
+        commissionAmount,
+        commissionType: setting.commission_type,
+        settingId: setting.id,
+        status
+      };
+    }
+    
+    console.log('Commission amount is 0, skipping');
+    return null;
+  } catch (err) {
+    console.error('Error processing referral commission:', err);
+    throw err;
+  }
+};
+
+
+
+// Function to check and update commission status based on deposit requirements
+exports.checkAndUpdateCommissionStatus = async (userId) => {
+  try {
+    // Get all pending commissions for this user
+    const [commissions] = await db.query(
+      `SELECT c.*, c.referred_user_id 
+       FROM commissions c 
+       WHERE c.user_id = ? AND c.converted = 0 AND c.status = 'pending'`,
+      [userId]
+    );
+
+    for (const commission of commissions) {
+      // Check if both users have minimum $10 deposit
+      const [referrerDeposits] = await db.query(
+        'SELECT SUM(amount) as total_deposit FROM deposits WHERE user_id = ? AND status = "approved"',
+        [commission.user_id]
+      );
+      
+      const [referredDeposits] = await db.query(
+        'SELECT SUM(amount) as total_deposit FROM deposits WHERE user_id = ? AND status = "approved"',
+        [commission.referred_user_id]
+      );
+      
+      const referrerTotalDeposit = referrerDeposits[0]?.total_deposit || 0;
+      const referredTotalDeposit = referredDeposits[0]?.total_deposit || 0;
+      
+      // Update status to eligible if both users meet the requirement
+      if (referrerTotalDeposit >= 10 && referredTotalDeposit >= 10) {
+        await db.query(
+          'UPDATE commissions SET status = "eligible" WHERE id = ?',
+          [commission.id]
+        );
+        console.log(`Commission ${commission.id} updated to eligible status`);
+      }
+    }
+  } catch (err) {
+    console.error('Error checking commission status:', err);
+    throw err;
   }
 };

@@ -123,6 +123,10 @@ export default function ReferralDashboard() {
           </div>
         </section>
 
+<p className="commission-info">
+  Komisi akan diberikan setelah user yang direferensikan melakukan deposit minimum dan deposit disetujui oleh admin.
+</p>
+
         {/* Registered Users */}
         <section className="table-section">
           <h2>Registered Users</h2>

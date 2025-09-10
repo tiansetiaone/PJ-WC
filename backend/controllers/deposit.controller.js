@@ -90,7 +90,6 @@ exports.generateDepositAddress = async (req, res) => {
 };
 
 // Process approved deposits and trigger referral commissions
-// Process approved deposits and trigger referral commissions
 async function processApprovedDeposit(depositId, userId, amount) {
   try {
     // Update user balance
@@ -100,19 +99,55 @@ async function processApprovedDeposit(depositId, userId, amount) {
       [amount, userId]
     );
 
-    // Check if this deposit qualifies user for referral commissions (single-level)
-    const [user] = await db.query(`SELECT referred_by FROM users WHERE id = ?`, [userId]);
-
-    if (user[0]?.referred_by) {
-      await checkReferralCommissions(userId, amount);
+    // PROSES KOMISI REFERRAL - HANYA JIKA DEPOSIT DISETUJUI
+    try {
+      // Cek apakah user memiliki referrer
+      const [user] = await db.query(
+        'SELECT referred_by FROM users WHERE id = ?',
+        [userId]
+      );
+      
+      if (user.length && user[0].referred_by) {
+        const referrerId = user[0].referred_by;
+        
+        // Dapatkan setting komisi aktif
+        const [activeSetting] = await db.query(
+          'SELECT * FROM referral_commission_settings WHERE is_active = 1 LIMIT 1'
+        );
+        
+        if (activeSetting.length > 0) {
+          const setting = activeSetting[0];
+          let commissionAmount = 0;
+          
+          // Hitung komisi berdasarkan setting
+          if (setting.commission_type === 'percent') {
+            commissionAmount = amount * setting.commission_value;
+          } else {
+            commissionAmount = setting.commission_value;
+          }
+          
+          // Pastikan deposit memenuhi minimum
+          if (amount >= setting.min_deposit && commissionAmount > 0) {
+            // Tambahkan komisi ke referrer
+            await db.query(
+              'INSERT INTO commissions (user_id, amount, commission_setting_id, status) VALUES (?, ?, ?, "pending")',
+              [referrerId, commissionAmount, setting.id]
+            );
+            
+            console.log(`Referral commission awarded: $${commissionAmount} to user ${referrerId} for deposit ${depositId}`);
+          }
+        }
+      }
+    } catch (commissionErr) {
+      console.error('Failed to process referral commission:', commissionErr);
+      // Jangan gagalkan deposit hanya karena komisi gagal
     }
+
   } catch (err) {
     console.error("Deposit processing error:", err);
     throw err;
   }
 }
-
-
 
 // Check and award referral commissions
 async function checkReferralCommissions(userId) {
@@ -495,12 +530,42 @@ exports.processDeposit = async (req, res) => {
       [newStatus, admin_notes || null, deposit_id]
     );
 
+    
     // If approved, process the deposit and check referrals
     if (action === "approve") {
       const userId = deposit[0].user_id;
-      const amount = deposit[0].amount;
+      const amount = parseFloat(deposit[0].amount);
 
-      await processApprovedDeposit(deposit_id, userId, amount);
+      // 1. Update user balance
+      await db.query(
+        `UPDATE users SET balance = COALESCE(balance, 0) + ? 
+         WHERE id = ?`,
+        [amount, userId]
+      );
+
+      // 2. PROSES KOMISI REFERRAL
+      try {
+        const { processReferralCommission } = require('./referral.controller');
+        const commissionResult = await processReferralCommission(userId, amount);
+        
+        if (commissionResult) {
+          console.log(`Referral commission awarded: $${commissionResult.commissionAmount} to user ${commissionResult.referrerId}`);
+          
+          // 3. CHECK AND UPDATE COMMISSION STATUS FOR THE REFERRER
+          try {
+            const { checkAndUpdateCommissionStatus } = require('./referral.controller');
+            await checkAndUpdateCommissionStatus(commissionResult.referrerId);
+          } catch (statusErr) {
+            console.error('Failed to check commission status:', statusErr);
+            // Jangan gagalkan proses hanya karena pemeriksaan status gagal
+          }
+        } else {
+          console.log('No referral commission processed for this deposit');
+        }
+      } catch (commissionErr) {
+        console.error('Failed to process referral commission:', commissionErr);
+        // Jangan gagalkan deposit hanya karena komisi gagal
+      }
     }
 
     res.json({

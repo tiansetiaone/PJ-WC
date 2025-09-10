@@ -22,7 +22,8 @@ const {
   setActiveCommissionSetting,
   updateCommissionSetting,
   deleteCommissionSetting,
-  getCommissionSettingById
+  getCommissionSettingById,
+  processReferralCommission
 } = require("../controllers/referral.controller");
 
 // Public endpoint
@@ -53,5 +54,51 @@ router.get("/admin/settings/:id", auth, getCommissionSettingById); // Get single
 router.put("/admin/settings/:id", auth, updateCommissionSetting); // Update setting
 router.delete("/admin/settings/:id", auth, deleteCommissionSetting); // Delete setting
 router.post("/admin/settings/:id/activate", auth, setActiveCommissionSetting);
+
+
+
+// Di referral.routes.js
+router.post('/admin/process-commissions/:userId', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  
+  try {
+    const { userId } = req.params;
+    const { depositAmount } = req.body;
+    
+    const result = await processReferralCommission(userId, depositAmount);
+    
+    if (result) {
+      res.json({
+        success: true,
+        message: `Commission processed: ${result.commissionAmount} awarded to user ${result.referrerId}`,
+        data: result
+      });
+    } else {
+      res.json({
+        success: false,
+        message: 'No commission processed (no referrer or conditions not met)'
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Di referral.routes.js
+router.post('/check-commissions', auth, async (req, res) => {
+  try {
+    const { checkAndUpdateCommissionStatus } = require('../controllers/referral.controller');
+    await checkAndUpdateCommissionStatus(req.user.id);
+    
+    res.json({
+      success: true,
+      message: 'Commission status checked and updated successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;
