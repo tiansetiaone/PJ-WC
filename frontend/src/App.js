@@ -32,6 +32,8 @@ import ReferralDashboard from "./pages/user/ReferralDashboard";
 import EditProfile from "./pages/user/EditProfile";
 import ContactSupport from "./pages/user/ContactSupport";
 import DepositAmountsPage from "./pages/admin/DepositAmountsPage";
+import LandingPage from "./pages/LandingPage";
+
 
 import UserManagement from "./pages/admin/UserManagement";
 import AdminRoute from "./components/Auth/AdminRoute";
@@ -75,6 +77,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

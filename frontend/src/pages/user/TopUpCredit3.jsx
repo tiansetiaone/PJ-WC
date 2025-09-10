@@ -165,15 +165,39 @@ useEffect(() => {
           <p>Loading deposit information...</p>
         ) : depositData?.deposit ? (
           <>
-            <div className="wallet-info">
-              <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT" className="wallet-icon" />
-              <div>
-                <p>Recipient Wallet Address ({depositData.deposit.network})</p>
-                <a href={depositData.deposit.address_link} target="_blank" rel="noreferrer" className="wallet-address-link">
-                  {formatWalletAddress(depositData.deposit.destination_address || depositData.deposit.recipient_wallet)}
-                </a>
-              </div>
-            </div>
+<div className="wallet-info">
+  <img
+    src="https://cryptologos.cc/logos/tether-usdt-logo.png"
+    alt="USDT"
+    className="wallet-icon"
+  />
+  <div>
+    <p>Recipient Wallet Address ({depositData.deposit.network})</p>
+    <div className="wallet-address-container">
+      <a
+        href={depositData.deposit.address_link}
+        target="_blank"
+        rel="noreferrer"
+        className="wallet-address-link"
+      >
+        {depositData.deposit.destination_address || depositData.deposit.recipient_wallet || "N/A"}
+      </a>
+      <button
+        className="copy-btn-top3"
+        onClick={() => {
+          const value =
+            depositData.deposit.destination_address || depositData.deposit.recipient_wallet || "";
+          if (value) {
+            navigator.clipboard.writeText(value);
+            alert("Wallet address copied to clipboard!");
+          }
+        }}
+      >
+        📋
+      </button>
+    </div>
+  </div>
+</div>
 
             <div className="payment-details">
               <div>

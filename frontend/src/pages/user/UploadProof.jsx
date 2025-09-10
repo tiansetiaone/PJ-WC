@@ -41,7 +41,7 @@ export default function UploadProof({ depositId, onClose }) {
 
     // Validasi: minimal salah satu harus diisi
     if (!file && !etherscanLink) {
-      setError("Harap isi minimal salah satu: bukti transfer atau link etherscan");
+      setError("Please fill in at least one of: proof of transfer or etherscan link");
       setIsSubmitting(false);
       return;
     }
@@ -72,12 +72,12 @@ export default function UploadProof({ depositId, onClose }) {
         }
       );
 
-      alert("Data berhasil dikirim! Status deposit sekarang: Checking");
+      alert("Data sent successfully! Current deposit status: Checking");
       if (onClose) onClose();
       navigate("/deposits/list");
     } catch (error) {
-      console.error("Upload gagal:", error.response?.data || error.message);
-      setError(error.response?.data?.message || "Upload gagal, coba lagi.");
+      console.error("Upload Failed:", error.response?.data || error.message);
+      setError(error.response?.data?.message || "Upload failed, try again!.");
     } finally {
       setIsSubmitting(false);
     }
