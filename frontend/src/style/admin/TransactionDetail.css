@@ -1,4 +1,4 @@
-.transaction-container {
+.transaction-details-container {
   position: fixed;       /* overlay menempel di viewport */
   top: 0;
   left: 0;
@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;         /* pastikan di atas semua konten */
+  z-index: 2000;         /* pastikan di atas semua konten */
 }
 
 .transaction-card {
@@ -214,7 +214,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 4000;
 }
 
 .modal-content-proof {
@@ -250,7 +250,7 @@
   border: none;
 }
 
-.transaction-container .status-badge.cancelled {
+.transaction-details-container .status-badge.cancelled {
   background: #dc3545;
   color: white;
   border-radius: 20px;

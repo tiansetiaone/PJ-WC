@@ -1,7 +1,17 @@
 const db = require('../config/db');
 
 exports.getReferralData = async (req, res) => {
-  try {
+    try {
+    // Dapatkan referral code user
+    const [user] = await db.query(
+      'SELECT referral_code FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    const referralCode = user[0]?.referral_code || '';
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const referralLink = `${baseUrl}/register?ref=${referralCode}`;
+
     // Get referral list with user details
     const [refList] = await db.query(`
       SELECT 
@@ -34,7 +44,8 @@ exports.getReferralData = async (req, res) => {
     `, [req.user.id, req.user.id]);
 
     res.json({
-      referral_link: `blasterc.id/invite/${req.user.referral_code}`,
+      referral_link: referralLink, // Link lengkap dengan parameter
+      referral_code: referralCode, // Hanya code-nya
       referrals: refList,
       stats: {
         current_earnings: commission[0]?.current_earnings || 0,
@@ -245,11 +256,14 @@ exports.getReferralRole = async (req, res) => {
 
 
 // Track referral visit
+// referral.controller.js - trackVisit function dengan logging
 exports.trackVisit = async (req, res) => {
   try {
     const { referrer_code } = req.params;
-    const ip = req.ip;
+    const ip = req.ip || req.connection.remoteAddress;
     const userAgent = req.headers['user-agent'];
+
+    console.log('Track visit attempt:', { referrer_code, ip, userAgent });
 
     // Get referrer ID from code
     const [referrer] = await db.query(
@@ -258,6 +272,7 @@ exports.trackVisit = async (req, res) => {
     );
 
     if (!referrer.length) {
+      console.log('Invalid referral code:', referrer_code);
       return res.status(404).json({ error: 'Invalid referral code' });
     }
 
@@ -267,8 +282,10 @@ exports.trackVisit = async (req, res) => {
       [referrer[0].id, ip, userAgent]
     );
 
+    console.log('Visit recorded for referrer:', referrer[0].id);
     res.json({ success: true });
   } catch (err) {
+    console.error('Error in trackVisit:', err);
     res.status(500).json({ error: err.message });
   }
 };

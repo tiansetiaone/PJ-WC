@@ -30,7 +30,7 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
 
  return (
     <>
-      <div className="transaction-container" onClick={onClose}>
+      <div className="transaction-details-container" onClick={onClose}>
         <div className="transaction-card" onClick={(e) => e.stopPropagation()}>
           <button className="modal-close" onClick={onClose}>✖</button>
 

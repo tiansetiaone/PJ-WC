@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect  } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams  } from 'react-router-dom';
 import '../../style/Auth/Register.css';
 import GoogleButton from '../GoogleButton';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
@@ -22,6 +22,46 @@ const [formData, setFormData] = useState({
     usdt_address: '',
     referral_code: ''   // <--- baru
 });
+
+  const [searchParams] = useSearchParams(); // Untuk membaca parameter URL
+  
+  // Effect untuk membaca parameter referral dari URL
+// Register.js - Perbaiki useEffect
+useEffect(() => {
+  const refCode = searchParams.get('ref');
+  if (refCode) {
+    // Kirim request ke backend untuk mencatat visit
+    const trackVisit = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/referrals/track/${refCode}`, {
+          method: 'GET',
+          credentials: 'include' // Jika menggunakan cookies/session
+        });
+        
+        if (response.ok) {
+          console.log('Visit tracked successfully');
+        } else {
+          console.error('Failed to track visit:', response.status);
+        }
+      } catch (err) {
+        console.error('Error tracking visit:', err);
+      }
+    };
+
+    trackVisit();
+    
+    setFormData(prev => ({
+      ...prev,
+      referral_code: refCode
+    }));
+    
+    toast.success(`Referral code detected: ${refCode}`, {
+      position: "top-center",
+      autoClose: 3000,
+    });
+  }
+}, [searchParams]);
+
 
   const [formErrors, setFormErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -373,21 +413,26 @@ const [formData, setFormData] = useState({
   )}
 </div>
 
-<div className="form-group-register">
-  <input 
-    type="text" 
-    name="referral_code" 
-    placeholder="Referral Code (Optional)" 
-    value={formData.referral_code} 
-    onChange={handleChange}
-    className={formErrors.referral_code ? 'input-error' : ''} 
-  />
-  {formErrors.referral_code && (
-    <span className="error-text">{formErrors.referral_code}</span>
-  )}
-</div>
-
-
+    <div className="form-group-register">
+      <input 
+        type="text" 
+        name="referral_code" 
+        placeholder="Referral Code (Optional)" 
+        value={formData.referral_code} 
+        onChange={handleChange}
+        className={formErrors.referral_code ? 'input-error' : ''} 
+      />
+      {formErrors.referral_code && (
+        <span className="error-text">{formErrors.referral_code}</span>
+      )}
+      
+      {/* Tampilkan info jika referral code dari URL */}
+      {searchParams.get('ref') && (
+        <small className="referral-info">
+          Referral code detected from invitation link
+        </small>
+      )}
+    </div>
 
                             <div className="checkbox-group">
                                 <input 

@@ -76,27 +76,79 @@ export default function ReferralDashboard() {
             </div>
           </div>
 
-          <div className="card share-card">
-            <h2>Share The Referral Link!</h2>
-            <p>Invite your friends to Blasterc dashboard, if they sign up, you will get commission to be converted to USDT.</p>
-            <div className="share-icons">
-              <button className="icon-btn">🟢</button>
-              <button className="icon-btn">❌</button>
-              <button className="icon-btn">📩</button>
-            </div>
-            <div className="link-box">
-              <input type="text" value={referralLink} readOnly />
-              <button
-                className="copy-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(referralLink);
-                  alert("Referral link copied!");
-                }}
-              >
-                Copy Link
-              </button>
-            </div>
-          </div>
+<div className="card share-card">
+  <h2>Share The Referral Link!</h2>
+  <p>Invite your friends to Blasterc dashboard, if they sign up, you will get commission to be converted to USDT.</p>
+  
+  {/* Share Icons dengan fungsi yang benar */}
+  <div className="share-icons">
+    <button 
+      className="icon-btn" 
+      onClick={() => {
+        const shareText = `Join Blasterc using my referral link: ${referralLink}`;
+        navigator.clipboard.writeText(shareText);
+        alert('Referral message copied to clipboard!');
+      }}
+      title="Copy referral message"
+    >
+      📋
+    </button>
+    
+    <button 
+      className="icon-btn"
+      onClick={() => {
+        if (navigator.share) {
+          navigator.share({
+            title: 'Join Blasterc',
+            text: 'Join Blasterc using my referral link!',
+            url: referralLink,
+          });
+        } else {
+          alert('Web Share API not supported in your browser');
+        }
+      }}
+      title="Share via native share"
+    >
+      📤
+    </button>
+    
+    <button 
+      className="icon-btn"
+      onClick={() => {
+        const subject = 'Join Blasterc with my referral';
+        const body = `Hi! I'm inviting you to join Blasterc using my referral link: ${referralLink}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      }}
+      title="Share via email"
+    >
+      📧
+    </button>
+  </div>
+  
+  <div className="link-box">
+    <input 
+      type="text" 
+      value={referralLink} 
+      readOnly 
+      onClick={(e) => e.target.select()}
+    />
+    <button
+      className="copy-btn"
+      onClick={() => {
+        navigator.clipboard.writeText(referralLink);
+        alert("Referral link copied!");
+      }}
+    >
+      Copy Link
+    </button>
+  </div>
+  
+  {/* Tambahkan informasi tentang referral code */}
+  <div className="referral-code-info">
+    <p><strong>Your Referral Code:</strong> {referralLink.split('/').pop()}</p>
+    <small>Share this code or the full link with your friends</small>
+  </div>
+</div>
         </section>
 
         {/* Stats */}

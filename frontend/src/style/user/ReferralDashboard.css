@@ -62,15 +62,64 @@
 .share-icons {
   display: flex;
   gap: 10px;
-  margin: 12px 0;
+  margin: 15px 0;
 }
+
 .icon-btn {
-  background: #f1f1f1;
+  background: #f0f0f0;
   border: none;
-  padding: 8px;
-  border-radius: 50%;
+  border-radius: 8px;
+  padding: 10px;
   cursor: pointer;
+  font-size: 18px;
+  transition: background 0.3s;
 }
+
+.icon-btn:hover {
+  background: #e0e0e0;
+}
+
+
+.referral-code-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.referral-code-info p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.referral-code-info small {
+  color: #6c757d;
+}
+
+/* Register.css - Tambahkan style baru */
+.referral-info {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
+
+
+.usdt-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.usdt-network-select {
+  flex: 1;
+  max-width: 120px;
+}
+
+.usdt-address-input {
+  flex: 2;
+}
+
 .link-box {
   display: flex;
   border: 1px solid #ddd;
