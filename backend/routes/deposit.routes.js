@@ -29,7 +29,12 @@ const {
   setDefaultWallet,
   cancelDeposit,
   deleteDeposit,
-  checkWalletAvailability
+  checkWalletAvailability,
+  addUSDTAddress,
+  getUserUSDTAddresses,
+  deleteUSDTAddress,
+  setDefaultUSDTAddress,
+  updateUSDTAddress
 } = require("../controllers/deposit.controller");
 
 // User endpoints
@@ -70,6 +75,12 @@ router.get("/user/usdt-info", auth, getUserUSDTInfo);
 
 // Update user USDT information
 router.post("/update-usdt", auth, updateUserUSDT);
+
+router.get('/user/usdt-addresses', auth, getUserUSDTAddresses);
+router.post('/user/usdt-addresses', auth, addUSDTAddress);
+router.put('/user/usdt-addresses/:id', auth, updateUSDTAddress);
+router.delete('/user/usdt-addresses/:id', auth, deleteUSDTAddress);
+router.put('/user/usdt-addresses/:id/set-default', auth, setDefaultUSDTAddress);
 
 
 router.get("/admin/wallets/user", auth, getAdminWallets);

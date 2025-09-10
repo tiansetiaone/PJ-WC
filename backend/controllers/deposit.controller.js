@@ -27,7 +27,7 @@ const upload = multer({
 });
 
 
-// Generate deposit address based on network - USING ADMIN WALLETS
+// Generate deposit address based on network - USING CREDIT RATE FROM DATABASE
 exports.generateDepositAddress = async (req, res) => {
   const { network, amount } = req.body;
 
@@ -38,14 +38,51 @@ exports.generateDepositAddress = async (req, res) => {
     }
 
     // Validate amount
-    if (parseFloat(amount) < 10.0) {
+    const amountValue = parseFloat(amount);
+    if (amountValue < 10.0) {
       return res.status(400).json({ error: "Minimum deposit is 10 USDT" });
     }
 
-    // Calculate credit (1 USDT = 100 credit)
-    const credit = parseFloat(amount) * 100;
+    // CARI CREDIT RATE DARI DATABASE
+    const [creditSetting] = await db.query(
+      `SELECT credits FROM deposit_amounts WHERE value = ? AND status = 'active'`,
+      [amountValue]
+    );
 
-    // Get default wallet address from admin_wallets for the specified network
+    let creditRate;
+    let finalCredit;
+    
+    if (creditSetting.length > 0) {
+      // Gunakan credit rate dari database
+      creditRate = creditSetting[0].credits;
+      console.log(`Using credit rate from database: ${creditRate} for amount: ${amountValue}`);
+      
+      // HITUNG FINAL CREDIT = AMOUNT * CREDIT RATE
+      finalCredit = amountValue * creditRate;
+    } else {
+      // Fallback: cari rate terdekat jika amount tidak exact match
+      const [closestRate] = await db.query(
+        `SELECT value, credits FROM deposit_amounts 
+         WHERE status = 'active' AND value <= ?
+         ORDER BY value DESC LIMIT 1`,
+        [amountValue]
+      );
+      
+      if (closestRate.length > 0) {
+        // Hitung secara proporsional berdasarkan rate terdekat
+        const ratePerDollar = closestRate[0].credits / parseFloat(closestRate[0].value);
+        creditRate = ratePerDollar;
+        finalCredit = Math.round(amountValue * ratePerDollar);
+        console.log(`Using proportional credit: ${finalCredit} based on closest rate`);
+      } else {
+        // Ultimate fallback: default calculation
+        creditRate = 100;
+        finalCredit = amountValue * 100;
+        console.log(`Using default credit calculation: ${finalCredit}`);
+      }
+    }
+
+    // Get default wallet address from admin_wallets
     const [wallet] = await db.query(
       `SELECT address FROM admin_wallets 
        WHERE network = ? AND is_default = 1 
@@ -63,12 +100,12 @@ exports.generateDepositAddress = async (req, res) => {
     const address = wallet[0].address;
     const memo = `UID${req.user.id}`;
 
-    // Create pending deposit record
+    // Create pending deposit record DENGAN FINAL CREDIT (amount * credit rate)
     const [result] = await db.query(
       `INSERT INTO deposits 
        (user_id, amount, network, destination_address, memo, status, credit)
        VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
-      [req.user.id, amount, network, address, memo, credit]
+      [req.user.id, amountValue, network, address, memo, finalCredit] // ← finalCredit disimpan
     );
 
     res.json({
@@ -77,8 +114,10 @@ exports.generateDepositAddress = async (req, res) => {
       address,
       memo,
       note: "Please send exact amount to this address",
-      expires_in: 3600, // 1 hour expiration
-      credit: credit
+      expires_in: 3600,
+      credit: finalCredit, // KIRIMKAN FINAL CREDIT
+      credit_rate: creditRate, // KIRIMKAN JUGA CREDIT RATE jika diperlukan
+      amount: amountValue
     });
   } catch (err) {
     console.error("Generate address error:", err);
@@ -1495,6 +1534,314 @@ exports.checkWalletAvailability = async (req, res, next) => {
     res.status(500).json({
       error: "Failed to check wallet availability",
       details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
+  }
+};
+
+
+
+// Controller functions
+exports.getUserUSDTAddresses = async (req, res) => {
+  try {
+    const [addresses] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, data: addresses });
+  } catch (err) {
+    console.error("Error fetching USDT addresses:", err);
+    res.status(500).json({ error: "Failed to fetch USDT addresses" });
+  }
+};
+
+exports.addUSDTAddress = async (req, res) => {
+  const { network, address, is_default = false } = req.body;
+  
+  try {
+    // Validasi network
+    if (!["TRC20", "ERC20", "BEP20"].includes(network)) {
+      return res.status(400).json({ error: "Invalid network" });
+    }
+
+    // Validasi address
+    if (!address || address.length < 10) {
+      return res.status(400).json({ error: "Invalid USDT address" });
+    }
+
+    // Jika set sebagai default, reset default lainnya
+    if (is_default) {
+      await db.query(
+        `UPDATE user_usdt_addresses SET is_default = 0 WHERE user_id = ?`,
+        [req.user.id]
+      );
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO user_usdt_addresses (user_id, network, address, is_default)
+       VALUES (?, ?, ?, ?)`,
+      [req.user.id, network, address, is_default]
+    );
+
+    res.json({ 
+      success: true, 
+      message: "USDT address added successfully",
+      id: result.insertId
+    });
+  } catch (err) {
+    console.error("Error adding USDT address:", err);
+    res.status(500).json({ error: "Failed to add USDT address" });
+  }
+};
+
+
+
+// Update USDT Address
+exports.updateUSDTAddress = async (req, res) => {
+  const { id } = req.params;
+  const { network, address, is_default } = req.body;
+
+  try {
+    // Validasi input
+    if (!network || !address) {
+      return res.status(400).json({ error: "Network and address are required" });
+    }
+
+    // Validasi network
+    if (!["TRC20", "ERC20", "BEP20"].includes(network)) {
+      return res.status(400).json({ error: "Invalid network" });
+    }
+
+    // Validasi address
+    if (address.length < 10) {
+      return res.status(400).json({ error: "Invalid USDT address" });
+    }
+
+    // Cek apakah address milik user
+    const [existingAddress] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (existingAddress.length === 0) {
+      return res.status(404).json({ error: "USDT address not found" });
+    }
+
+    // Jika set sebagai default, reset default lainnya
+    if (is_default) {
+      await db.query(
+        `UPDATE user_usdt_addresses SET is_default = 0 WHERE user_id = ? AND id != ?`,
+        [req.user.id, id]
+      );
+    }
+
+    // Update address
+    const [result] = await db.query(
+      `UPDATE user_usdt_addresses 
+       SET network = ?, address = ?, is_default = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND user_id = ?`,
+      [network, address, is_default || false, id, req.user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Failed to update USDT address" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "USDT address updated successfully" 
+    });
+
+  } catch (err) {
+    console.error("Error updating USDT address:", err);
+    res.status(500).json({ 
+      error: "Failed to update USDT address",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Delete USDT Address
+exports.deleteUSDTAddress = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Cek apakah address milik user
+    const [existingAddress] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (existingAddress.length === 0) {
+      return res.status(404).json({ error: "USDT address not found" });
+    }
+
+    // Jangan izinkan menghapus jika hanya ada satu address
+    const [userAddresses] = await db.query(
+      `SELECT COUNT(*) as count FROM user_usdt_addresses WHERE user_id = ?`,
+      [req.user.id]
+    );
+
+    if (userAddresses[0].count <= 1) {
+      return res.status(400).json({ 
+        error: "Cannot delete the only USDT address. Please add another address first." 
+      });
+    }
+
+    // Jika yang dihapus adalah default, set address lain sebagai default
+    if (existingAddress[0].is_default) {
+      // Cari address lain untuk dijadikan default
+      const [otherAddresses] = await db.query(
+        `SELECT id FROM user_usdt_addresses 
+         WHERE user_id = ? AND id != ? 
+         ORDER BY created_at DESC LIMIT 1`,
+        [req.user.id, id]
+      );
+
+      if (otherAddresses.length > 0) {
+        await db.query(
+          `UPDATE user_usdt_addresses SET is_default = 1 WHERE id = ?`,
+          [otherAddresses[0].id]
+        );
+      }
+    }
+
+    // Hapus address
+    const [result] = await db.query(
+      `DELETE FROM user_usdt_addresses WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Failed to delete USDT address" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "USDT address deleted successfully" 
+    });
+
+  } catch (err) {
+    console.error("Error deleting USDT address:", err);
+    res.status(500).json({ 
+      error: "Failed to delete USDT address",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Set Default USDT Address
+exports.setDefaultUSDTAddress = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Cek apakah address milik user
+    const [existingAddress] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (existingAddress.length === 0) {
+      return res.status(404).json({ error: "USDT address not found" });
+    }
+
+    // Reset semua default addresses
+    await db.query(
+      `UPDATE user_usdt_addresses SET is_default = 0 WHERE user_id = ?`,
+      [req.user.id]
+    );
+
+    // Set address sebagai default
+    const [result] = await db.query(
+      `UPDATE user_usdt_addresses SET is_default = 1 WHERE id = ? AND user_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Failed to set default USDT address" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "USDT address set as default successfully" 
+    });
+
+  } catch (err) {
+    console.error("Error setting default USDT address:", err);
+    res.status(500).json({ 
+      error: "Failed to set default USDT address",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Get User USDT Addresses
+exports.getUserUSDTAddresses = async (req, res) => {
+  try {
+    const [addresses] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, data: addresses });
+  } catch (err) {
+    console.error("Error fetching USDT addresses:", err);
+    res.status(500).json({ 
+      error: "Failed to fetch USDT addresses",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Add USDT Address
+exports.addUSDTAddress = async (req, res) => {
+  const { network, address, is_default = false } = req.body;
+  
+  try {
+    // Validasi network
+    if (!["TRC20", "ERC20", "BEP20"].includes(network)) {
+      return res.status(400).json({ error: "Invalid network" });
+    }
+
+    // Validasi address
+    if (!address || address.length < 10) {
+      return res.status(400).json({ error: "Invalid USDT address" });
+    }
+
+    // Cek apakah network sudah ada untuk user ini
+    const [existingNetwork] = await db.query(
+      `SELECT * FROM user_usdt_addresses WHERE user_id = ? AND network = ?`,
+      [req.user.id, network]
+    );
+
+    if (existingNetwork.length > 0) {
+      return res.status(400).json({ 
+        error: `You already have a ${network} address. Please update the existing one instead.` 
+      });
+    }
+
+    // Jika set sebagai default, reset default lainnya
+    if (is_default) {
+      await db.query(
+        `UPDATE user_usdt_addresses SET is_default = 0 WHERE user_id = ?`,
+        [req.user.id]
+      );
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO user_usdt_addresses (user_id, network, address, is_default)
+       VALUES (?, ?, ?, ?)`,
+      [req.user.id, network, address, is_default]
+    );
+
+    res.json({ 
+      success: true, 
+      message: "USDT address added successfully",
+      id: result.insertId
+    });
+  } catch (err) {
+    console.error("Error adding USDT address:", err);
+    res.status(500).json({ 
+      error: "Failed to add USDT address",
+      details: process.env.NODE_ENV === "development" ? err.message : null
     });
   }
 };

@@ -9,12 +9,16 @@ const TopUpCredit = () => {
   const [selected, setSelected] = useState(null);
   const [customAmount, setCustomAmount] = useState("");
   const [currency, setCurrency] = useState("TRC20");
-  const [userUSDTInfo, setUserUSDTInfo] = useState(null);
+  const [userUSDTAddresses, setUserUSDTAddresses] = useState([]);
+  const [selectedUSDT, setSelectedUSDT] = useState(null);
   const [showAddUSDT, setShowAddUSDT] = useState(false);
   const [newUSDTNetwork, setNewUSDTNetwork] = useState("TRC20");
   const [newUSDTAddress, setNewUSDTAddress] = useState("");
+  const [setAsDefault, setSetAsDefault] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [adminWalletInfo, setAdminWalletInfo] = useState(null);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [showEditUSDT, setShowEditUSDT] = useState(false);
   const navigate = useNavigate();
 
   // Available currencies
@@ -27,7 +31,6 @@ const TopUpCredit = () => {
   // Fungsi untuk mendapatkan admin wallet berdasarkan network
   const getAdminWalletByNetwork = (network) => {
     if (!adminWalletInfo) return null;
-    
     return adminWalletInfo.find(wallet => 
       wallet.network === network && wallet.is_default === 1
     );
@@ -40,7 +43,7 @@ const TopUpCredit = () => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
   };
 
-  // Ambil data nominal, info USDT user, dan info wallet admin dari backend
+  // Ambil data dari backend
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -48,20 +51,25 @@ const TopUpCredit = () => {
         const amountsRes = await fetchApi("/deposits/admin/amounts");
         setAmounts(amountsRes.data || []);
         
-        // Load user USDT info
-        const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
-        setUserUSDTInfo(usdtInfoRes.data);
+        // Load user USDT addresses (multiple)
+        const usdtAddressesRes = await fetchApi("/deposits/user/usdt-addresses");
+        setUserUSDTAddresses(usdtAddressesRes.data || []);
         
-        // Load admin wallet info untuk network yang tersedia
+        // Set default selected USDT
+        const defaultAddress = usdtAddressesRes.data.find(addr => addr.is_default);
+        if (defaultAddress) {
+          setSelectedUSDT(defaultAddress);
+          setCurrency(defaultAddress.network);
+        } else if (usdtAddressesRes.data.length > 0) {
+          setSelectedUSDT(usdtAddressesRes.data[0]);
+          setCurrency(usdtAddressesRes.data[0].network);
+        }
+        
+        // Load admin wallet info
         const walletInfoRes = await fetchApi("/deposits/admin/wallets/user");
         if (walletInfoRes.success) {
           setAdminWalletInfo(walletInfoRes.data);
         }
-        
-        // Set default currency berdasarkan USDT network user jika ada
-        if (usdtInfoRes.data && usdtInfoRes.data.usdt_network) {
-          setCurrency(usdtInfoRes.data.usdt_network);
-        }
       } catch (err) {
         console.error("Error fetching data:", err.message);
       } finally {
@@ -70,67 +78,6 @@ const TopUpCredit = () => {
     };
     loadData();
   }, []);
-
-
-  // Ambil data nominal dan info USDT user dari backend
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Load amounts
-        const amountsRes = await fetchApi("/deposits/admin/amounts");
-        setAmounts(amountsRes.data || []);
-        
-        // Load user USDT info
-        const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
-        setUserUSDTInfo(usdtInfoRes.data);
-        
-        // Set default currency berdasarkan USDT network user jika ada
-        if (usdtInfoRes.data && usdtInfoRes.data.usdt_network) {
-          setCurrency(usdtInfoRes.data.usdt_network);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
-
-  // Fungsi untuk menyimpan USDT baru
-  const saveNewUSDT = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/deposits/update-usdt", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          usdt_network: newUSDTNetwork,
-          usdt_address: newUSDTAddress
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        // Update state dengan data baru
-        setUserUSDTInfo({
-          usdt_network: newUSDTNetwork,
-          usdt_address: newUSDTAddress
-        });
-        setCurrency(newUSDTNetwork);
-        setShowAddUSDT(false);
-        alert("USDT information updated successfully!");
-      } else {
-        alert(data.error || "Failed to update USDT information");
-      }
-    } catch (err) {
-      console.error("Error saving USDT:", err);
-      alert("Error saving USDT information");
-    }
-  };
 
   // Handle pemilihan nominal card
   const handleSelectAmount = (index) => {
@@ -178,16 +125,179 @@ const TopUpCredit = () => {
     setSelected(null);
   };
 
+  // Fungsi untuk update USDT address
+  const updateUSDTAddress = async (id, network, address, isDefault) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/deposits/user/usdt-addresses/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ network, address, is_default: isDefault })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Reload USDT addresses
+        const usdtAddressesRes = await fetchApi("/deposits/user/usdt-addresses");
+        setUserUSDTAddresses(usdtAddressesRes.data || []);
+        alert("USDT address updated successfully!");
+        setShowEditUSDT(false);
+        setEditingAddress(null);
+      } else {
+        alert(data.error || "Failed to update USDT address");
+      }
+    } catch (error) {
+      console.error('Error updating address:', error);
+      alert("Error updating USDT address");
+    }
+  };
+
+  // Fungsi untuk menghapus USDT address
+  const deleteUSDTAddress = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this USDT address?")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/deposits/user/usdt-addresses/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Reload USDT addresses
+        const usdtAddressesRes = await fetchApi("/deposits/user/usdt-addresses");
+        setUserUSDTAddresses(usdtAddressesRes.data || []);
+        
+        // Jika yang dihapus adalah yang selected, pilih yang lain
+        if (selectedUSDT && selectedUSDT.id === id) {
+          if (usdtAddressesRes.data.length > 0) {
+            setSelectedUSDT(usdtAddressesRes.data[0]);
+            setCurrency(usdtAddressesRes.data[0].network);
+          } else {
+            setSelectedUSDT(null);
+          }
+        }
+        
+        alert("USDT address deleted successfully!");
+      } else {
+        alert(data.error || "Failed to delete USDT address");
+      }
+    } catch (err) {
+      console.error("Error deleting USDT:", err);
+      alert("Error deleting USDT address");
+    }
+  };
+
+  // Fungsi untuk set default USDT address
+  const setDefaultUSDTAddress = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/deposits/user/usdt-addresses/${id}/set-default`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Reload USDT addresses
+        const usdtAddressesRes = await fetchApi("/deposits/user/usdt-addresses");
+        setUserUSDTAddresses(usdtAddressesRes.data || []);
+        
+        // Update selected address jika perlu
+        const newDefault = usdtAddressesRes.data.find(addr => addr.is_default);
+        if (newDefault) {
+          setSelectedUSDT(newDefault);
+          setCurrency(newDefault.network);
+        }
+        
+        alert("USDT address set as default successfully!");
+      } else {
+        alert(data.error || "Failed to set default USDT address");
+      }
+    } catch (error) {
+      console.error('Error setting default address:', error);
+      alert("Error setting default USDT address");
+    }
+  };
+
+  // Fungsi untuk membuka modal edit
+  const handleEditUSDT = (address) => {
+    setEditingAddress(address);
+    setNewUSDTNetwork(address.network);
+    setNewUSDTAddress(address.address);
+    setSetAsDefault(address.is_default);
+    setShowEditUSDT(true);
+  };
+
+  // Fungsi untuk menyimpan USDT address baru
+  const saveNewUSDT = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:5000/api/deposits/user/usdt-addresses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          network: newUSDTNetwork,
+          address: newUSDTAddress,
+          is_default: setAsDefault
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Reload USDT addresses
+        const usdtAddressesRes = await fetchApi("/deposits/user/usdt-addresses");
+        setUserUSDTAddresses(usdtAddressesRes.data || []);
+        
+        // Set yang baru sebagai selected jika adalah default
+        if (setAsDefault) {
+          const newAddress = usdtAddressesRes.data.find(addr => addr.id === data.id);
+          setSelectedUSDT(newAddress);
+          setCurrency(newUSDTNetwork);
+        }
+        
+        setShowAddUSDT(false);
+        setNewUSDTAddress("");
+        setSetAsDefault(false);
+        alert("USDT address added successfully!");
+      } else {
+        alert(data.error || "Failed to add USDT address");
+      }
+    } catch (err) {
+      console.error("Error saving USDT:", err);
+      alert("Error saving USDT address");
+    }
+  };
+
+  // Handle pemilihan USDT address
+  const handleSelectUSDT = (address) => {
+    setSelectedUSDT(address);
+    setCurrency(address.network);
+  };
+
+  // HandleConfirm function
   const handleConfirm = async () => {
     let amountValue;
 
     if (selected !== null && amounts[selected]) {
       amountValue = parseFloat(amounts[selected].value);
-    } else {
+    } else if (customAmount) {
       amountValue = parseFloat(customAmount);
+    } else {
+      alert("Please select an amount or enter a custom amount");
+      return;
     }
-
-    console.log("Amount value:", amountValue, "Type:", typeof amountValue);
 
     // Validasi minimal $10
     if (isNaN(amountValue) || amountValue < 10) {
@@ -196,8 +306,8 @@ const TopUpCredit = () => {
     }
 
     // Validasi USDT information
-    if (!userUSDTInfo?.usdt_network || !userUSDTInfo?.usdt_address) {
-      alert("Please set up your USDT information first");
+    if (!selectedUSDT) {
+      alert("Please select a USDT address first");
       return;
     }
 
@@ -212,21 +322,27 @@ const TopUpCredit = () => {
         },
         body: JSON.stringify({
           network: currency,
-          amount: amountValue
+          amount: amountValue,
+          usdt_address: selectedUSDT.address
         }),
       });
 
       const data = await response.json();
       
       if (data.success) {
-        // Simpan semua data ke localStorage
-        localStorage.setItem("depositData", JSON.stringify(data));
+        // SIMPAN SEMUA DATA YANG DIPERLUKAN
+        localStorage.setItem("depositData", JSON.stringify({
+          ...data,
+          userUSDTInfo: {
+            usdt_network: selectedUSDT.network,
+            usdt_address: selectedUSDT.address
+          }
+        }));
         localStorage.setItem("topupAmount", amountValue.toString());
         localStorage.setItem("topupCurrency", currency);
         localStorage.setItem("topupCredit", data.credit.toString());
         localStorage.setItem("deposit_id", data.deposit_id.toString());
         
-        // Pindah ke step berikutnya
         navigate("/deposits/topup2");
       } else {
         alert(data.error || "Failed to generate deposit address");
@@ -252,15 +368,15 @@ const TopUpCredit = () => {
     // Validasi amount minimal $10
     const isAmountValid = !isNaN(amountValue) && amountValue >= 10;
     
-    // Validasi USDT information harus terisi
-    const isUSDTValid = userUSDTInfo?.usdt_network && userUSDTInfo?.usdt_address;
+    // Validasi USDT address harus terpilih
+    const isUSDTValid = selectedUSDT !== null;
 
     return isAmountValid && isUSDTValid && !generating;
   };
 
   if (loading) return <p>Loading...</p>;
 
-return (
+  return (
     <div className="topup-container">
       <div className="breadcrumb">Deposit &gt; Top Up Credit</div>
       <h1 className="title">Top Up Credit</h1>
@@ -274,7 +390,7 @@ return (
         <div className="step">3 <span>Payment Instruction</span></div>
       </div>
 
-      {/* Tampilkan info admin wallet untuk network yang dipilih */}
+      {/* Tampilkan info admin wallet */}
       {adminWalletInfo && (
         <div className="admin-wallet-info">
           <h3>Recipient Wallet Information</h3>
@@ -301,34 +417,114 @@ return (
                 {formatWalletAddress(getAdminWalletByNetwork(currency)?.address)}
               </span>
             </p>
-            <p className="wallet-note">
-              ⚠️ Please ensure you send funds to this exact address on the {currency} network
-            </p>
           </div>
         </div>
       )}
 
-      {/* Tampilkan info USDT user jika ada */}
-      {userUSDTInfo && userUSDTInfo.usdt_address && (
-        <div className="user-usdt-info">
-          <h3>Your Current USDT Information</h3>
-          <div className="usdt-details">
-            <p><strong>Network:</strong> {userUSDTInfo.usdt_network || 'Not set'}</p>
-            <p><strong>Address:</strong> {userUSDTInfo.usdt_address}</p>
-            <button 
-              className="btn-change-usdt"
-              onClick={() => setShowAddUSDT(!showAddUSDT)}
+      {/* Tampilkan USDT addresses user */}
+      <div className="user-usdt-section">
+        <h3>Your USDT Addresses</h3>
+        
+      {userUSDTAddresses.length > 0 ? (
+  <div className="usdt-addresses-list">
+    {userUSDTAddresses.map((address) => (
+  (address.is_default || selectedUSDT?.id === address.id) && (
+    <div
+      key={address.id}
+      className={`usdt-address-card ${selectedUSDT?.id === address.id ? "selected" : ""}`}
+      onClick={() => handleSelectUSDT(address)}
+    >
+      <div className="usdt-address-header">
+<span className="network-badge">
+  {address.network}
+</span>
+{Boolean(address.is_default) && (
+  <span className="default-badge">Default</span>
+)}
+        <div className="address-actions">
+          <button
+            className="edit-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditUSDT(address);
+            }}
+          >
+            ✏️
+          </button>
+          <button
+            className="delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteUSDTAddress(address.id);
+            }}
+          >
+            🗑️
+          </button>
+          {!address.is_default && (
+            <button
+              className="default-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDefaultUSDTAddress(address.id);
+              }}
             >
-              {showAddUSDT ? 'Cancel' : 'Change USDT'}
+              ⭐
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+      <div className="usdt-address-value">
+        {formatWalletAddress(address.address)}
+      </div>
+    </div>
+  )
+))}
+    
+    {/* Dropdown untuk memilih wallet lain yang tidak default */}
+    {userUSDTAddresses.filter(addr => !addr.is_default && selectedUSDT?.id !== addr.id).length > 0 && (
+      <div className="other-wallets-dropdown">
+        <select
+          className="wallet-selector"
+          onChange={(e) => {
+            const selectedId = parseInt(e.target.value);
+            const selectedAddress = userUSDTAddresses.find(addr => addr.id === selectedId);
+            if (selectedAddress) {
+              handleSelectUSDT(selectedAddress);
+            }
+          }}
+          value=""
+        >
+          <option value="">Select other wallet...</option>
+          {userUSDTAddresses
+            .filter(addr => !addr.is_default && selectedUSDT?.id !== addr.id)
+            .map((address) => (
+              <option key={address.id} value={address.id}>
+                {address.network} - {formatWalletAddress(address.address)}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+    )}
+  </div>
+) : (
+  <div className="no-usdt-info">
+    <p>You haven't added any USDT addresses yet.</p>
+  </div>
+)}
 
-      {/* Form untuk menambah/ubah USDT */}
+        <button 
+          className="btn-add-usdt"
+          onClick={() => setShowAddUSDT(true)}
+        >
+          + Add New USDT Address
+        </button>
+      </div>
+
+      {/* Form untuk menambah USDT address */}
       {showAddUSDT && (
         <div className="add-usdt-form">
-          <h3>{userUSDTInfo?.usdt_address ? 'Change USDT Information' : 'Add USDT Information'}</h3>
+          <h3>Add New USDT Address</h3>
           <div className="form-group">
             <label>Select Network</label>
             <select
@@ -353,10 +549,24 @@ return (
               className="usdt-address-input"
             />
           </div>
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={setAsDefault}
+                onChange={(e) => setSetAsDefault(e.target.checked)}
+              />
+              Set as default address
+            </label>
+          </div>
           <div className="form-buttons">
             <button 
               className="btn-cancel"
-              onClick={() => setShowAddUSDT(false)}
+              onClick={() => {
+                setShowAddUSDT(false);
+                setNewUSDTAddress("");
+                setSetAsDefault(false);
+              }}
             >
               Cancel
             </button>
@@ -365,29 +575,77 @@ return (
               onClick={saveNewUSDT}
               disabled={!newUSDTAddress}
             >
-              Save USDT
+              Save USDT Address
             </button>
           </div>
         </div>
       )}
 
-      {/* Jika user belum punya USDT, tampilkan tombol untuk menambah */}
-      {!userUSDTInfo?.usdt_address && !showAddUSDT && (
-        <div className="no-usdt-info">
-          <p>You haven't set up your USDT information yet.</p>
-          <button 
-            className="btn-add-usdt"
-            onClick={() => setShowAddUSDT(true)}
-          >
-            Add USDT Information
-          </button>
+      {/* Form untuk edit USDT address */}
+      {showEditUSDT && editingAddress && (
+        <div className="add-usdt-form">
+          <h3>Edit USDT Address</h3>
+          <div className="form-group">
+            <label>Select Network</label>
+            <select
+              value={newUSDTNetwork}
+              onChange={(e) => setNewUSDTNetwork(e.target.value)}
+              className="currency-select"
+            >
+              {availableCurrencies.map((curr) => (
+                <option key={curr.value} value={curr.value}>
+                  {curr.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>USDT Wallet Address</label>
+            <input
+              type="text"
+              placeholder="Enter your USDT wallet address"
+              value={newUSDTAddress}
+              onChange={(e) => setNewUSDTAddress(e.target.value)}
+              className="usdt-address-input"
+            />
+          </div>
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={setAsDefault}
+                onChange={(e) => setSetAsDefault(e.target.checked)}
+              />
+              Set as default address
+            </label>
+          </div>
+          <div className="form-buttons">
+            <button 
+              className="btn-cancel"
+              onClick={() => {
+                setShowEditUSDT(false);
+                setEditingAddress(null);
+                setNewUSDTAddress("");
+                setSetAsDefault(false);
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn-save"
+              onClick={() => updateUSDTAddress(editingAddress.id, newUSDTNetwork, newUSDTAddress, setAsDefault)}
+              disabled={!newUSDTAddress}
+            >
+              Update USDT Address
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Warning jika USDT information belum lengkap */}
-      {(!userUSDTInfo?.usdt_network || !userUSDTInfo?.usdt_address) && !showAddUSDT && (
+      {/* Warning jika belum pilih USDT address */}
+      {!selectedUSDT && (
         <div className="usdt-warning">
-          <p>⚠️ You must set up your USDT information before you can top up.</p>
+          <p>⚠️ Please select a USDT address before proceeding.</p>
         </div>
       )}
 
@@ -415,11 +673,11 @@ return (
         <div className={`custom-input ${selected !== null ? "deselected" : ""}`}>
           <label>Input Another Nominal</label>
           <input
-            type="text" // Menggunakan type="text" agar lebih mudah mengontrol format
+            type="text"
             placeholder="More than $10.00..."
             value={customAmount}
             onChange={handleCustomAmountChange}
-            onBlur={handleCustomAmountBlur} // Format saat kehilangan fokus
+            onBlur={handleCustomAmountBlur}
             onFocus={handleCustomInputFocus}
             onClick={handleCustomInputClick}
           />
@@ -429,8 +687,8 @@ return (
         <div className="requirements-info">
           <p>Requirements to proceed:</p>
           <ul>
-            <li className={userUSDTInfo?.usdt_network && userUSDTInfo?.usdt_address ? "requirement-met" : "requirement-not-met"}>
-              ✓ USDT information set up
+            <li className={selectedUSDT ? "requirement-met" : "requirement-not-met"}>
+              ✓ USDT address selected
             </li>
             <li className={(selected !== null && parseFloat(amounts[selected]?.value) >= 10) || (customAmount && parseFloat(customAmount) >= 10) ? "requirement-met" : "requirement-not-met"}>
               ✓ Minimum amount $10.00

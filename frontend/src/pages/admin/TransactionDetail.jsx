@@ -3,6 +3,15 @@ import "../../style/admin/TransactionDetail.css";
 
 export default function TransactionDetail({ deposit, onClose, onProcess }) {
   const [showProofModal, setShowProofModal] = useState(false);
+  const [userUSDTInfo, setUserUSDTInfo] = useState(null);
+
+
+    useEffect(() => {
+    const storedDeposit = JSON.parse(localStorage.getItem("depositData"));
+    if (storedDeposit?.userUSDTInfo) {
+      setUserUSDTInfo(storedDeposit.userUSDTInfo);
+    }
+  }, []);
   
   if (!deposit) return null;
 
@@ -28,7 +37,27 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
     });
   };
 
- return (
+  // Fungsi untuk mendapatkan usdt_address dengan cara yang sama seperti TransactionModal
+  const getUserUSDTAddress = () => {
+    const addr =
+      (userUSDTInfo?.usdt_address && userUSDTInfo.usdt_address !== "0" && userUSDTInfo.usdt_address) ||
+      (deposit.user?.usdt_address && deposit.user.usdt_address !== "0" && deposit.user.usdt_address) ||
+      (deposit.deposit?.user?.usdt_address && deposit.deposit.user.usdt_address !== "0" && deposit.deposit.user.usdt_address) ||
+      (deposit.usdt_address && deposit.usdt_address !== "0" && deposit.usdt_address) ||
+      null;
+
+    return addr ? addr : "Not Available";
+  };
+
+
+  // Fungsi untuk memformat alamat wallet (sama seperti di TransactionModal)
+  const formatWalletAddress = (address) => {
+    if (!address || address === "N/A") return "Not Available";
+    if (address.length <= 12) return address;
+    return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
+  };
+
+  return (
     <>
       <div className="transaction-details-container" onClick={onClose}>
         <div className="transaction-card" onClick={(e) => e.stopPropagation()}>
@@ -62,13 +91,13 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
                 <button className="icon-btn">👁</button>
               </strong>
             </div>
-            <div className="info-row">
-              <span>User's Wallet Address</span>
-              <strong>
-                {deposit.user_wallet || deposit.memo || "N/A"} 
-                <button className="icon-btn">👁</button>
-              </strong>
-            </div>
+<div className="info-row">
+  <span>User's Wallet Address</span>
+  <strong>
+    {formatWalletAddress(getUserUSDTAddress())}
+    <button className="icon-btn">👁</button>
+  </strong>
+</div>
             
             {/* TRANSFER EVIDENCE - PERBAIKAN */}
             <div className="info-row">
@@ -142,7 +171,7 @@ export default function TransactionDetail({ deposit, onClose, onProcess }) {
           )}
 
           {/* Buttons */}
-      <div className="action-buttons-tr-detail">
+          <div className="action-buttons-tr-detail">
             <button className="btn secondary" onClick={onClose}>Back</button>
             {(deposit.status === "Checking Deposit" || deposit.status === "checking") && (
               <>

@@ -10,47 +10,22 @@ export default function TopUpCredit3() {
   const [timeLeft, setTimeLeft] = useState(3600);
   const depositId = localStorage.getItem("deposit_id");
 
-  // Fetch user USDT info
-  const fetchUserUSDTInfo = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        "http://localhost:5000/api/deposits/user/usdt-info",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await res.json();
-      if (data.success) {
-        setUserUSDTInfo(data.data);
-      }
-    } catch (err) {
-      console.error("Error fetching user USDT info:", err);
-    }
-  };
 
   // Fetch deposit details dengan auto-refresh
   const fetchDepositDetails = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `http://localhost:5000/api/deposits/status/${depositId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/deposits/status/${depositId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
       if (data.success) {
         setDepositData(data.data);
-        
+
         // Hitung sisa waktu berdasarkan created_at
         if (data.data.deposit && data.data.deposit.created_at) {
           const createdAt = new Date(data.data.deposit.created_at);
@@ -72,14 +47,13 @@ export default function TopUpCredit3() {
   // Setup auto-refresh dan countdown
   useEffect(() => {
     fetchDepositDetails(); // Initial fetch
-    fetchUserUSDTInfo(); // Fetch user USDT info
 
     // Auto-refresh setiap 30 detik
     const refreshInterval = setInterval(fetchDepositDetails, 30000);
-    
+
     // Countdown timer
     const countdownInterval = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 0) {
           clearInterval(countdownInterval);
           return 0;
@@ -98,7 +72,7 @@ export default function TopUpCredit3() {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Format wallet address untuk tampilan
@@ -108,44 +82,48 @@ export default function TopUpCredit3() {
     return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`;
   };
 
-
-
   // Di useEffect TopUpCredit3.jsx, tambahkan pengecekan
+  // Ganti state & useEffect
 useEffect(() => {
   const loadDepositData = async () => {
     try {
-      // Coba ambil dari localStorage dulu (untuk proses baru)
-      let depositData = JSON.parse(localStorage.getItem("depositData"));
-      
-      // Jika tidak ada di localStorage, tapi ada depositId dari params/props
-      if (!depositData && depositId) {
-        // Fetch data deposit dari API
+      // Ambil dari localStorage dulu
+      let storedDeposit = JSON.parse(localStorage.getItem("depositData"));
+
+      if (storedDeposit) {
+        setDepositData(storedDeposit);
+        if (storedDeposit.userUSDTInfo) {
+          setUserUSDTInfo(storedDeposit.userUSDTInfo);
+        }
+      } else if (depositId) {
+        // Kalau tidak ada di localStorage → fetch dari API
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          `http://localhost:5000/api/deposits/status/${depositId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        
+        const res = await fetch(`http://localhost:5000/api/deposits/status/${depositId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         const data = await res.json();
         if (data.success) {
-          depositData = data;
           setDepositData(data.data);
+          // kalau di response ada wallet user, masukkan juga
+          if (data.data.userUSDTInfo) {
+            setUserUSDTInfo(data.data.userUSDTInfo);
+          }
         }
       }
-      
-      // ... rest of your code
     } catch (error) {
       console.error("Error loading deposit data:", error);
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   loadDepositData();
 }, [depositId]);
+
 
   return (
     <div className="topup3-container">
@@ -157,29 +135,28 @@ useEffect(() => {
 
       <div className="steps">
         <div className="step active">
-          1<br />Top Up Deposit
+          1<br />
+          Top Up Deposit
         </div>
         <div className="step active">
-          2<br />Check Payment
+          2<br />
+          Check Payment
         </div>
         <div className="step active">
-          3<br />Payment Instruction
+          3<br />
+          Payment Instruction
         </div>
       </div>
 
       {/* Countdown Timer */}
       {timeLeft > 0 && (
-        <div className={`countdown-timer ${timeLeft < 300 ? 'warning' : ''}`}>
+        <div className={`countdown-timer ${timeLeft < 300 ? "warning" : ""}`}>
           ⏰ Time remaining: {formatTime(timeLeft)}
           {timeLeft < 300 && <span> - Hurry up!</span>}
         </div>
       )}
 
-      {timeLeft === 0 && (
-        <div className="countdown-timer expired">
-          ⚠️ Deposit window expired. Please start a new deposit.
-        </div>
-      )}
+      {timeLeft === 0 && <div className="countdown-timer expired">⚠️ Deposit window expired. Please start a new deposit.</div>}
 
       <div className="payment-box">
         <h3>Payment Instruction</h3>
@@ -189,19 +166,10 @@ useEffect(() => {
         ) : depositData?.deposit ? (
           <>
             <div className="wallet-info">
-              <img
-                src="https://cryptologos.cc/logos/tether-usdt-logo.png"
-                alt="USDT"
-                className="wallet-icon"
-              />
+              <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT" className="wallet-icon" />
               <div>
                 <p>Recipient Wallet Address ({depositData.deposit.network})</p>
-                <a 
-                  href={depositData.deposit.address_link} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="wallet-address-link"
-                >
+                <a href={depositData.deposit.address_link} target="_blank" rel="noreferrer" className="wallet-address-link">
                   {formatWalletAddress(depositData.deposit.destination_address || depositData.deposit.recipient_wallet)}
                 </a>
               </div>
@@ -209,68 +177,52 @@ useEffect(() => {
 
             <div className="payment-details">
               <div>
-                <strong>ID Deposit</strong>{" "}
-                <span>{depositData.deposit.id}</span>
+                <strong>ID Deposit</strong> <span>{depositData.deposit.id}</span>
               </div>
               <div>
-                <strong>Status</strong>{" "}
-                <span className={`status-${depositData.deposit.status}`}>
-                  {depositData.deposit.status}
-                </span>
+                <strong>Status</strong> <span className={`status-${depositData.deposit.status}`}>{depositData.deposit.status}</span>
               </div>
               <div>
-                <strong>Payment Date</strong>{" "}
-                <span>{new Date(depositData.deposit.created_at).toLocaleString()}</span>
+                <strong>Payment Date</strong> <span>{new Date(depositData.deposit.created_at).toLocaleString()}</span>
               </div>
               <div>
-                <strong>Your Wallet (Memo)</strong>{" "}
-                <span title={depositData.deposit.memo}>
-                  {formatWalletAddress(depositData.deposit.memo)}
-                </span>
+                <strong>Your Wallet (Memo)</strong> <span title={depositData.deposit.memo}>{formatWalletAddress(depositData.deposit.memo)}</span>
+              </div>
+<div>
+  <strong>Your Wallet (USDT)</strong>
+  <span title={userUSDTInfo?.usdt_address}>
+    {userUSDTInfo?.usdt_address ? formatWalletAddress(userUSDTInfo.usdt_address) : "Not set"}
+  </span>
+</div>
+              <div>
+                <strong>Network</strong> <span>{depositData.deposit.network}</span>
               </div>
               <div>
-                <strong>Your Wallet (USDT)</strong>{" "}
-                <span title={userUSDTInfo?.usdt_address}>
-                  {userUSDTInfo?.usdt_address ? formatWalletAddress(userUSDTInfo.usdt_address) : "Not set"}
-                </span>
+                <strong>Top Up Amount</strong> <span className="amount">${depositData.deposit.amount}</span>
               </div>
-              <div>
-                <strong>Network</strong>{" "}
-                <span>{depositData.deposit.network}</span>
-              </div>
-              <div>
-                <strong>Top Up Amount</strong>{" "}
-                <span className="amount">${depositData.deposit.amount}</span>
-              </div>
-              <div>
-                <strong>Convert to Credit</strong>{" "}
-                <span className="credit">{depositData.deposit.credit} credits</span>
-              </div>
+<div>
+  <strong>Convert to Credit</strong> 
+  <span className="credit">{depositData.deposit.credit} credits</span>
+</div>
             </div>
 
-            {depositData.deposit.status === 'pending' && timeLeft > 0 && (
+            {depositData.deposit.status === "pending" && timeLeft > 0 && (
               <div className="btn-group">
                 <button className="btn-back" onClick={() => window.history.back()}>
                   Back
                 </button>
-                <button 
-                  className="btn-done" 
-                  onClick={() => setShowUploadModal(true)}
-                  disabled={timeLeft === 0}
-                >
-                  {timeLeft === 0 ? 'Time Expired' : 'Payment Done'}
+                <button className="btn-done" onClick={() => setShowUploadModal(true)} disabled={timeLeft === 0}>
+                  {timeLeft === 0 ? "Time Expired" : "Payment Done"}
                 </button>
               </div>
             )}
 
-            {depositData.deposit.status !== 'pending' && (
+            {depositData.deposit.status !== "pending" && (
               <div className="status-message">
                 <p>
                   Deposit status: <strong>{depositData.deposit.status}</strong>
                 </p>
-                {depositData.deposit.admin_notes && (
-                  <p>Admin notes: {depositData.deposit.admin_notes}</p>
-                )}
+                {depositData.deposit.admin_notes && <p>Admin notes: {depositData.deposit.admin_notes}</p>}
               </div>
             )}
           </>
@@ -283,7 +235,7 @@ useEffect(() => {
         <h3>Top Up Information</h3>
         <ol>
           <li>
-            Choose {depositData?.deposit?.network || 'TRC20'} Network, make sure your wallet/exchange supports USDT-{depositData?.deposit?.network || 'TRC20'}.
+            Choose {depositData?.deposit?.network || "TRC20"} Network, make sure your wallet/exchange supports USDT-{depositData?.deposit?.network || "TRC20"}.
           </li>
           <li>Complete your transfer before the countdown ends (1 hour).</li>
           <li>After payment, click "Payment Done" to upload proof of transfer.</li>

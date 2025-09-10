@@ -1,3 +1,4 @@
+// TopUpCredit2.jsx - Perbaikan
 import React, { useEffect, useState } from "react";
 import "../../style/user/TopUpCredit2.css";
 import { useNavigate } from "react-router-dom";
@@ -6,17 +7,22 @@ import { fetchApi } from "../../utils/api";
 export default function TopUpCredit2() {
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState("0.00");
+  const [credit, setCredit] = useState(0); // FINAL CREDIT (amount * credit rate)
+  const [creditRate, setCreditRate] = useState(100); // CREDIT RATE per dollar
   const [network, setNetwork] = useState("TRC20");
   const [deposit, setDeposit] = useState(null);
   const [userUSDTInfo, setUserUSDTInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const depositData = JSON.parse(localStorage.getItem("depositData"));
         const storedAmount = localStorage.getItem("topupAmount");
+        const storedCredit = localStorage.getItem("topupCredit");
+        const storedCreditRate = localStorage.getItem("creditRate");
         const storedNetwork = localStorage.getItem("topupCurrency");
         
         if (depositData && depositData.success) {
@@ -29,20 +35,35 @@ export default function TopUpCredit2() {
               setAmount(numValue);
               setFormattedAmount(numValue.toFixed(2));
             }
-          } else if (depositData.amount) {
-            setAmount(depositData.amount);
-            setFormattedAmount(depositData.amount.toFixed(2));
           }
+
+          // SET FINAL CREDIT DAN CREDIT RATE
+          if (storedCredit) {
+            setCredit(parseInt(storedCredit));
+          } else if (depositData.credit) {
+            setCredit(depositData.credit);
+          }
+
+          if (storedCreditRate) {
+            setCreditRate(parseFloat(storedCreditRate));
+          } else if (depositData.credit_rate) {
+            setCreditRate(depositData.credit_rate);
+          }
+
+            if (depositData.userUSDTInfo) {
+    setUserUSDTInfo(depositData.userUSDTInfo);
+  }
+
         } else {
           alert("No deposit data found");
           navigate("/deposits/topup");
         }
 
         // Fetch user USDT info
-        const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
-        if (usdtInfoRes.success) {
-          setUserUSDTInfo(usdtInfoRes.data);
-        }
+        // const usdtInfoRes = await fetchApi("/deposits/user/usdt-info");
+        // if (usdtInfoRes.success) {
+        //   setUserUSDTInfo(usdtInfoRes.data);
+        // }
       } catch (err) {
         console.error("Error loading deposit data:", err);
         alert("Error loading deposit information");
@@ -54,8 +75,6 @@ export default function TopUpCredit2() {
 
     loadData();
   }, [navigate]);
-
-  const convertedCredit = amount * 100;
 
   // Format wallet address untuk tampilan
   const formatWalletAddress = (address) => {
@@ -110,12 +129,12 @@ export default function TopUpCredit2() {
                 </span>
               </div>
 
-              <div className="transaction-item">
-                <span>Your Wallet (USDT)</span>
-                <span className="wallet" title={userUSDTInfo?.usdt_address}>
-                  {userUSDTInfo?.usdt_address ? formatWalletAddress(userUSDTInfo.usdt_address) : "Not set"}
-                </span>
-              </div>
+<div className="transaction-item">
+  <span>Your Wallet (USDT)</span>
+  <span className="wallet" title={userUSDTInfo?.usdt_address}>
+    {userUSDTInfo?.usdt_address ? formatWalletAddress(userUSDTInfo.usdt_address) : "Not set"}
+  </span>
+</div>
 
               <div className="transaction-item">
                 <span>Network</span>
@@ -127,10 +146,10 @@ export default function TopUpCredit2() {
                 <span className="amount">${formattedAmount}</span>
               </div>
 
-              <div className="transaction-item">
-                <span>Convert to Credit</span>
-                <span className="credit">{convertedCredit} credits</span>
-              </div>
+            <div className="transaction-item">
+              <span>Credit Rate</span>
+              <span className="credit-rate">{creditRate} credits per $1</span>
+            </div>
 
               <div className="transaction-item important-note">
                 <span>⚠️ Important</span>

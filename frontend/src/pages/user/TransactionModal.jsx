@@ -4,13 +4,25 @@ import "../../style/user/TransactionModal.css";
 const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
   const [showProof, setShowProof] = useState(false);
   const [depositData, setDepositData] = useState(null);
+  const [userUSDTInfo, setUserUSDTInfo] = useState(null);
+
 
   // Update depositData ketika deposit prop berubah
-  useEffect(() => {
-    if (deposit) {
-      setDepositData(deposit);
+useEffect(() => {
+  if (deposit) {
+    setDepositData(deposit);
+  } else {
+    // fallback ambil dari localStorage
+    const storedDeposit = JSON.parse(localStorage.getItem("depositData"));
+    if (storedDeposit) {
+      setDepositData(storedDeposit);
+      if (storedDeposit.userUSDTInfo) {
+        setUserUSDTInfo(storedDeposit.userUSDTInfo);
+      }
     }
-  }, [deposit]);
+  }
+}, [deposit]);
+
 
   if (!show) return null;
 
@@ -158,12 +170,34 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
               </div>
               
               <div className="info-row">
-                <span>Your Wallet Address</span>
-                <span className="value wallet-address" title={depositData.user?.usdt_address || depositData.deposit?.user?.usdt_address}>
-                  {formatWalletAddress(depositData.user?.usdt_address || depositData.deposit?.user?.usdt_address)} 
-                  <span className="eye-icon"> 👁</span>
-                </span>
-              </div>
+  <span>Your Wallet Address</span>
+  <span
+    className="value wallet-address"
+    title={
+      (userUSDTInfo?.usdt_address &&
+        userUSDTInfo.usdt_address !== "0" &&
+        userUSDTInfo.usdt_address) ||
+      (depositData.user?.usdt_address &&
+        depositData.user?.usdt_address !== "0" &&
+        depositData.user?.usdt_address) ||
+      (depositData.deposit?.user?.usdt_address &&
+        depositData.deposit?.user?.usdt_address !== "0" &&
+        depositData.deposit?.user?.usdt_address) ||
+      "Not Available"
+    }
+  >
+    {userUSDTInfo?.usdt_address && userUSDTInfo.usdt_address !== "0"
+      ? formatWalletAddress(userUSDTInfo.usdt_address)
+      : depositData.user?.usdt_address &&
+        depositData.user?.usdt_address !== "0"
+      ? formatWalletAddress(depositData.user.usdt_address)
+      : depositData.deposit?.user?.usdt_address &&
+        depositData.deposit?.user?.usdt_address !== "0"
+      ? formatWalletAddress(depositData.deposit.user.usdt_address)
+      : "Not Available"}{" "}
+    <span className="eye-icon"> 👁</span>
+  </span>
+</div>
 
               {/* Link address wallet user */}
               {(depositData.user?.user_address_link || depositData.deposit?.user?.user_address_link) && (
@@ -188,7 +222,7 @@ const TransactionModal = ({ show, onClose, deposit, loading, error }) => {
               
               <div className="info-row bold">
                 <span>Converted to Credit</span>
-                <span className="value credit">{depositData.deposit?.amount * 100 || depositData.amount * 100}</span>
+                <span className="value credit">{depositData.deposit?.credit|| depositData.credit}</span>
               </div>
 
               {/* Footer */}
