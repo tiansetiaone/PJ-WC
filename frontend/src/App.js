@@ -33,6 +33,7 @@ import EditProfile from "./pages/user/EditProfile";
 import ContactSupport from "./pages/user/ContactSupport";
 import DepositAmountsPage from "./pages/admin/DepositAmountsPage";
 import LandingPage from "./pages/LandingPage";
+import CampaignPricing from "./pages/admin/CampaignPricing";
 
 
 import UserManagement from "./pages/admin/UserManagement";
@@ -340,6 +341,18 @@ const AppRoutes = () => {
           <AdminRoute>
             <MainLayout admin>
               <DepositAmountsPage />
+            </MainLayout>
+          </AdminRoute>
+        }
+      />
+
+
+            <Route
+        path="/admin/pricing"
+        element={
+          <AdminRoute>
+            <MainLayout admin>
+              <CampaignPricing />
             </MainLayout>
           </AdminRoute>
         }

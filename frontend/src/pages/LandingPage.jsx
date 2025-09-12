@@ -1,20 +1,36 @@
 import React from "react";
 import "../style/LandingPage.css";
 import logoImage from "../assets/logo-blasterc-blue.png";
+import aw from "../assets/a&w.png";
+import binance from "../assets/binance.png";
+import bitcoinlogo from "../assets/bitcoin-logo.png";
+import cardano from "../assets/cardano-logo.png";
+import diy from "../assets/diy-logo.png";
+import eth from "../assets/eth.png";
+import etiqa from "../assets/etiqa-logo.png";
+import fpx from "../assets/fpxlogo.jpg";
+import grabPay from "../assets/grab_pay.png";
+import mb from "../assets/Marrybrown_Logo.png";
+import payPal from "../assets/paypal_logo.png";
+import proton from "../assets/proton-Logo.png";
+import stripe from "../assets/Stripe_logo.png";
+import tether from "../assets/tether.png";
+import univmalaya from "../assets/university-malaya.png";
+import { Bitcoin, Theater } from "lucide-react";
 
 const LandingPage = () => {
   return (
     <div>
       {/* Header */}
-      <header>
+      <header className="header-lp">
         <div className="container-lp">
           <div className="header-content">
             <div className="logo">
         <img src={logoImage} alt="BLASTERC" className="logo-img" />
             </div>
             <div className="auth-buttons">
-              <a href="/login" className="btn btn-login">Login</a>
-              <a href="/register" className="btn btn-register">Register</a>
+              <a href="/login" className="btn-lp btn-login">Login</a>
+              <a href="/register" className="btn-lp btn-register">Register</a>
             </div>
           </div>
         </div>
@@ -106,9 +122,24 @@ const LandingPage = () => {
         <div className="container-lp">
           <h3>Our Client</h3>
           <div className="client-logos">
-            <div className="client-logo">AW</div>
-            <div className="client-logo">Pizza Hut</div>
-            <div className="client-logo">KFC</div>
+            <div className="client-logo">
+              <img src={etiqa} alt="etiqa" />
+            </div>
+            <div className="client-logo">
+              <img src={aw} alt="AW" />
+            </div>
+            <div className="client-logo">
+              <img src={univmalaya} alt="univ-malaya" />
+            </div>
+            <div className="client-logo">
+              <img src={diy} alt="DIY" />
+            </div>
+            <div className="client-logo">
+              <img src={proton} alt="proton" />
+            </div>
+            <div className="client-logo">
+              <img src={mb} alt="Marry-brown" />
+            </div>
           </div>
           <div className="client-count">10,500+</div>
           <div className="client-label">Satisfied Customers</div>
@@ -121,12 +152,46 @@ const LandingPage = () => {
           <div className="footer-content">
             <div className="payment-methods">
               <h4 className="footer-title">Payment Method:</h4>
+               <div className="crypto-payments1">
+                <span className="crypto-badge">
+                  <img src={payPal} alt="Tether" />
+                  <h6>PayPal</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={stripe} alt="Tether" />
+                  <h6>Stripe</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={fpx} alt="Tether" />
+                  <h6>FPX</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={grabPay} alt="Tether" />
+                  <h6>Grab Pay</h6>
+                </span>
+              </div>
               <p>Crypto Payments Accepted</p>
               <div className="crypto-payments">
-                <span className="crypto-badge">Tether</span>
-                <span className="crypto-badge">Bitcoin</span>
-                <span className="crypto-badge">Ethereum</span>
-                <span className="crypto-badge">Binance</span>
+                <span className="crypto-badge">
+                  <img src={bitcoinlogo} alt="Tether" />
+                  <h6>Bitcoin</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={eth} alt="Tether" />
+                  <h6>Etheureum</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={cardano} alt="Tether" />
+                  <h6>Cardano</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={binance} alt="Tether" />
+                  <h6>Bitcoin</h6>
+                </span>
+                <span className="crypto-badge">
+                  <img src={tether} alt="Tether" />
+                  <h6>Bitcoin</h6>
+                </span>
               </div>
             </div>
             <div className="support-contact">

@@ -19,7 +19,15 @@ const {
   deleteCampaign,
   getAdminCampaignMonthlyStats,
   getUserCampaignMonthlyStats,
-  uploadCampaignNumbersRaw
+  uploadCampaignNumbersRaw,
+  approveCampaign,
+  uploadNumbers,
+  createCampaignPricing,
+  deleteCampaignPricing,
+  getCampaignPricing,
+  getPublicPricing,
+  updateCampaignPricing,
+  estimateCampaignCost
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -138,4 +146,20 @@ router.delete("/:campaignId", auth, deleteCampaign);
 
 router.get("/:campaignId", auth, getCampaignDetails);
 
+// Admin approve campaign
+router.post("/admin/campaigns/:campaignId/approve", auth, auth.adminOnly, approveCampaign);
+
+// Admin pricing management routes
+router.get("/admin/pricing", auth, auth.adminOnly, getCampaignPricing);
+router.post("/admin/pricing", auth, auth.adminOnly, createCampaignPricing);
+router.put("/admin/pricing/:id", auth, auth.adminOnly, updateCampaignPricing);
+router.delete("/admin/pricing/:id", auth, auth.adminOnly, deleteCampaignPricing);
+
+// Public pricing info (bisa diakses user)
+router.get("/pricing", getPublicPricing);
+
+// Tambahkan route untuk estimasi biaya
+router.post("/estimate-cost", estimateCampaignCost);
+
 module.exports = router;
+

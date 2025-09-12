@@ -33,7 +33,7 @@ exports.createCampaign = async (req, res) => {
       });
     }
 
-    // CEK SALDO USER sebelum membuat campaign
+     // CEK SALDO USER sebelum membuat campaign
     const [userBalance] = await db.query(
       `SELECT balance FROM users WHERE id = ?`,
       [user_id]
@@ -51,17 +51,17 @@ exports.createCampaign = async (req, res) => {
       image_url = `/uploads/${req.file.filename}`;
     }
 
-    // Insert campaign
+    // Insert campaign (tanpa total_cost dulu)
     const [result] = await db.query(
       `INSERT INTO campaigns 
        (user_id, campaign_name, campaign_date, message, image_url, campaign_type, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, 'on_process', NOW())`,
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())`,
       [user_id, campaign_name, campaign_date, message, image_url, campaign_type]
     );
 
     res.status(201).json({
       success: true,
-      message: "Campaign created successfully",
+      message: "Campaign created successfully. Please upload numbers to calculate cost.",
       campaign_id: result.insertId,
     });
   } catch (err) {
@@ -140,14 +140,15 @@ exports.getUserCampaigns = async (req, res) => {
   }
 };
 
+// UPLOAD NUMBERS dengan perhitungan biaya
 exports.uploadCampaignNumbers = async (req, res) => {
   const { campaignId } = req.params;
   const user_id = req.user.id;
 
   try {
-    // 1. Verify campaign ownership (untuk semua tipe)
+    // 1. Verify campaign ownership
     const [campaign] = await db.query(
-      `SELECT id, campaign_type FROM campaigns 
+      `SELECT id, campaign_type, user_id FROM campaigns 
        WHERE id = ? AND user_id = ?`,
       [campaignId, user_id]
     );
@@ -172,7 +173,7 @@ exports.uploadCampaignNumbers = async (req, res) => {
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    // 4. Validate phone numbers (logika validasi berbeda untuk SMS/WhatsApp)
+    // 4. Validate phone numbers
     const { validNumbers, invalidNumbers } = validatePhoneNumbers(numbers, campaignType);
 
     if (invalidNumbers.length > 0) {
@@ -184,27 +185,59 @@ exports.uploadCampaignNumbers = async (req, res) => {
       });
     }
 
-    // 5. Save to database
+    const totalNumbers = validNumbers.length;
+
+    // 5. Hitung biaya campaign
+    const pricePerNumber = await getCampaignPrice(campaignType, totalNumbers);
+    const totalCost = pricePerNumber * totalNumbers;
+
+    // 6. Cek saldo user
+    const [user] = await db.query(
+      `SELECT balance FROM users WHERE id = ?`,
+      [user_id]
+    );
+
+    const userBalance = parseFloat(user[0].balance || 0);
+
+    if (userBalance < totalCost) {
+      return res.status(400).json({
+        error: "Insufficient balance",
+        message: `You need $${totalCost.toFixed(4)} but only have $${userBalance.toFixed(4)}`,
+        required: totalCost,
+        current_balance: userBalance
+      });
+    }
+
+    // 7. Save to database
     await db.query(
       `INSERT INTO campaign_numbers (campaign_id, phone_number) 
        VALUES ?`,
       [validNumbers.map((num) => [campaignId, num])]
     );
 
-    // 6. Update campaign status
+    // 8. Update campaign dengan informasi biaya
     await db.query(
-      `UPDATE campaigns SET status = 'on_process' 
+      `UPDATE campaigns 
+       SET total_numbers = ?, 
+           price_per_number = ?, 
+           total_cost = ?,
+           status = 'on_process'
        WHERE id = ?`,
-      [campaignId]
+      [totalNumbers, pricePerNumber, totalCost, campaignId]
     );
+
+    // 9. Kurangi saldo user (pending sampai campaign approved)
+    // Saldo akan dipotong saat campaign di-approve oleh admin
 
     // Cleanup
     fs.unlinkSync(req.file.path);
 
     res.json({
       success: true,
-      message: `Phone numbers uploaded successfully for ${campaignType} campaign`,
-      totalUploaded: validNumbers.length,
+      message: `Phone numbers uploaded successfully`,
+      totalUploaded: totalNumbers,
+      pricePerNumber: pricePerNumber,
+      totalCost: totalCost,
       campaignType: campaignType,
     });
   } catch (err) {
@@ -715,3 +748,360 @@ exports.getAdminCampaignMonthlyStats = async (req, res) => {
 };
 
 
+// Helper function untuk mendapatkan harga
+async function getCampaignPrice(campaignType, totalNumbers) {
+  const [pricing] = await db.query(
+    `SELECT price_per_number 
+     FROM campaign_pricing 
+     WHERE campaign_type = ? 
+       AND (min_numbers <= ? OR min_numbers IS NULL)
+       AND (? <= max_numbers OR max_numbers IS NULL)
+       AND status = 'active'
+     ORDER BY min_numbers DESC
+     LIMIT 1`,
+    [campaignType, totalNumbers, totalNumbers]
+  );
+  
+  return pricing.length > 0 ? parseFloat(pricing[0].price_per_number) : 0.0010;
+}
+
+
+// Admin - Approve Campaign dan potong saldo
+exports.approveCampaign = async (req, res) => {
+  const { campaignId } = req.params;
+  const { action } = req.body; // 'approve' or 'reject'
+
+  try {
+    const [campaign] = await db.query(
+      `SELECT c.*, u.balance as user_balance 
+       FROM campaigns c 
+       JOIN users u ON c.user_id = u.id 
+       WHERE c.id = ? AND c.status = 'on_process'`,
+      [campaignId]
+    );
+
+    if (!campaign.length) {
+      return res.status(404).json({ error: "Campaign not found or not ready for approval" });
+    }
+
+    const campaignData = campaign[0];
+
+    if (action === 'approve') {
+      // Cek saldo user
+      if (parseFloat(campaignData.user_balance) < parseFloat(campaignData.total_cost)) {
+        return res.status(400).json({
+          error: "User has insufficient balance",
+          required: campaignData.total_cost,
+          current_balance: campaignData.user_balance
+        });
+      }
+
+      // Potong saldo user
+      await db.query(
+        `UPDATE users 
+         SET balance = balance - ? 
+         WHERE id = ?`,
+        [campaignData.total_cost, campaignData.user_id]
+      );
+
+      // Update status campaign
+      await db.query(
+        `UPDATE campaigns SET status = 'approved' WHERE id = ?`,
+        [campaignId]
+      );
+
+      res.json({
+        success: true,
+        message: "Campaign approved and balance deducted",
+        amount_deducted: campaignData.total_cost
+      });
+
+    } else if (action === 'reject') {
+      // Update status campaign menjadi rejected
+      await db.query(
+        `UPDATE campaigns SET status = 'rejected' WHERE id = ?`,
+        [campaignId]
+      );
+
+      res.json({
+        success: true,
+        message: "Campaign rejected"
+      });
+    }
+
+  } catch (err) {
+    console.error("Approve campaign error:", err);
+    res.status(500).json({ error: "Failed to process campaign approval" });
+  }
+};
+
+
+// Admin - Get all pricing
+exports.getCampaignPricing = async (req, res) => {
+  try {
+    const [pricing] = await db.query(
+      `SELECT * FROM campaign_pricing ORDER BY campaign_type, min_numbers`
+    );
+    
+    res.json({ 
+      success: true, 
+      data: pricing 
+    });
+  } catch (err) {
+    console.error("Get pricing error:", err);
+    res.status(500).json({ 
+      error: "Failed to get pricing",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Admin - Update pricing
+exports.updateCampaignPricing = async (req, res) => {
+  const { id } = req.params;
+  const { price_per_number, min_numbers, max_numbers, status } = req.body;
+
+  try {
+    await db.query(
+      `UPDATE campaign_pricing 
+       SET price_per_number = ?, min_numbers = ?, max_numbers = ?, status = ?
+       WHERE id = ?`,
+      [price_per_number, min_numbers, max_numbers, status, id]
+    );
+    
+    res.json({ success: true, message: "Pricing updated successfully" });
+  } catch (err) {
+    console.error("Update pricing error:", err);
+    res.status(500).json({ error: "Failed to update pricing" });
+  }
+};
+
+
+// Admin - Create new pricing tier
+exports.createCampaignPricing = async (req, res) => {
+  const { campaign_type, price_per_number, min_numbers, max_numbers, status } = req.body;
+
+  try {
+    // Validasi input
+    if (!campaign_type || !price_per_number || min_numbers === undefined) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: ["campaign_type", "price_per_number", "min_numbers"]
+      });
+    }
+
+    if (!["whatsapp", "sms"].includes(campaign_type)) {
+      return res.status(400).json({
+        error: "Invalid campaign type",
+        allowed: ["whatsapp", "sms"]
+      });
+    }
+
+    // Cek overlap pricing
+    const [overlap] = await db.query(
+      `SELECT * FROM campaign_pricing 
+       WHERE campaign_type = ? 
+       AND (
+         (min_numbers <= ? AND (max_numbers >= ? OR max_numbers IS NULL)) OR
+         (min_numbers <= ? AND (max_numbers >= ? OR max_numbers IS NULL)) OR
+         (? <= min_numbers AND (? >= max_numbers OR max_numbers IS NULL))
+       )
+       AND status = 'active'`,
+      [campaign_type, min_numbers, min_numbers, max_numbers, max_numbers, min_numbers, max_numbers]
+    );
+
+    if (overlap.length > 0) {
+      return res.status(400).json({
+        error: "Pricing tier overlaps with existing active tier",
+        overlapping_tiers: overlap
+      });
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO campaign_pricing 
+       (campaign_type, price_per_number, min_numbers, max_numbers, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [campaign_type, price_per_number, min_numbers, max_numbers || null, status || 'active']
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Pricing tier created successfully",
+      data: {
+        id: result.insertId,
+        campaign_type,
+        price_per_number,
+        min_numbers,
+        max_numbers,
+        status: status || 'active'
+      }
+    });
+  } catch (err) {
+    console.error("Create pricing error:", err);
+    res.status(500).json({
+      error: "Failed to create pricing tier",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Admin - Update pricing tier
+exports.updateCampaignPricing = async (req, res) => {
+  const { id } = req.params;
+  const { price_per_number, min_numbers, max_numbers, status } = req.body;
+
+  try {
+    // Get current pricing data
+    const [current] = await db.query(
+      `SELECT * FROM campaign_pricing WHERE id = ?`,
+      [id]
+    );
+
+    if (!current.length) {
+      return res.status(404).json({
+        error: "Pricing tier not found"
+      });
+    }
+
+    const currentData = current[0];
+
+    // Cek overlap dengan tier lain (kecuali diri sendiri)
+    const [overlap] = await db.query(
+      `SELECT * FROM campaign_pricing 
+       WHERE campaign_type = ? 
+       AND id != ?
+       AND (
+         (min_numbers <= ? AND (max_numbers >= ? OR max_numbers IS NULL)) OR
+         (min_numbers <= ? AND (max_numbers >= ? OR max_numbers IS NULL)) OR
+         (? <= min_numbers AND (? >= max_numbers OR max_numbers IS NULL))
+       )
+       AND status = 'active'`,
+      [
+        currentData.campaign_type, 
+        id,
+        min_numbers !== undefined ? min_numbers : currentData.min_numbers,
+        min_numbers !== undefined ? min_numbers : currentData.min_numbers,
+        max_numbers !== undefined ? max_numbers : currentData.max_numbers,
+        max_numbers !== undefined ? max_numbers : currentData.max_numbers,
+        min_numbers !== undefined ? min_numbers : currentData.min_numbers,
+        max_numbers !== undefined ? max_numbers : currentData.max_numbers
+      ]
+    );
+
+    if (overlap.length > 0) {
+      return res.status(400).json({
+        error: "Pricing tier overlaps with existing active tier",
+        overlapping_tiers: overlap
+      });
+    }
+
+    const [result] = await db.query(
+      `UPDATE campaign_pricing 
+       SET price_per_number = ?, 
+           min_numbers = ?, 
+           max_numbers = ?, 
+           status = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        price_per_number !== undefined ? price_per_number : currentData.price_per_number,
+        min_numbers !== undefined ? min_numbers : currentData.min_numbers,
+        max_numbers !== undefined ? max_numbers : currentData.max_numbers,
+        status !== undefined ? status : currentData.status,
+        id
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        error: "Pricing tier not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Pricing tier updated successfully"
+    });
+  } catch (err) {
+    console.error("Update pricing error:", err);
+    res.status(500).json({
+      error: "Failed to update pricing tier",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Admin - Delete pricing tier
+exports.deleteCampaignPricing = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.query(
+      `DELETE FROM campaign_pricing WHERE id = ?`,
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        error: "Pricing tier not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Pricing tier deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete pricing error:", err);
+    res.status(500).json({
+      error: "Failed to delete pricing tier",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+// Get pricing untuk public (user bisa lihat harga)
+exports.getPublicPricing = async (req, res) => {
+  try {
+    const [pricing] = await db.query(
+      `SELECT campaign_type, price_per_number, min_numbers, max_numbers
+       FROM campaign_pricing 
+       WHERE status = 'active'
+       ORDER BY campaign_type, min_numbers`
+    );
+    
+    res.json({ 
+      success: true, 
+      data: pricing 
+    });
+  } catch (err) {
+    console.error("Get public pricing error:", err);
+    res.status(500).json({ 
+      error: "Failed to get pricing information"
+    });
+  }
+};
+
+
+// Estimasi biaya campaign
+exports.estimateCampaignCost = async (req, res) => {
+  const { campaign_type, total_numbers } = req.body;
+
+  try {
+    const pricePerNumber = await getCampaignPrice(campaign_type, total_numbers);
+    const totalCost = pricePerNumber * total_numbers;
+
+    res.json({
+      success: true,
+      data: {
+        total_numbers: total_numbers,
+        price_per_number: pricePerNumber,
+        total_cost: totalCost,
+        campaign_type: campaign_type
+      }
+    });
+  } catch (err) {
+    console.error("Estimate cost error:", err);
+    res.status(500).json({ error: "Failed to estimate cost" });
+  }
+};

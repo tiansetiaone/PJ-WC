@@ -670,7 +670,7 @@ const TopUpCredit = () => {
         </div>
 
         {/* Custom input */}
-        <div className={`custom-input ${selected !== null ? "deselected" : ""}`}>
+        {/* <div className={`custom-input ${selected !== null ? "deselected" : ""}`}>
           <label>Input Another Nominal</label>
           <input
             type="text"
@@ -681,7 +681,7 @@ const TopUpCredit = () => {
             onFocus={handleCustomInputFocus}
             onClick={handleCustomInputClick}
           />
-        </div>
+        </div> */}
         
         {/* Info requirements */}
         <div className="requirements-info">
@@ -690,8 +690,11 @@ const TopUpCredit = () => {
             <li className={selectedUSDT ? "requirement-met" : "requirement-not-met"}>
               ✓ USDT address selected
             </li>
-            <li className={(selected !== null && parseFloat(amounts[selected]?.value) >= 10) || (customAmount && parseFloat(customAmount) >= 10) ? "requirement-met" : "requirement-not-met"}>
+            {/* <li className={(selected !== null && parseFloat(amounts[selected]?.value) >= 10) || (customAmount && parseFloat(customAmount) >= 10) ? "requirement-met" : "requirement-not-met"}>
               ✓ Minimum amount $10.00
+            </li> */}
+            <li className={(selected !== null && parseFloat(amounts[selected]?.value) >= 10) || (customAmount && parseFloat(customAmount) >= 10) ? "requirement-met" : "requirement-not-met"}>
+              ✓ $1 = 32 Credit
             </li>
           </ul>
         </div>

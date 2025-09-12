@@ -147,6 +147,51 @@
 .disabled-btn:hover {
   background-color: #6c757d !important;
 }
+
+
+/* Di CreateCampaignUsers.css dan CreateCampaignUsers2.css */
+.cost-estimate {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  margin: 10px 0;
+}
+
+.cost-estimate.loading {
+  border-left-color: #6c757d;
+}
+
+.cost-estimate h4 {
+  margin: 0 0 10px 0;
+  color: #007bff;
+}
+
+.cost-details p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.cost-details .total-cost {
+  font-size: 16px;
+  font-weight: bold;
+  color: #28a745;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.cost-details .balance-check {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.disabled-btn {
+  background-color: #6c757d !important;
+  cursor: not-allowed !important;
+}
+
+
 /* Tablet */
 @media (max-width: 1024px) {
   .campaign-container {

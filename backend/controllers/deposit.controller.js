@@ -58,7 +58,7 @@ exports.generateDepositAddress = async (req, res) => {
       console.log(`Using credit rate from database: ${creditRate} for amount: ${amountValue}`);
       
       // HITUNG FINAL CREDIT = AMOUNT * CREDIT RATE
-      finalCredit = amountValue * creditRate;
+      finalCredit = creditRate;
     } else {
       // Fallback: cari rate terdekat jika amount tidak exact match
       const [closestRate] = await db.query(
@@ -72,7 +72,7 @@ exports.generateDepositAddress = async (req, res) => {
         // Hitung secara proporsional berdasarkan rate terdekat
         const ratePerDollar = closestRate[0].credits / parseFloat(closestRate[0].value);
         creditRate = ratePerDollar;
-        finalCredit = Math.round(amountValue * ratePerDollar);
+        finalCredit = ratePerDollar;
         console.log(`Using proportional credit: ${finalCredit} based on closest rate`);
       } else {
         // Ultimate fallback: default calculation

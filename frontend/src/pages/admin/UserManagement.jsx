@@ -215,7 +215,7 @@ const UserManagement = () => {
                     <th>WhatsApp Number</th>
                     <th>Referral Code</th>
                     <th>Credit</th>
-                    <th>Balance</th>
+                    {/* <th>Balance</th> */}
                     <th>Status</th>
                     <th>Register Date</th>
                     <th>Action</th>
@@ -230,7 +230,7 @@ const UserManagement = () => {
                       <td>{u.phone || "-"}</td>
                       <td>{u.referral || "-"}</td>
                       <td>{u.total_credit || "0.00"}</td>
-                      <td>{u.balance || "-"}</td>
+                      {/* <td>{u.balance || "-"}</td> */}
                       <td>
                         <span className={`status ${u.status?.toLowerCase()}`}>
                           {u.status}

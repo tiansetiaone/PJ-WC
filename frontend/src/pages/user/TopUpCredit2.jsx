@@ -148,7 +148,7 @@ export default function TopUpCredit2() {
 
             <div className="transaction-item">
               <span>Credit Rate</span>
-              <span className="credit-rate">{creditRate} credits per $1</span>
+              <span className="credit-rate">{creditRate} credits</span>
             </div>
 
               <div className="transaction-item important-note">

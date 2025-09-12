@@ -51,6 +51,17 @@ const WhatsNew = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Helper format tanggal ke English
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // fallback
+    return date.toLocaleString("en-US", {
+      dateStyle: "long",
+      timeStyle: "short",
+    });
+  };
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -58,7 +69,6 @@ const WhatsNew = () => {
         if (Array.isArray(res)) {
           setNotifications(res);
         } else if (res.success && Array.isArray(res.data)) {
-          // jika backend kirim dengan { success, data }
           setNotifications(res.data);
         }
       } catch (err) {
@@ -81,12 +91,8 @@ const WhatsNew = () => {
       ) : (
         notifications.map((n) => (
           <div key={n.id} className="news-card">
-            <p className="news-date">
-              {new Date(n.created_at).toLocaleString("id-ID", {
-                dateStyle: "long",
-                timeStyle: "short",
-              })}
-            </p>
+            {/* ✅ pakai formatDate */}
+            <p className="news-date">{formatDate(n.created_at)}</p>
             <h3 className="news-title">{n.title}</h3>
             <p>{n.content}</p>
           </div>

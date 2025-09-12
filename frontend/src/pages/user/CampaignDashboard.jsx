@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import CampaignListUser from "./CampaignList";
 import CampaignListAdmin from "../admin/CampaignListAdmin";
 import UploadNumbersModal from "./UploadNumbersModal";
+import CampaignPricingModal from "../admin/CampaignPricingModal"; // Import modal pricing
 import { fetchApi } from "../../utils/api";
 import {
   BarChart,
@@ -14,9 +15,8 @@ import {
   ResponsiveContainer,
   CartesianGrid
 } from "recharts";
-import SelectCampaign from "./SelectCampaign"; // ⬅️ Import
+import SelectCampaign from "./SelectCampaign";
 import "../../style/user/CampaignDashboardUser.css";
-// import "../../style/user/selectCampaign.css"; 
 
 export default function CampaignDashboard() {
   const navigate = useNavigate();
@@ -25,10 +25,9 @@ export default function CampaignDashboard() {
     campaignId: null,
   });
 
-
-    const [showSelectModal, setShowSelectModal] = useState(false); // ⬅️ state modal
+  const [showSelectModal, setShowSelectModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState(null);
-
+  const [showPricingModal, setShowPricingModal] = useState(false); // State untuk modal pricing
 
   const [stats, setStats] = useState([
     { label: "Total", value: 0, color: "blue", icon: "🏴" },
@@ -89,22 +88,22 @@ export default function CampaignDashboard() {
   ];
 
   const fetchMonthlyStats = async () => {
-  try {
-    const endpoint = isAdmin
-      ? "/campaigns/admin/stats/monthly"
-      : "/campaigns/stats/monthly";
-    const response = await fetchApi(endpoint);
-    if (response.success) {
-      setMonthlyData(response.data);
+    try {
+      const endpoint = isAdmin
+        ? "/campaigns/admin/stats/monthly"
+        : "/campaigns/stats/monthly";
+      const response = await fetchApi(endpoint);
+      if (response.success) {
+        setMonthlyData(response.data);
+      }
+    } catch (err) {
+      console.error("Error fetching monthly stats:", err);
     }
-  } catch (err) {
-    console.error("Error fetching monthly stats:", err);
-  }
-};
+  };
 
-useEffect(() => {
-  fetchMonthlyStats();
-}, []);
+  useEffect(() => {
+    fetchMonthlyStats();
+  }, []);
 
   return (
     <div className="cd-root">
@@ -112,14 +111,27 @@ useEffect(() => {
       <main className="cd-main">
         <header className="cd-header">
           <h1>{isAdmin ? "Campaign Management" : "Campaign"}</h1>
-          {!isAdmin && (
-            <button
-              className="cd-btn-primary"
-              onClick={() => setShowSelectModal(true)} // ⬅️ Buka modal, bukan navigate langsung
-            >
-              + Create New Campaign
-            </button>
-          )}
+          <div className="cd-header-actions">
+            {isAdmin ? (
+              // Tombol untuk Admin
+              <>
+                <button
+                  className="cd-btn-secondary"
+                  onClick={() => setShowPricingModal(true)}
+                >
+                  📊 Edit Campaign Pricing
+                </button>
+              </>
+            ) : (
+              // Tombol untuk User
+              <button
+                className="cd-btn-primary"
+                onClick={() => setShowSelectModal(true)}
+              >
+                + Create New Campaign
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Error */}
@@ -149,26 +161,26 @@ useEffect(() => {
             </div>
 
             {/* Analytics */}
-<div className="cd-card">
-  <h3>Campaign Analytics</h3>
-  <div className="cd-chart-wrapper" style={{ width: "100%", height: "300px" }}>
-    {loading ? (
-      "Memuat data..."
-    ) : (
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="month" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="success" fill="#22c55e" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    )}
-  </div>
-</div>
+            <div className="cd-card">
+              <h3>Campaign Analytics</h3>
+              <div className="cd-chart-wrapper" style={{ width: "100%", height: "300px" }}>
+                {loading ? (
+                  "Memuat data..."
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="success" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="failed" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
           </>
         )}
 
@@ -197,34 +209,39 @@ useEffect(() => {
           )}
         </div>
 
+        {/* SelectCampaign Modal */}
+        {showSelectModal && (
+          <div
+            className="sc-overlay"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowSelectModal(false);
+              }
+            }}
+          >
+            <div className="sc-modal">
+              <SelectCampaign
+                onBack={() => setShowSelectModal(false)}
+                onNext={() => {
+                  if (selectedChannel === "whatsapp") {
+                    navigate("/campaigns/createwa");
+                  } else if (selectedChannel === "sms") {
+                    navigate("/campaigns/createsms");
+                  }
+                  setShowSelectModal(false);
+                }}
+                onSelectChannel={(ch) => setSelectedChannel(ch)}
+                selected={selectedChannel}
+              />
+            </div>
+          </div>
+        )}
 
-{/* SelectCampaign Modal */}
-{showSelectModal && (
-  <div
-    className="sc-overlay"
-    onClick={(e) => {
-      if (e.target === e.currentTarget) {
-        setShowSelectModal(false); // ⬅️ close modal kalau klik di luar
-      }
-    }}
-  >
-    <div className="sc-modal">
-      <SelectCampaign
-        onBack={() => setShowSelectModal(false)}
-        onNext={() => {
-          if (selectedChannel === "whatsapp") {
-            navigate("/campaigns/createwa");
-          } else if (selectedChannel === "sms") {
-            navigate("/campaigns/createsms");
-          }
-          setShowSelectModal(false);
-        }}
-        onSelectChannel={(ch) => setSelectedChannel(ch)}
-        selected={selectedChannel}
-      />
-    </div>
-  </div>
-)}
+        {/* Campaign Pricing Modal */}
+        <CampaignPricingModal
+          isOpen={showPricingModal}
+          onClose={() => setShowPricingModal(false)}
+        />
       </main>
     </div>
   );
