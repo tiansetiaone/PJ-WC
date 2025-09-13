@@ -915,25 +915,66 @@ exports.checkAccountStatus = async (req, res) => {
 
 
 // controllers/adminController.js
+// Di auth.controller.js
 exports.getUserById = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const [user] = await db.query('SELECT id, name, email, whatsapp_number, usdt_network, usdt_address, is_active, created_at FROM users WHERE id = ?', [id]);
+    const { id } = req.params;
+    
+    const [users] = await db.query(`
+      SELECT 
+        u.id, 
+        u.name, 
+        u.username,
+        u.email, 
+        u.whatsapp_number,
+        u.referral_code, 
+        u.is_active, 
+        u.created_at, 
+        u.provider,
+        u.deleted_at,
+        u.verified_at,
+        u.balance,
+        u.total_credit
+      FROM users u
+      WHERE u.id = ?
+    `, [id]);
 
-    if (!user.length) {
+    if (!users.length) {
       return res.status(404).json({
-        error: 'User not found',
-        code: 'USER_NOT_FOUND'
+        error: "User not found",
+        code: "USER_NOT_FOUND"
       });
     }
 
-    res.json(user[0]);
+    const user = users[0];
+    const mappedUser = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.whatsapp_number || null,
+      referral: user.referral_code,
+      status: user.deleted_at 
+        ? "Register Failed"
+        : user.is_active === 1
+          ? "Register Success"
+          : "Checking Register",
+      date: user.created_at,
+      provider: user.provider,
+      verified_at: user.verified_at,
+      balance: user.balance,
+      total_credit: user.total_credit,
+      is_active: user.is_active,
+      deleted_at: user.deleted_at
+    };
+
+    res.json(mappedUser);
+
   } catch (err) {
-    console.error('Get user by ID error:', err);
+    console.error("Error fetching user:", err);
     res.status(500).json({
-      error: 'Failed to fetch user',
-      code: 'FETCH_USER_FAILED'
+      error: "Failed to fetch user",
+      code: "FETCH_USER_FAILED"
     });
   }
 };
@@ -974,6 +1015,7 @@ const [users] = await db.query(`
   SELECT 
     u.id, 
     u.name, 
+    u.username,
     u.email, 
     u.whatsapp_number,
     u.referral_code, 
@@ -983,7 +1025,7 @@ const [users] = await db.query(`
     u.deleted_at,
     u.verified_at,
     u.balance,
-    COALESCE(SUM(d.credit), 0) AS total_credit
+    u.total_credit
   FROM users u
   LEFT JOIN deposits d ON u.id = d.user_id
   GROUP BY u.id
@@ -998,6 +1040,7 @@ const [users] = await db.query(`
 const mappedUsers = users.map(u => ({
   id: u.id,
   name: u.name,
+  username: u.username,
   email: u.email,
   phone: u.whatsapp_number || null,
   referral : u.referral_code,

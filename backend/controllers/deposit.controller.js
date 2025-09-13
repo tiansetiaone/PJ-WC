@@ -129,15 +129,16 @@ exports.generateDepositAddress = async (req, res) => {
 };
 
 // Process approved deposits and trigger referral commissions
-async function processApprovedDeposit(depositId, userId, amount) {
+async function processApprovedDeposit(depositId, userId, amount, credit) {
   try {
-    // Update user balance
+    // Update user balance dan total_credit
     await db.query(
-      `UPDATE users SET balance = COALESCE(balance, 0) + ? 
+      `UPDATE users 
+       SET balance = COALESCE(balance, 0) + ?, 
+           total_credit = COALESCE(total_credit, 0) + ?
        WHERE id = ?`,
-      [amount, userId]
+      [amount, credit, userId]
     );
-
     // PROSES KOMISI REFERRAL - HANYA JIKA DEPOSIT DISETUJUI
     try {
       // Cek apakah user memiliki referrer
@@ -569,17 +570,19 @@ exports.processDeposit = async (req, res) => {
       [newStatus, admin_notes || null, deposit_id]
     );
 
-    
     // If approved, process the deposit and check referrals
     if (action === "approve") {
       const userId = deposit[0].user_id;
       const amount = parseFloat(deposit[0].amount);
+      const credit = parseFloat(deposit[0].credit); // Ambil credit dari deposit
 
-      // 1. Update user balance
+      // 1. Update user balance dan total_credit
       await db.query(
-        `UPDATE users SET balance = COALESCE(balance, 0) + ? 
+        `UPDATE users 
+         SET balance = COALESCE(balance, 0) + ?, 
+             total_credit = COALESCE(total_credit, 0) + ?
          WHERE id = ?`,
-        [amount, userId]
+        [amount, credit, userId]
       );
 
       // 2. PROSES KOMISI REFERRAL
@@ -881,23 +884,6 @@ exports.convertCommission = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-};
-
-// Ambil total credit user (semua deposit sukses)
-exports.getTotalCredit = async (req, res) => {
-  try {
-    const userId = req.user.id; // dari JWT
-
-    const [rows] = await db.query("SELECT SUM(amount) AS total FROM deposits WHERE user_id = ? AND status = 'approved'", [userId]);
-
-    res.json({
-      success: true,
-      totalCredit: rows[0].total || 0,
-    });
-  } catch (err) {
-    console.error("Error getTotalCredit:", err);
-    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -1841,6 +1827,119 @@ exports.addUSDTAddress = async (req, res) => {
     console.error("Error adding USDT address:", err);
     res.status(500).json({ 
       error: "Failed to add USDT address",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+// Get total available credit for user
+exports.getUserTotalCredit = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [result] = await db.query(
+      `SELECT 
+         COALESCE(total_credit, 0) as total_credit,
+         COALESCE(balance, 0) as balance
+       FROM users 
+       WHERE id = ?`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        total_credit: parseFloat(result[0].total_credit || 0),
+        balance: parseFloat(result[0].balance || 0)
+      }
+    });
+  } catch (err) {
+    console.error("Get user credit error:", err);
+    res.status(500).json({
+      error: "Failed to get user credit",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+// Di deposit.controller.js
+exports.getCreditUsageHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const [history] = await db.query(`
+      SELECT 
+        cud.*,
+        cm.campaign_name,
+        cm.total_cost,
+        cm.created_at as campaign_date
+      FROM credit_usage_details cud
+      LEFT JOIN campaigns cm ON cud.campaign_id = cm.id
+      WHERE cud.user_id = ?
+      ORDER BY cud.created_at DESC
+    `, [userId]);
+    
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (err) {
+    console.error("Get credit history error:", err);
+    res.status(500).json({
+      error: "Failed to get credit history",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
+  }
+};
+
+
+
+// deposit.controller.js
+exports.getUserCreditByAdmin = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    // Validasi admin role
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        error: "Access denied. Admin only.",
+        code: "ADMIN_ACCESS_REQUIRED"
+      });
+    }
+
+    const [result] = await db.query(
+      `SELECT 
+         COALESCE(total_credit, 0) as total_credit,
+         COALESCE(balance, 0) as balance,
+         username,
+         email
+       FROM users 
+       WHERE id = ?`,
+      [user_id]
+    );
+
+    if (!result.length) {
+      return res.status(404).json({
+        error: "User not found",
+        code: "USER_NOT_FOUND"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        total_credit: parseFloat(result[0].total_credit || 0),
+        balance: parseFloat(result[0].balance || 0),
+        username: result[0].username,
+        email: result[0].email
+      }
+    });
+  } catch (err) {
+    console.error("Get user credit by admin error:", err);
+    res.status(500).json({
+      error: "Failed to get user credit",
       details: process.env.NODE_ENV === "development" ? err.message : null
     });
   }

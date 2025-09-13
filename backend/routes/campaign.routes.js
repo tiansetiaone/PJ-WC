@@ -27,7 +27,8 @@ const {
   getCampaignPricing,
   getPublicPricing,
   updateCampaignPricing,
-  estimateCampaignCost
+  estimateCampaignCost,
+  getCampaignNumbersAdmin
 } = require("../controllers/campaign.controller");
 
 // 1. Setup Upload Directory
@@ -161,5 +162,7 @@ router.get("/pricing", getPublicPricing);
 // Tambahkan route untuk estimasi biaya
 router.post("/estimate-cost", estimateCampaignCost);
 
+// Di campaign.routes.js, pastikan ada route 
+router.get("/admin/campaigns/:campaignId/numbers", auth, auth.adminOnly, getCampaignNumbersAdmin);
 module.exports = router;
 

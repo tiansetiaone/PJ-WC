@@ -34,7 +34,10 @@ const {
   getUserUSDTAddresses,
   deleteUSDTAddress,
   setDefaultUSDTAddress,
-  updateUSDTAddress
+  updateUSDTAddress,
+  getUserTotalCredit,
+  getCreditUsageHistory,
+  getUserCreditByAdmin
 } = require("../controllers/deposit.controller");
 
 // User endpoints
@@ -43,7 +46,7 @@ router.post("/initiate", auth, checkWalletAvailability, initiateDeposit);
 router.post("/submit-evidence", auth, uploadProof, submitDepositEvidence);
 router.get("/status/:deposit_id", auth, checkDepositStatus);
 router.get("/history", auth, getUserDeposits);
-router.get("/credit/total", auth, getTotalCredit);
+
 
 // Admin endpoints
 router.get("/admin/requests", auth, auth.adminOnly, getDepositRequests);
@@ -105,5 +108,13 @@ router.delete(
   deleteDeposit
 );
 
+// User credit info
+router.get("/user/credit", auth, getUserTotalCredit);
+
+router.get("/user/credit/history", auth, getCreditUsageHistory);
+
+
+// Admin get user credit
+router.get("/admin/user-credit/:user_id", auth, auth.adminOnly, getUserCreditByAdmin);
 
 module.exports = router;

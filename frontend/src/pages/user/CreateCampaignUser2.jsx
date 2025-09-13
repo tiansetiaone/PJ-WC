@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchApi } from "../../utils/api";
 import "../../style/user/CreateCampaignUsers2.css";
-import phoneMockupsms from "../../assets/phone-mockup-image-sms.png"; 
+import phoneMockupsms from "../../assets/phone-mockup-image-sms.png";
 
-// Tambahkan fungsi readFileContent di sini
 const readFileContent = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -24,70 +23,89 @@ export default function CreateCampaignSMS() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [previewImage, setPreviewImage] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
+  const [userTotalCredit, setUserTotalCredit] = useState(0);
   const [costEstimate, setCostEstimate] = useState(null);
   const [loadingEstimate, setLoadingEstimate] = useState(false);
 
   const navigate = useNavigate();
 
-  // Fungsi untuk mengambil saldo user dari local storage
-  const getUserBalanceFromStorage = () => {
+  const getUserCreditFromStorage = () => {
     try {
-      const userData = localStorage.getItem('user');
+      const userData = localStorage.getItem("user");
       if (userData) {
         const user = JSON.parse(userData);
-        return parseFloat(user.balance || 0);
+        return {
+          balance: parseFloat(user.balance || 0),
+          total_credit: parseFloat(user.total_credit || 0),
+        };
       }
-      return 0;
+      return { balance: 0, total_credit: 0 };
     } catch (error) {
-      console.error("Error getting balance from storage:", error);
-      return 0;
+      console.error("Error getting credit from storage:", error);
+      return { balance: 0, total_credit: 0 };
     }
   };
 
   useEffect(() => {
-    // Ambil saldo dari local storage saat komponen dimount
-    const balance = getUserBalanceFromStorage();
-    setUserBalance(balance);
+    const fetchUserCredit = async () => {
+      try {
+        const response = await fetchApi("/deposits/user/credit");
+        if (response.success) {
+          setUserBalance(response.data.balance);
+          setUserTotalCredit(response.data.total_credit);
+
+          const userData = localStorage.getItem("user");
+          if (userData) {
+            const user = JSON.parse(userData);
+            user.balance = response.data.balance;
+            user.total_credit = response.data.total_credit;
+            localStorage.setItem("user", JSON.stringify(user));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user credit:", error);
+      }
+    };
+
+    fetchUserCredit();
   }, []);
 
-  // Fungsi untuk estimasi biaya
   const estimateCost = async (file, campaignType) => {
     if (!file) {
       setCostEstimate(null);
       return;
     }
-    
+
     setLoadingEstimate(true);
     try {
       const fileContent = await readFileContent(file);
-      const numbers = fileContent.split(/\r?\n/)
-        .map(num => num.trim())
-        .filter(num => num !== "");
-      
+      const numbers = fileContent
+        .split(/\r?\n/)
+        .map((num) => num.trim())
+        .filter((num) => num !== "");
+
       const totalNumbers = numbers.length;
-      
+
       if (totalNumbers === 0) {
         setCostEstimate(null);
         return;
       }
-      
-      // Hitung estimasi biaya
-      const response = await fetchApi('/campaigns/estimate-cost', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+
+      const response = await fetchApi("/campaigns/estimate-cost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           campaign_type: campaignType,
-          total_numbers: totalNumbers
-        })
+          total_numbers: totalNumbers,
+        }),
       });
-      
+
       if (response.success) {
         setCostEstimate(response.data);
       }
     } catch (error) {
-      console.error('Error estimating cost:', error);
+      console.error("Error estimating cost:", error);
       setCostEstimate(null);
     } finally {
       setLoadingEstimate(false);
@@ -108,27 +126,28 @@ export default function CreateCampaignSMS() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
-    // Cek saldo sebelum submit (dari local storage)
-    const currentBalance = getUserBalanceFromStorage();
-    setUserBalance(currentBalance);
-    
-    // Cek jika ada estimasi biaya dan saldo cukup
-    if (costEstimate && currentBalance < costEstimate.total_cost) {
-      setError(`You need $${costEstimate.total_cost.toFixed(4)} but only have $${currentBalance.toFixed(4)}`);
+
+    // PERBAIKAN: Gunakan total_credit bukan balance
+    const currentCredit = getUserCreditFromStorage();
+    setUserBalance(currentCredit.balance);
+    setUserTotalCredit(currentCredit.total_credit);
+
+    // Validasi berdasarkan total_credit
+    if (costEstimate && currentCredit.total_credit < costEstimate.total_cost) {
+      setError(`You need $${costEstimate.total_cost.toFixed(4)} campaign credit but only have $${currentCredit.total_credit.toFixed(4)}`);
       return;
     }
-    
-    if (currentBalance <= 0) {
-      setError("You don't have enough credit to create a campaign. Please top up first.");
+
+    if (currentCredit.total_credit <= 0) {
+      setError("You don't have enough campaign credit to create a campaign. Please top up first.");
       return;
     }
-    
+
     if (!formData.numbersFile) {
       setError("Please upload a numbers file");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -167,17 +186,16 @@ export default function CreateCampaignSMS() {
 
   return (
     <div className="campaign-containers">
-      {/* Form Section */}
       <div className="campaign-form">
         <h2>Create Campaign</h2>
         <h3>SMS Campaign Form</h3>
-        
-        {/* Tampilkan saldo user */}
+
         <div className="balance-info">
-          <p>Your current balance: <strong>${userBalance.toFixed(4)}</strong></p>
-          {userBalance <= 0 && (
+          <p>Your USDT Balance: <strong>${userBalance.toFixed(4)}</strong></p>
+          <p>Your Campaign Credit: <strong>${userTotalCredit.toFixed(4)}</strong></p>
+          {userTotalCredit <= 0 && (
             <p className="error-text">
-              You don't have enough credit. Please <a href="/deposit">top up</a> first.
+              You don't have enough campaign credit. Please <a href="/deposit">top up</a> first.
             </p>
           )}
         </div>
@@ -185,9 +203,7 @@ export default function CreateCampaignSMS() {
         {error && <p className="error-text">{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          <label>
-            Campaign Name <span>*</span>
-          </label>
+          <label>Campaign Name <span>*</span></label>
           <input
             type="text"
             name="campaign_name"
@@ -197,14 +213,10 @@ export default function CreateCampaignSMS() {
             required
           />
 
-          <label>
-            Channel <span>*</span>
-          </label>
+          <label>Channel <span>*</span></label>
           <input type="text" value="SMS" disabled />
 
-          <label>
-            Campaign Date <span>*</span>
-          </label>
+          <label>Campaign Date <span>*</span></label>
           <input
             type="date"
             name="campaign_date"
@@ -213,9 +225,7 @@ export default function CreateCampaignSMS() {
             required
           />
 
-          <label>
-            Campaign Numbers File <span>*</span>
-          </label>
+          <label>Campaign Numbers File <span>*</span></label>
           <input
             type="file"
             name="numbersFile"
@@ -225,7 +235,6 @@ export default function CreateCampaignSMS() {
           />
           <small>TXT max. 1 MB</small>
 
-          {/* Tampilkan estimasi biaya */}
           {loadingEstimate && (
             <div className="cost-estimate loading">
               <p>Calculating cost estimate...</p>
@@ -242,20 +251,18 @@ export default function CreateCampaignSMS() {
                   Total Cost: <strong>${costEstimate.total_cost.toFixed(4)}</strong>
                 </p>
                 <p className="balance-check">
-                  Your Balance: ${userBalance.toFixed(4)} - 
-                  Cost: ${costEstimate.total_cost.toFixed(4)} = 
-                  Remaining: <strong>${(userBalance - costEstimate.total_cost).toFixed(4)}</strong>
+                  Your Campaign Credit: ${userTotalCredit.toFixed(4)} - Cost: $
+                  {costEstimate.total_cost.toFixed(4)} = Remaining Credit:{" "}
+                  <strong>${(userTotalCredit - costEstimate.total_cost).toFixed(4)}</strong>
                 </p>
-                {userBalance < costEstimate.total_cost && (
-                  <p className="error-text">Insufficient balance!</p>
+                {userTotalCredit < costEstimate.total_cost && (
+                  <p className="error-text">Insufficient campaign credit!</p>
                 )}
               </div>
             </div>
           )}
 
-          <label>
-            Message <span>*</span>
-          </label>
+          <label>Message <span>*</span></label>
           <textarea
             name="message"
             rows="4"
@@ -267,22 +274,20 @@ export default function CreateCampaignSMS() {
 
           <button 
             type="submit" 
-            disabled={isSubmitting || userBalance <= 0 || (costEstimate && userBalance < costEstimate.total_cost)}
-            className={userBalance <= 0 || (costEstimate && userBalance < costEstimate.total_cost) ? "disabled-btn" : ""}
+            disabled={isSubmitting || userTotalCredit <= 0 || (costEstimate && userTotalCredit < costEstimate.total_cost)}
+            className={userTotalCredit <= 0 || (costEstimate && userTotalCredit < costEstimate.total_cost) ? "disabled-btn" : ""}
           >
             {isSubmitting ? "Creating..." : 
-             userBalance <= 0 ? "Insufficient Balance" :
-             (costEstimate && userBalance < costEstimate.total_cost) ? "Not Enough Balance" :
+             userTotalCredit <= 0 ? "Insufficient Credit" :
+             (costEstimate && userTotalCredit < costEstimate.total_cost) ? "Not Enough Credit" :
              "Create Campaign"}
           </button>
         </form>
       </div>
 
-      {/* Preview Section */}
       <div className="campaign-preview">
         <div className="phone-frame">
           <img src={phoneMockupsms} alt="Phone Mockup" className="phone-mockup" />
-          
           <div className="screen-content">
             <div className="preview-message">
               <p className="title">{formData.campaign_name || "Campaign Name"}</p>

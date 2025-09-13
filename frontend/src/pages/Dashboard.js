@@ -8,15 +8,19 @@ import SelectCampaign from "../pages/user/SelectCampaign";
 // Komponen DashboardCredit
 const DashboardCredit = () => {
   const [credit, setCredit] = useState(0);
+  const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user')) || {};
 
   useEffect(() => {
     const fetchCredit = async () => {
       try {
-        const res = await fetchApi("/deposits/credit/total");
-        if (res.success) {
-          setCredit(res.totalCredit);
+        // Menggunakan endpoint getUserById dengan ID user yang sedang login
+        const res = await fetchApi(`/auth/users/${user.id}`);
+        if (res) {
+          setCredit(res.total_credit || 0);
+          setBalance(res.balance || 0);
         }
       } catch (err) {
         console.error("Failed to fetch credit:", err.message);
@@ -25,23 +29,48 @@ const DashboardCredit = () => {
       }
     };
 
-    fetchCredit();
-  }, []);
+    if (user.id) {
+      fetchCredit();
+    } else {
+      setLoading(false);
+    }
+  }, [user.id]);
 
-  return (
+   return (
     <div className="dashboard-card">
       <div className="card-header">
-        <h2>Credit</h2>
+        <h2>Balance & Credit</h2>
       </div>
-      <p className="credit-value">
-        {loading ? "Loading..." : credit}
-      </p>
-      <p className="credit-info">
-        {credit > 0
-          ? `Your current balance is ${credit}`
-          : "You don't have any balance, top up now."}
-      </p>
-      <button className="btn-primary" onClick={() => navigate("/deposits/topup")}>+ Top Up Credit</button>
+      
+      <div className="balance-credit-container">
+<div className="balance-section">
+  <h3>Balance</h3>
+  <p className="balance-value">
+    {loading ? "Loading..." : `$${balance.toLocaleString('en-US')} USDT`}
+  </p>
+  <p className="balance-info-dashboard">
+    {balance > 0
+      ? `Your current balance is $${balance.toLocaleString('en-US')}`
+      : "You don't have any balance, top up now."}
+  </p>
+</div>
+        
+        <div className="credit-section">
+          <h3>Credit</h3>
+          <p className="credit-value">
+            {loading ? "Loading..." : credit}
+          </p>
+          <p className="credit-info">
+            {credit > 0
+              ? `Your current credits is ${credit}`
+              : "You don't have any credits."}
+          </p>
+        </div>
+      </div>
+      
+      <button className="btn-primary" onClick={() => navigate("/deposits/topup")}>
+        + Top Up Balance
+      </button>
     </div>
   );
 };

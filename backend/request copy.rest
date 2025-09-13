@@ -811,3 +811,8 @@ curl -X GET http://localhost:5000/api/referrals \
 ####
 curl -X GET http://localhost:5000/api/auth/balance \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTksInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3NDI5NTYxLCJleHAiOjE3NTc0MzMxNjF9.qGvjinBNJ4Xf_2saQYSMLrf2Z6DsUi95Nn133SZNMR4"
+
+####
+curl -X POST http://localhost:5000/api/campaigns/admin/campaigns/74/approve \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1Nzc2MTc2MywiZXhwIjoxNzU3NzY1MzYzfQ.feNCUH2oBREpZ9OX9yG_gOOEuJlkqkslynMbSmg4nO0"

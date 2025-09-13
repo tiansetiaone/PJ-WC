@@ -18,7 +18,6 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
 
   useEffect(() => {
     fetchCampaigns();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCampaigns = async () => {
@@ -31,16 +30,30 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
         ? response.data
         : [];
 
-      const validatedData = data.map((campaign) => ({
-        id: campaign.id || "",
-        name: campaign.name || campaign.campaign_name || "",
-        numbers: campaign.numbers || campaign.total_numbers || 0,
-        status: campaign.status || "",
-        user: campaign.user || campaign.creator_name || "Unknown",
-        created_at: campaign.created_at || new Date().toISOString(),
-        message: campaign.message || "",
-        image: campaign.image || null,
-      }));
+      const validatedData = data.map((campaign) => {
+        let totalCost = 0;
+        try {
+          totalCost = parseFloat(campaign.total_cost) || 0;
+        } catch (e) {
+          console.warn("Invalid total_cost value:", campaign.total_cost);
+          totalCost = 0;
+        }
+
+        return {
+          id: campaign.id || "",
+          name: campaign.name || campaign.campaign_name || "",
+          numbers: parseInt(campaign.numbers || campaign.total_numbers || 0),
+          status: campaign.status || "",
+          user: campaign.user || campaign.creator_name || "Unknown",
+          user_id: campaign.user_id || campaign.creator_id || "",
+          total_cost: totalCost,
+          price_per_number: parseFloat(campaign.price_per_number) || 0,
+          created_at: campaign.created_at || new Date().toISOString(),
+          message: campaign.message || "",
+          image: campaign.image || null,
+          campaign_type: campaign.campaign_type || "N/A" // Pastikan ini ada
+        };
+      });
 
       setCampaigns(validatedData);
     } catch (err) {
@@ -55,6 +68,50 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
     }
   };
 
+  // Fungsi untuk update status campaign di local state
+  const updateLocalCampaignStatus = (campaignId, newStatus) => {
+    setCampaigns(prevCampaigns => 
+      prevCampaigns.map(campaign => 
+        campaign.id === campaignId 
+          ? { ...campaign, status: newStatus }
+          : campaign
+      )
+    );
+  };
+
+  const getUserCreditInfo = async (userId) => {
+    try {
+      try {
+        const response = await fetchApi(`/deposits/admin/user-credit/${userId}`);
+        if (response.success) {
+          return {
+            total_credit: parseFloat(response.data.total_credit) || 0,
+            balance: parseFloat(response.data.balance) || 0,
+            username: response.data.username || "",
+            email: response.data.email || "",
+          };
+        }
+      } catch (adminError) {
+        console.warn("Admin endpoint failed, trying fallback...");
+      }
+
+      return {
+        total_credit: 0,
+        balance: 0,
+        username: "",
+        email: "",
+      };
+    } catch (error) {
+      console.error("Error fetching user credit:", error);
+      return {
+        total_credit: 0,
+        balance: 0,
+        username: "",
+        email: "",
+      };
+    }
+  };
+
   const updateCampaignStatus = async (campaignId, status) => {
     try {
       await fetchApi(`/campaigns/admin/campaigns/${campaignId}/status`, {
@@ -62,19 +119,16 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
         body: { status },
       });
 
+      // Update local state immediately
+      updateLocalCampaignStatus(campaignId, status);
+
       addToast({
         title: "Success",
         description: `Campaign updated to ${status}`,
         variant: "success",
       });
 
-      // Refresh campaign list setelah update
-      fetchCampaigns();
-
-      // callback ke parent kalau ada
       if (onCampaignUpdate) onCampaignUpdate();
-
-      // Tutup modal kalau ada
       setSelectedCampaign(null);
     } catch (err) {
       addToast({
@@ -85,10 +139,74 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
     }
   };
 
-  const handleApprove = (id) => updateCampaignStatus(id, "success");
-  const handleReject = (id) => updateCampaignStatus(id, "failed");
+  const handleApprove = async (campaign) => {
+    try {
+      const userCreditInfo = await getUserCreditInfo(campaign.user_id);
+
+      const confirmMessage = `Approve campaign "${campaign.name}"?\n\n` +
+        `User: ${campaign.user}\n` +
+        `Total Numbers: ${campaign.numbers.toLocaleString()}\n` +
+        `Cost: $${campaign.total_cost.toFixed(4)}\n` +
+        `Total Credit: $${userCreditInfo.total_credit.toFixed(4)}\n` +
+        `Balance: $${userCreditInfo.balance.toFixed(4)}`;
+
+      if (window.confirm(confirmMessage)) {
+        const response = await fetchApi(`/campaigns/admin/campaigns/${campaign.id}/approve`, {
+          method: "POST",
+          body: {
+            user_id: campaign.user_id,
+            amount: campaign.total_cost,
+          },
+        });
+
+        if (response.success) {
+          // Update local state to 'success' status
+          updateLocalCampaignStatus(campaign.id, 'success');
+
+          addToast({
+            title: "Success",
+            description: "Campaign approved and credit deducted successfully",
+            variant: "success",
+          });
+
+          if (onCampaignUpdate) onCampaignUpdate();
+          setSelectedCampaign(null);
+        } else {
+          throw new Error(response.error || "Failed to approve campaign");
+        }
+      }
+    } catch (err) {
+      addToast({
+        title: "Error",
+        description: err.message || "Failed to approve campaign",
+        variant: "error",
+      });
+    }
+  };
+
+  const handleReject = async (campaign) => {
+    try {
+      if (window.confirm(`Reject campaign "${campaign.name}"?`)) {
+        await updateCampaignStatus(campaign.id, "failed");
+        setSelectedCampaign(null);
+      }
+    } catch (err) {
+      addToast({
+        title: "Error",
+        description: err.message || "Failed to reject campaign",
+        variant: "error",
+      });
+    }
+  };
+
   const handleView = (campaign) => setSelectedCampaign(campaign);
   const closeModal = () => setSelectedCampaign(null);
+
+  // Refresh function untuk CampaignInfo component
+  const refreshCampaignList = () => {
+    fetchCampaigns();
+    if (onCampaignUpdate) onCampaignUpdate();
+  };
 
   const filteredData = campaigns.filter((c) => {
     const searchMatch =
@@ -165,7 +283,8 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
               <th>No.</th>
               <th>Campaign Name</th>
               <th>User's Request</th>
-              <th>Sum. Number</th>
+              <th>Total Numbers</th>
+              <th>Estimated Cost</th>
               <th>Status</th>
               <th>Register Date</th>
               <th>Action</th>
@@ -178,7 +297,8 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
                   <td>{(currentPage - 1) * pageSize + index + 1}</td>
                   <td>{c.name}</td>
                   <td>{c.user}</td>
-                  <td>{c.numbers.toLocaleString()} numbers</td>
+                  <td>{c.numbers.toLocaleString()}</td>
+                  <td>${c.total_cost.toFixed(4)}</td>
                   <td>
                     <span
                       className={`status-badge ${
@@ -215,13 +335,13 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
                         <>
                           <button
                             className="action-btn-campaignlist approve-btn-campaignlist"
-                            onClick={() => handleApprove(c.id)}
+                            onClick={() => handleApprove(c)}
                           >
                             ✔
                           </button>
                           <button
                             className="action-btn-campaignlist delete-btn-campaignlist"
-                            onClick={() => handleReject(c.id)}
+                            onClick={() => handleReject(c)}
                           >
                             ✖
                           </button>
@@ -233,7 +353,7 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="no-data">
+                <td colSpan="8" className="no-data">
                   No campaigns found
                 </td>
               </tr>
@@ -249,8 +369,8 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
             <CampaignInfo
               campaign={selectedCampaign}
               onClose={closeModal}
-              onApprove={handleApprove}
-              onReject={handleReject}
+              onReject={() => handleReject(selectedCampaign)}
+              refreshList={refreshCampaignList} // Pass refresh function
             />
           </div>
         </div>
@@ -283,7 +403,9 @@ export default function CampaignListAdmin({ onCampaignUpdate }) {
             return (
               <button
                 key={pageNum}
-                className={`page-btn ${pageNum === currentPage ? "active" : ""}`}
+                className={`page-btn ${
+                  pageNum === currentPage ? "active" : ""
+                }`}
                 onClick={() => setCurrentPage(pageNum)}
               >
                 {pageNum}

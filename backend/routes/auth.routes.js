@@ -32,7 +32,10 @@ router.post(
   verifyUser
 );
 
-router.get('/admin/users/:id', getUserById);
+// Di auth.routes.js
+router.get("/admin/users/:id", authMiddleware, authMiddleware.adminOnly, getUserById);
+
+router.get("/users/:id", authMiddleware, getUserById);
 
 router.get('/account-status', checkAccountStatus);
 

@@ -397,8 +397,8 @@ exports.getAllCampaigns = async (req, res) => {
     const offset = (page - 1) * limit;
 
     let query = `SELECT 
-      c.id, c.campaign_name, c.campaign_date, 
-      c.campaign_type, c.status, c.created_at,
+      c.id, c.user_id, c.campaign_name, c.campaign_date, 
+      c.campaign_type, c.total_cost, c.price_per_number, c.status, c.created_at,
       c.message, c.image_url,
       u.name as creator_name,
       (SELECT COUNT(*) FROM campaign_numbers WHERE campaign_id = c.id) as total_numbers,
@@ -766,14 +766,18 @@ async function getCampaignPrice(campaignType, totalNumbers) {
 }
 
 
-// Admin - Approve Campaign dan potong saldo
+
+// Admin: Approve campaign and deduct user credit
 exports.approveCampaign = async (req, res) => {
   const { campaignId } = req.params;
-  const { action } = req.body; // 'approve' or 'reject'
 
   try {
+    // Mulai transaction
+    await db.query("START TRANSACTION");
+
+    // 1. Dapatkan data campaign termasuk user_id dan total_cost
     const [campaign] = await db.query(
-      `SELECT c.*, u.balance as user_balance 
+      `SELECT c.*, u.total_credit, u.balance 
        FROM campaigns c 
        JOIN users u ON c.user_id = u.id 
        WHERE c.id = ? AND c.status = 'on_process'`,
@@ -781,57 +785,66 @@ exports.approveCampaign = async (req, res) => {
     );
 
     if (!campaign.length) {
-      return res.status(404).json({ error: "Campaign not found or not ready for approval" });
+      await db.query("ROLLBACK");
+      return res.status(404).json({
+        error: "Campaign not found or already processed",
+        code: "CAMPAIGN_NOT_FOUND"
+      });
     }
 
     const campaignData = campaign[0];
+    const userId = campaignData.user_id;
+    const totalCost = parseFloat(campaignData.total_cost || 0);
 
-    if (action === 'approve') {
-      // Cek saldo user
-      if (parseFloat(campaignData.user_balance) < parseFloat(campaignData.total_cost)) {
-        return res.status(400).json({
-          error: "User has insufficient balance",
-          required: campaignData.total_cost,
-          current_balance: campaignData.user_balance
-        });
-      }
-
-      // Potong saldo user
-      await db.query(
-        `UPDATE users 
-         SET balance = balance - ? 
-         WHERE id = ?`,
-        [campaignData.total_cost, campaignData.user_id]
-      );
-
-      // Update status campaign
-      await db.query(
-        `UPDATE campaigns SET status = 'approved' WHERE id = ?`,
-        [campaignId]
-      );
-
-      res.json({
-        success: true,
-        message: "Campaign approved and balance deducted",
-        amount_deducted: campaignData.total_cost
-      });
-
-    } else if (action === 'reject') {
-      // Update status campaign menjadi rejected
-      await db.query(
-        `UPDATE campaigns SET status = 'rejected' WHERE id = ?`,
-        [campaignId]
-      );
-
-      res.json({
-        success: true,
-        message: "Campaign rejected"
+    // 2. Cek apakah user memiliki cukup credit
+    const userTotalCredit = parseFloat(campaignData.total_credit || 0);
+    
+    if (userTotalCredit < totalCost) {
+      await db.query("ROLLBACK");
+      return res.status(400).json({
+        error: "Insufficient user credit",
+        code: "INSUFFICIENT_CREDIT",
+        user_credit: userTotalCredit,
+        required_amount: totalCost
       });
     }
 
+    // 3. Update status campaign menjadi 'success'
+    await db.query(
+      `UPDATE campaigns SET status = 'success' WHERE id = ?`,
+      [campaignId]
+    );
+
+    // 4. Kurangi total_credit user
+    await db.query(
+      `UPDATE users SET total_credit = total_credit - ? WHERE id = ?`,
+      [totalCost, userId]
+    );
+
+    // 5. Catat transaksi penggunaan credit
+    await db.query(
+      `INSERT INTO credit_usage_details 
+       (campaign_id, user_id, credit_used, created_at) 
+       VALUES (?, ?, ?, NOW())`,
+      [campaignId, userId, totalCost]
+    );
+
+    await db.query("COMMIT");
+
+    res.json({
+      success: true,
+      message: "Campaign approved and user credit deducted successfully",
+      amount_deducted: totalCost,
+      remaining_credit: userTotalCredit - totalCost
+    });
+
   } catch (err) {
+    await db.query("ROLLBACK");
     console.error("Approve campaign error:", err);
-    res.status(500).json({ error: "Failed to process campaign approval" });
+    res.status(500).json({
+      error: "Failed to approve campaign",
+      details: process.env.NODE_ENV === "development" ? err.message : null
+    });
   }
 };
 
@@ -1103,5 +1116,32 @@ exports.estimateCampaignCost = async (req, res) => {
   } catch (err) {
     console.error("Estimate cost error:", err);
     res.status(500).json({ error: "Failed to estimate cost" });
+  }
+};
+
+
+// Admin - Get Campaign Numbers (tanpa batasan user ownership)
+exports.getCampaignNumbersAdmin = async (req, res) => {
+  const { campaignId } = req.params;
+
+  try {
+    const [numbers] = await db.query(
+      `SELECT id, phone_number, status 
+       FROM campaign_numbers 
+       WHERE campaign_id = ? 
+       ORDER BY id`,
+      [campaignId]
+    );
+
+    res.json({
+      success: true,
+      data: numbers,
+    });
+  } catch (err) {
+    console.error("Get campaign numbers error:", err);
+    res.status(500).json({
+      error: "Failed to fetch campaign numbers",
+      details: process.env.NODE_ENV === "development" ? err.message : null,
+    });
   }
 };
