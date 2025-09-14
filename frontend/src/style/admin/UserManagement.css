@@ -292,6 +292,90 @@ th, td {
   }
 }
 
+/* Tombol edit credit */
+button.edit-credit {
+  color: #000;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+button.edit-credit:hover {
+  background-color: #e0a800;
+}
+/* Tombol edit credit */
+button.edit-user {
+  color: #000;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+button.edit-user:hover {
+  background-color: #e0a800;
+}
+/* Tombol edit credit */
+button.block-user {
+  color: #000;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+button.block-user:hover {
+  background-color: #e0a800;
+}
+/* Tombol edit credit */
+button.delete-user {
+  color: #000;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+button.delete-user:hover {
+  background-color: #e0a800;
+}
+/* Tombol edit credit */
+button.view-user {
+  color: #000;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+button.view-user:hover {
+  background-color: #e0a800;
+}
+
+/* Modal input */
+.modal-input {
+  margin: 15px 0;
+}
+
+.modal-input label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.modal-input input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
 
 
 @media (max-width: 768px) {

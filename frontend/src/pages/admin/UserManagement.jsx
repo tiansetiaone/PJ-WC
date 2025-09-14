@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../../style/admin/UserManagement.css";
 import { fetchApi } from "../../utils/api";
-import UserInfo from "./UserInfo"; // pastikan path benar
+import UserInfo from "./UserInfo";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -11,32 +11,35 @@ const UserManagement = () => {
   // Modal states
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetUser, setResetUser] = useState(null);
+  const [showEditCreditModal, setShowEditCreditModal] = useState(false);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [updatingCredit, setUpdatingCredit] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
-
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetUser, setResetUser] = useState(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchApi("/auth/admin/users");
-        setUsers(data);
-      } catch (err) {
-        setError(err.message || "Failed to load users");
-      } finally {
-        setLoading(false);
-      }
-    };
     loadUsers();
   }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchApi("/auth/admin/users");
+      setUsers(data);
+    } catch (err) {
+      setError(err.message || "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleView = async (id) => {
     try {
@@ -133,6 +136,51 @@ const UserManagement = () => {
     }
   };
 
+  // Handle edit credit
+  const handleEditCredit = (user) => {
+    setSelectedUser(user);
+    setCreditAmount(user.total_credit || "0");
+    setShowEditCreditModal(true);
+  };
+
+  // Confirm update credit
+  const confirmUpdateCredit = async () => {
+    if (!selectedUser || !creditAmount) return;
+    
+    setUpdatingCredit(true);
+    try {
+      const response = await fetchApi(`/auth/admin/update-credit`, {
+        method: "POST",
+        body: { 
+          user_id: selectedUser.id, 
+          credit_amount: parseFloat(creditAmount) 
+        },
+      });
+      
+      if (response.success) {
+        alert(`Credit untuk ${selectedUser.name} berhasil diupdate.`);
+        
+        // Refresh data users
+        await loadUsers();
+        
+        setShowEditCreditModal(false);
+        setSelectedUser(null);
+        setCreditAmount("");
+      } else {
+        alert(response.error || "Failed to update credit");
+      }
+    } catch (err) {
+      console.error("Update credit error:", err);
+      if (err.message.includes("Failed to fetch") || err.message.includes("connection refused")) {
+        alert("Cannot connect to server. Please check if backend is running on port 5000.");
+      } else {
+        alert("Failed to update credit: " + err.message);
+      }
+    } finally {
+      setUpdatingCredit(false);
+    }
+  };
+
   // === Filtering logic ===
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -188,14 +236,14 @@ const UserManagement = () => {
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
-                    setCurrentPage(1); // reset pagination saat filter
+                    setCurrentPage(1);
                   }}
                 />
                 <select
                   value={statusFilter}
                   onChange={(e) => {
                     setStatusFilter(e.target.value);
-                    setCurrentPage(1); // reset pagination saat filter
+                    setCurrentPage(1);
                   }}
                 >
                   <option value="">Status</option>
@@ -215,7 +263,6 @@ const UserManagement = () => {
                     <th>WhatsApp Number</th>
                     <th>Referral Code</th>
                     <th>Credit</th>
-                    {/* <th>Balance</th> */}
                     <th>Status</th>
                     <th>Register Date</th>
                     <th>Action</th>
@@ -230,7 +277,6 @@ const UserManagement = () => {
                       <td>{u.phone || "-"}</td>
                       <td>{u.referral || "-"}</td>
                       <td>{u.total_credit || "0.00"}</td>
-                      {/* <td>{u.balance || "-"}</td> */}
                       <td>
                         <span className={`status ${u.status?.toLowerCase()}`}>
                           {u.status}
@@ -240,28 +286,34 @@ const UserManagement = () => {
                         {u.date ? new Date(u.date).toLocaleDateString() : "-"}
                       </td>
                       <td className="actions">
-                        <button className="view" onClick={() => handleView(u.id)}>👁️</button>
+                        <button className="view-user" onClick={() => handleView(u.id)} title="View">👁️</button>
+                        
+                        <button 
+                          className="edit-credit" 
+                          onClick={() => handleEditCredit(u)}
+                          title="Edit Credit"
+                        >💰</button>
 
                         {u.status === "Register Success" && (
                           <>
-                            <button className="edit" onClick={() => handleEdit(u.id)}>✏️</button>
-                            <button className="block" onClick={() => handleBlock(u.id)}>🚫</button>
-                            <button className="delete" onClick={() => handleDelete(u.id)}>❌</button>
+                            <button className="edit-user" onClick={() => handleEdit(u.id)} title="Edit">✏️</button>
+                            <button className="block-user" onClick={() => handleBlock(u.id)} title="Block">🚫</button>
+                            <button className="delete-user" onClick={() => handleDelete(u.id)} title="Delete">❌</button>
                           </>
                         )}
 
                         {u.status === "Register Failed" && (
                           <>
-                            <button className="block" onClick={() => handleBlock(u.id)}>🚫</button>
-                            <button className="delete" onClick={() => handleDelete(u.id)}>❌</button>
+                            <button className="block-user" onClick={() => handleBlock(u.id)} title="Block">🚫</button>
+                            <button className="delete-user" onClick={() => handleDelete(u.id)} title="Delete">❌</button>
                           </>
                         )}
 
                         {u.status === "Checking Register" && (
                           <>
-                            <button className="block" onClick={() => handleBlock(u.id)}>🚫</button>
-                            <button className="delete" onClick={() => handleDelete(u.id)}>❌</button>
-                            <button className="approve" onClick={() => handleApprove(u.id)}>✔️</button>
+                            <button className="block-user" onClick={() => handleBlock(u.id)} title="Block">🚫</button>
+                            <button className="delete-user" onClick={() => handleDelete(u.id)} title="Delete">❌</button>
+                            <button className="approve" onClick={() => handleApprove(u.id)} title="Approve">✔️</button>
                           </>
                         )}
                       </td>
@@ -303,17 +355,56 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Edit Credit Modal */}
+      {showEditCreditModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Edit Credit</h3>
+            <p>
+              Edit nominal credit untuk user <b>{selectedUser?.name}</b>
+            </p>
+            
+            <div className="modal-input">
+              <label>Jumlah Credit:</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={creditAmount}
+                onChange={(e) => setCreditAmount(e.target.value)}
+                placeholder="Masukkan jumlah credit"
+                disabled={updatingCredit}
+              />
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                onClick={() => setShowEditCreditModal(false)}
+                disabled={updatingCredit}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={confirmUpdateCredit}
+                disabled={updatingCredit}
+              >
+                {updatingCredit ? "Updating..." : "Update Credit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Info Modal */}
       {showModal && (
         <UserInfo
           user={selectedUser}
           onClose={handleCloseModal}
-          refreshUsers={() => {
-            fetchApi("/auth/admin/users").then(setUsers);
-          }}
+          refreshUsers={loadUsers}
         />
       )}
 
+      {/* Reset Password Modal */}
       {showResetModal && (
         <div className="modal-overlay">
           <div className="modal">

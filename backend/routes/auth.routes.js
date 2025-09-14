@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById, getProfileWithConversionRules, getAllUsers, deleteUser,adminResetPassword, getUserBalance} = require("../controllers/auth.controller");
+const { registerUser, loginUser, forgotPassword, resetPassword, googleAuth, getResetToken, verifyUser, checkAccountStatus, getVerifyUserPage, getUserById, getProfileWithConversionRules, getAllUsers, deleteUser,adminResetPassword, getUserBalance, updateUserCredit
+} = require("../controllers/auth.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
 // Hanya aktif di development
@@ -63,6 +64,11 @@ router.post(
 
 router.get('/balance', authMiddleware, getUserBalance);
 
-
+router.post(
+  "/admin/update-credit",
+  authMiddleware,
+  authMiddleware.adminOnly,
+  updateUserCredit
+);
 
 module.exports = router;

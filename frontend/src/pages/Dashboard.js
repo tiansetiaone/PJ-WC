@@ -39,11 +39,11 @@ const DashboardCredit = () => {
    return (
     <div className="dashboard-card">
       <div className="card-header">
-        <h2>Balance & Credit</h2>
+        <h2>Credit</h2>
       </div>
       
       <div className="balance-credit-container">
-<div className="balance-section">
+{/* <div className="balance-section">
   <h3>Balance</h3>
   <p className="balance-value">
     {loading ? "Loading..." : `$${balance.toLocaleString('en-US')} USDT`}
@@ -53,10 +53,10 @@ const DashboardCredit = () => {
       ? `Your current balance is $${balance.toLocaleString('en-US')}`
       : "You don't have any balance, top up now."}
   </p>
-</div>
+</div> */}
         
         <div className="credit-section">
-          <h3>Credit</h3>
+          {/* <h3>Credit</h3> */}
           <p className="credit-value">
             {loading ? "Loading..." : credit}
           </p>
@@ -69,7 +69,7 @@ const DashboardCredit = () => {
       </div>
       
       <button className="btn-primary" onClick={() => navigate("/deposits/topup")}>
-        + Top Up Balance
+        + Top Up Credit
       </button>
     </div>
   );

@@ -816,3 +816,11 @@ curl -X GET http://localhost:5000/api/auth/balance \
 curl -X POST http://localhost:5000/api/campaigns/admin/campaigns/74/approve \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1Nzc2MTc2MywiZXhwIjoxNzU3NzY1MzYzfQ.feNCUH2oBREpZ9OX9yG_gOOEuJlkqkslynMbSmg4nO0"
+
+
+
+#### UPDATE CREDIT BY ADMIN
+curl -X POST http://localhost:5000/api/auth/admin/update-credit \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzEsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1Nzg3MDM0OCwiZXhwIjoxNzU3ODczOTQ4fQ.8dyhE46HnzD379MLc-w9eM_HdX4h-hNCokOge-frWjo" \
+  -d '{"user_id": 59, "credit_amount": 30000}'

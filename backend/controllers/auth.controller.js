@@ -1159,3 +1159,71 @@ exports.getUserBalance = async (req, res) => {
     });
   }
 };
+
+
+exports.updateUserCredit = async (req, res) => {
+  const { user_id, credit_amount } = req.body;
+  
+  try {
+    console.log("Update credit request:", { user_id, credit_amount, admin: req.user.id });
+
+    // Validasi input
+    if (!user_id || credit_amount === undefined || credit_amount === null) {
+      return res.status(400).json({
+        error: "User ID and credit amount are required",
+        code: "MISSING_FIELDS"
+      });
+    }
+    
+    const numericCredit = parseFloat(credit_amount);
+    if (isNaN(numericCredit) || numericCredit < 0) {
+      return res.status(400).json({
+        error: "Credit amount must be a valid non-negative number",
+        code: "INVALID_CREDIT_AMOUNT"
+      });
+    }
+    
+    // Cek apakah user exists
+    const [user] = await db.query("SELECT id, name FROM users WHERE id = ?", [user_id]);
+    if (!user.length) {
+      return res.status(404).json({
+        error: "User not found",
+        code: "USER_NOT_FOUND"
+      });
+    }
+    
+    // Update credit
+    await db.query(
+      "UPDATE users SET total_credit = ? WHERE id = ?",
+      [numericCredit, user_id]
+    );
+    
+    // Log ke credit_history (jika tabel ada)
+    try {
+      await db.query(
+        "INSERT INTO credit_history (user_id, amount, type, description, admin_id, created_at) VALUES (?, ?, 'manual', 'Manual credit adjustment by admin', ?, NOW())",
+        [user_id, numericCredit, req.user.id]
+      );
+    } catch (historyError) {
+      console.warn("Could not log to credit_history:", historyError.message);
+      // Jangan gagalkan request hanya karena logging gagal
+    }
+    
+    res.json({
+      success: true,
+      message: "User credit updated successfully",
+      code: "CREDIT_UPDATED",
+      user_id: user_id,
+      user_name: user[0].name,
+      new_credit: numericCredit
+    });
+    
+  } catch (err) {
+    console.error("Update credit error:", err);
+    res.status(500).json({
+      error: "Failed to update user credit",
+      code: "CREDIT_UPDATE_FAILED",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined
+    });
+  }
+};

@@ -191,8 +191,8 @@ export default function CreateCampaignSMS() {
         <h3>SMS Campaign Form</h3>
 
         <div className="balance-info">
-          <p>Your USDT Balance: <strong>${userBalance.toFixed(4)}</strong></p>
-          <p>Your Campaign Credit: <strong>${userTotalCredit.toFixed(4)}</strong></p>
+          {/* <p>Your USDT Balance: <strong>${userBalance.toFixed(4)}</strong></p> */}
+          <p>Your Campaign Credit: <strong>{userTotalCredit}</strong></p>
           {userTotalCredit <= 0 && (
             <p className="error-text">
               You don't have enough campaign credit. Please <a href="/deposit">top up</a> first.
@@ -246,14 +246,14 @@ export default function CreateCampaignSMS() {
               <h4>Cost Estimate:</h4>
               <div className="cost-details">
                 <p>Total Numbers: <strong>{costEstimate.total_numbers.toLocaleString()}</strong></p>
-                <p>Price per Number: <strong>${costEstimate.price_per_number.toFixed(4)}</strong></p>
+                <p>Price per Number: <strong>{costEstimate.price_per_number} Credit</strong></p>
                 <p className="total-cost">
-                  Total Cost: <strong>${costEstimate.total_cost.toFixed(4)}</strong>
+                  Total Cost: <strong>{costEstimate.total_cost}</strong>
                 </p>
                 <p className="balance-check">
-                  Your Campaign Credit: ${userTotalCredit.toFixed(4)} - Cost: $
-                  {costEstimate.total_cost.toFixed(4)} = Remaining Credit:{" "}
-                  <strong>${(userTotalCredit - costEstimate.total_cost).toFixed(4)}</strong>
+                  Your Campaign Credit: {userTotalCredit} - 
+                  Cost: {costEstimate.total_cost} = 
+                  Remaining Credit: <strong>{(userTotalCredit - costEstimate.total_cost)}</strong>
                 </p>
                 {userTotalCredit < costEstimate.total_cost && (
                   <p className="error-text">Insufficient campaign credit!</p>
