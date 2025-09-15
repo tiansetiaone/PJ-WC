@@ -205,3 +205,20 @@ exports.markAllAsRead = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// GET unread notifications count
+exports.getUnreadCount = async (req, res) => {
+  const role = req.user.role;
+  try {
+    const [rows] = await db.query(
+      `SELECT COUNT(*) as count 
+       FROM notifications 
+       WHERE is_read = 0 AND (user_scope = 'all' OR user_scope = ? OR recipient_id = ?)`,
+      [role, req.user.id]
+    );
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

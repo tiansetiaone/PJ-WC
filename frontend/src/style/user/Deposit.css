@@ -99,29 +99,29 @@ th, td {
 }
 
 /* Status Badges */
-.status-badge {
+.status-badge-depoyus {
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: bold;
 }
 
-.status-badge.pending-transaction {
-  background: #fff3cd;
-  color: #856404;
+.status-badge-depoyus.pending-transaction {
+  background: #856404;
+  color: #fff3cd;
 }
 
-.status-badge.checking-deposit {
+.status-badge-depoyus.checking-deposit {
   background: #d1ecf1;
   color: #0c5460;
 }
 
-.status-badge.deposit-success {
+.status-badge-depoyus.deposit-success {
   background: #d4edda;
   color: #155724;
 }
 
-.status-badge.deposit-failed {
+.status-badge-depoyus.deposit-failed {
   background: #f8d7da;
   color: #721c24;
 }
@@ -205,22 +205,22 @@ th, td {
 }
 
 /* Status Badge */
-.status-badge.checking {
+.status-badge-depoyus.checking {
   background: #e6f0ff;
   color: #004085;
 }
 
-.status-badge.success {
+.status-badge-depoyus.success {
   background: #d4edda;
   color: #155724;
 }
 
-.status-badge.failed {
+.status-badge-depoyus.failed {
   background: #f8d7da;
   color: #721c24;
 }
 
-.status-badge.pending {
+.status-badge-depoyus.pending {
   background: #fff7e6; /* kuning muda */
   color: #f59e0b;     /* orange */
 }
@@ -523,7 +523,7 @@ th, td {
   transform: scale(1.05);
 }
 
-.status-badge.cancelled {
+.status-badge-depoyus.cancelled {
   background: #ee2d40a2; /* Merah */
   color: white;
   padding: 4px 10px;

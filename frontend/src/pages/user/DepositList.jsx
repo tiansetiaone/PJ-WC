@@ -64,7 +64,7 @@ const Deposit = () => {
                 <td>{d.amount}</td>
                 <td>
                   <span
-                    className={`status-badge ${d.status
+                    className={`status-badge-depoyus ${d.status
                       .toLowerCase()
                       .replace(/\s+/g, "-")}`}
                   >

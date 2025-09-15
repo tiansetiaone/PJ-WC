@@ -97,6 +97,37 @@
   min-width: 200px;
 }
 
+/* Header.css - Tambahkan style untuk badge notifikasi */
+.notification-wrapper {
+  position: relative;
+  margin-right: 20px;
+}
+
+.notification-icon {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .topnav {

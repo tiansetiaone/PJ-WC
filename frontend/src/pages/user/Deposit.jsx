@@ -217,21 +217,21 @@ const renderStatusBadge = (statusRaw) => {
   const status = (statusRaw || "").toLowerCase();
 
   if (status.includes("checking"))
-    return <span className="status-badge checking">🔍 Checking Deposit</span>;
+    return <span className="status-badge-depoyus checking">🔍 Checking Deposit</span>;
 
   if (status.includes("approved")) // Fokus hanya pada "approved"
-    return <span className="status-badge success">✔ Deposit Success</span>;
+    return <span className="status-badge-depoyus success">✔ Deposit Success</span>;
 
   if (status.includes("rejected")) // Fokus hanya pada "rejected"
-    return <span className="status-badge failed">✖ Deposit Failed</span>;
+    return <span className="status-badge-depoyus failed">✖ Deposit Failed</span>;
 
   if (status.includes("pending"))
-    return <span className="status-badge pending">⏱ Pending Transaction</span>;
+    return <span className="status-badge-depoyus pending">⏱ Pending Transaction</span>;
 
   if (status.includes("cancelled"))
-    return <span className="status-badge cancelled">✖ Cancel Transaction</span>;
+    return <span className="status-badge-depoyus cancelled">✖ Cancel Transaction</span>;
 
-  return <span className="status-badge">{statusRaw}</span>;
+  return <span className="status-badge-depoyus">{statusRaw}</span>;
 };
 
   // ✅ Navigasi ke halaman top up

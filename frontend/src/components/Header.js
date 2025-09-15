@@ -14,6 +14,7 @@ const Header = ({ toggleSidebar }) => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0); // State untuk jumlah notifikasi belum dibaca
   const [loading, setLoading] = useState(false);
 
   const [showProfile, setShowProfile] = useState(false);
@@ -48,10 +49,31 @@ const Header = ({ toggleSidebar }) => {
     }
 
     fetchApi(endpoint)
-      .then((data) => setNotifications(data))
+      .then((data) => {
+        setNotifications(data);
+        // Hitung jumlah notifikasi yang belum dibaca
+        const unread = data.filter(notif => !notif.is_read).length;
+        setUnreadCount(unread);
+      })
       .catch((err) => console.error("Error refresh notifications:", err))
       .finally(() => setLoading(false));
   };
+
+  // Dalam Header.js
+const fetchUnreadCount = () => {
+  fetchApi('/notifications/unread-count')
+    .then(data => setUnreadCount(data.count))
+    .catch(err => console.error('Error fetching unread count:', err));
+};
+
+// Gunakan fungsi ini untuk polling yang lebih ringan
+useEffect(() => {
+  const intervalId = setInterval(() => {
+    fetchUnreadCount();
+  }, 30000);
+  
+  return () => clearInterval(intervalId);
+}, []);
 
   // Handle click outside untuk menutup dropdown
   useEffect(() => {
@@ -84,6 +106,16 @@ const Header = ({ toggleSidebar }) => {
   useEffect(() => {
     if (showNotifications) {
       refreshNotifications();
+    } else {
+      // Refresh notifikasi secara berkala meski dropdown tidak terbuka
+      refreshNotifications();
+      
+      // Set interval untuk polling notifikasi setiap 30 detik
+      const intervalId = setInterval(() => {
+        refreshNotifications();
+      }, 30000);
+      
+      return () => clearInterval(intervalId);
     }
   }, [showNotifications]);
 
@@ -104,6 +136,9 @@ const Header = ({ toggleSidebar }) => {
             onClick={toggleNotificationDropdown}
           >
             🔔
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
           </button>
           {showNotifications && (
             <div className="notification-dropdown">

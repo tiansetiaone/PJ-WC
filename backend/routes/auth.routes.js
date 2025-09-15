@@ -48,9 +48,21 @@ router.get(
   getAllUsers
 );
 
+// routes/auth.routes.js
 router.delete("/admin/users/:id",
   authMiddleware,
   authMiddleware.adminOnly,
+  // Validasi tambahan untuk parameter ID
+  (req, res, next) => {
+    const { id } = req.params;
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({
+        error: "Invalid user ID",
+        code: "INVALID_USER_ID"
+      });
+    }
+    next();
+  },
   deleteUser
 );
 

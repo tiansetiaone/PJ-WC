@@ -23,8 +23,15 @@ require('dotenv').config();
 
 exports.googleAuth = async (req, res) => {
   try {
-    const { token: googleToken } = req.body;
+    const { token: googleToken, referral_code, action } = req.body;
     
+    console.log('Google Auth Request Received:', {
+      hasToken: !!googleToken,
+      action: action,
+      hasReferralCode: !!referral_code,
+      referralCode: referral_code
+    });
+
     if (!googleToken) return res.status(400).json({ error: 'Token required' });
 
     // Verifikasi token Google
@@ -37,42 +44,129 @@ exports.googleAuth = async (req, res) => {
     const username = email.split('@')[0];
     const name = `${given_name} ${family_name}`;
 
+    console.log('Google User Info:', { email, name, username });
+
     // 1. Cek user existing
     const [existingUser] = await db.query(
       'SELECT * FROM users WHERE email = ?', 
       [email]
     );
 
+    console.log('User exists in database:', existingUser.length > 0);
+
+    // Jika user sudah ada (untuk login)
     if (existingUser.length > 0) {
+      console.log('Existing user status:', {
+        is_active: existingUser[0].is_active,
+        provider: existingUser[0].provider
+      });
+      
+      // Cek status akun
+      if (existingUser[0].is_active !== 1) {
+        console.log('Account pending approval');
+        return res.status(403).json({
+          error: 'Account pending admin approval. Please wait for approval before logging in.',
+          code: 'PENDING_APPROVAL',
+          is_active: existingUser[0].is_active
+        });
+      }
+      
       const jwtToken = generateToken(existingUser[0]);
+      console.log('Login successful for existing user');
       return res.json({ 
         token: jwtToken, 
-        user: existingUser[0] 
+        user: {
+          id: existingUser[0].id,
+          name: existingUser[0].name,
+          email: existingUser[0].email,
+          role: existingUser[0].role,
+          provider: existingUser[0].provider,
+          is_active: existingUser[0].is_active,
+          balance: existingUser[0].balance,
+          username: existingUser[0].username,
+          usdt_address: existingUser[0].usdt_address,
+          usdt_network: existingUser[0].usdt_network,
+          referral_code: existingUser[0].referral_code
+        }
       });
     }
 
-    // 2. Insert user baru DENGAN provider='google'
+    // Jika user belum terdaftar, cek parameter action
+    console.log('Action parameter:', action);
+    if (action !== 'register') {
+      console.log('Account not registered and not from register page');
+      return res.status(404).json({
+        error: 'Account not registered. Please register first.',
+        code: 'ACCOUNT_NOT_REGISTERED',
+        redirect: '/register'
+      });
+    }
+
+    console.log('Proceeding with registration from register page');
+
+    // Jika dari halaman register (action = 'register'), lanjutkan dengan proses pendaftaran
+    // 2. Check referral code jika ada
+    let referrer_id = null;
+    if (referral_code) {
+      const [referrer] = await db.query(
+        'SELECT id FROM users WHERE referral_code = ?', 
+        [referral_code]
+      );
+      
+      if (!referrer.length) {
+        return res.status(400).json({ 
+          error: 'Invalid referral code',
+          code: 'INVALID_REFERRAL' 
+        });
+      }
+      referrer_id = referrer[0].id;
+    }
+
+    // 3. Insert user baru DENGAN status sesuai setting admin approval dan referral code
+    const is_active = (process.env.REQUIRE_ADMIN_VERIFICATION === 'true') ? 0 : 1;
+    const referralCode = generateReferralCode(username);
+    
     await db.query(
       `INSERT INTO users 
-      (name, username, email, password, role, created_at, provider) 
-      VALUES (?, ?, ?, ?, 'user', NOW(), 'google')`,
-      [name, username, email, sub] // sub (Google ID) sebagai password
+      (name, username, email, password, role, created_at, provider, is_active, referral_code, referred_by) 
+      VALUES (?, ?, ?, ?, 'user', NOW(), 'google', ?, ?, ?)`,
+      [name, username, email, sub, is_active, referralCode, referrer_id]
     );
 
-    // 3. Debugging: Log hasil query
-    console.log(`User ${email} berhasil didaftarkan via Google`);
+    // 4. Record referral jika valid code was provided
+    if (referrer_id) {
+      try {
+        const [newUser] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+        await db.query(
+          'INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)',
+          [referrer_id, newUser[0].id]
+        );
+      } catch (err) {
+        console.error('Failed to record referral:', err);
+        // Jangan gagalkan registrasi hanya karena gagal record referral
+      }
+    }
 
-    // 4. Ambil data user baru
+    // 5. Ambil data user baru
     const [newUser] = await db.query(
       'SELECT * FROM users WHERE email = ?', 
       [email]
     );
 
-    if (!newUser.length) {
-      throw new Error('Gagal mengambil user setelah pendaftaran');
+    // 6. JIKA MEMBUTUHKAN APPROVAL ADMIN, KIRIM RESPONSE YANG SESUAI
+    if (is_active === 0) {
+      // Kirim email notifikasi ke admin
+      await sendAdminVerificationRequest(email, newUser[0].id, name);
+      
+      return res.status(403).json({
+        error: 'Your account is pending admin approval. Please wait for approval before logging in.',
+        code: 'PENDING_APPROVAL',
+        message: 'Your account has been created but requires admin approval before you can login',
+        email: email // Tambahkan email di response untuk frontend
+      });
     }
 
-    // 5. Kirim response
+    // 7. Jika langsung aktif, generate token
     const jwtToken = generateToken(newUser[0]);
     res.json({ 
       token: jwtToken,
@@ -81,18 +175,29 @@ exports.googleAuth = async (req, res) => {
         name: newUser[0].name,
         email: newUser[0].email,
         role: newUser[0].role,
-        provider: newUser[0].provider // Pastikan ini ada di response
+        provider: newUser[0].provider,
+        is_active: newUser[0].is_active,
+        balance: newUser[0].balance,
+        username: newUser[0].username,
+        usdt_address: newUser[0].usdt_address,
+        usdt_network: newUser[0].usdt_network,
+        referral_code: newUser[0].referral_code
       }
     });
 
   } catch (err) {
-    console.error('Google auth error:', err);
+    console.error('Google auth error details:', {
+      message: err.message,
+      stack: err.stack,
+      code: err.code
+    });
     res.status(500).json({ 
       error: 'Authentication failed',
       details: process.env.NODE_ENV === 'development' ? err.message : null
     });
   }
 };
+
 
 // Fungsi pembantu untuk generate token
 function generateToken(user) {
@@ -1069,12 +1174,16 @@ const mappedUsers = users.map(u => ({
 };
 
 
-// Delete user (admin only)
+// controllers/auth.controller.js
 exports.deleteUser = async (req, res) => {
+  let connection;
   try {
     // hanya admin yang boleh
     if (req.user.role !== "admin") {
-      return res.status(403).json({ error: "Forbidden: Admin access required" });
+      return res.status(403).json({ 
+        error: "Forbidden: Admin access required",
+        code: "ADMIN_ACCESS_REQUIRED" 
+      });
     }
 
     const { id } = req.params;
@@ -1082,16 +1191,128 @@ exports.deleteUser = async (req, res) => {
     // cek apakah user ada
     const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
     if (rows.length === 0) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ 
+        error: "User not found",
+        code: "USER_NOT_FOUND" 
+      });
     }
 
-    // hapus user
-    await db.query("DELETE FROM users WHERE id = ?", [id]);
+    // Dapatkan koneksi dari pool
+    connection = await db.getConnection();
+    await connection.beginTransaction();
 
-    res.json({ message: "User deleted successfully" });
+    try {
+      // 1. Hapus data dari tabel-tabel yang memiliki foreign key ke users
+      // Daftar tabel dan kolom yang perlu dibersihkan
+      const tablesToClean = [
+        { table: 'user_activities', column: 'user_id' },
+        { table: 'referrals', column: 'referrer_id' }, // referrer_id adalah user_id yang mereferensikan
+        { table: 'referrals', column: 'referred_id' }, // referred_id adalah user_id yang direferensikan
+        { table: 'deposits', column: 'user_id' },
+        { table: 'sessions', column: 'user_id' },
+        { table: 'tickets', column: 'user_id' },
+        { table: 'credit_history', column: 'user_id' },
+        { table: 'password_resets', column: 'user_id' },
+        { table: 'login_attempts', column: 'user_id' },
+        { table: 'commissions', column: 'user_id' },    // Jika ada kolom user_id di commissions
+        { table: 'commissions', column: 'referrer_id' }, // Jika commissions menyimpan data referrer
+        { table: 'commissions', column: 'referred_user_id' } // Kolom yang menyebabkan error
+      ];
+
+      console.log(`Cleaning related data for user ${id}...`);
+      
+      for (const { table, column } of tablesToClean) {
+        try {
+          // Cek apakah tabel exist terlebih dahulu
+          const [tableExists] = await connection.query(
+            `SELECT COUNT(*) as count FROM information_schema.tables 
+             WHERE table_schema = ? AND table_name = ?`,
+            [process.env.DB_NAME || 'campaign_db', table]
+          );
+          
+          if (tableExists[0].count > 0) {
+            // Cek apakah kolom exist dalam tabel
+            const [columnExists] = await connection.query(
+              `SELECT COUNT(*) as count FROM information_schema.columns 
+               WHERE table_schema = ? AND table_name = ? AND column_name = ?`,
+              [process.env.DB_NAME || 'campaign_db', table, column]
+            );
+            
+            if (columnExists[0].count > 0) {
+              const [result] = await connection.query(
+                `DELETE FROM ${table} WHERE ${column} = ?`,
+                [id]
+              );
+              console.log(`Cleaned ${result.affectedRows} rows from ${table}.${column} for user ${id}`);
+            }
+          }
+        } catch (err) {
+          // Jika tabel/kolom tidak ada atau error, catat warning dan lanjutkan
+          console.warn(`Could not clean ${table}.${column}:`, err.message);
+          // Jangan gagalkan proses karena error di satu tabel/kolom
+        }
+      }
+
+      // 2. Hapus user dari tabel users
+      const [deleteResult] = await connection.query(
+        "DELETE FROM users WHERE id = ?", 
+        [id]
+      );
+
+      if (deleteResult.affectedRows === 0) {
+        throw new Error('No user was deleted');
+      }
+
+      // Commit transaction jika semua berhasil
+      await connection.commit();
+      
+      console.log(`User ${id} deleted successfully`);
+
+      res.json({ 
+        success: true,
+        message: "User and all related data deleted successfully",
+        deleted_user_id: parseInt(id),
+        details: {
+          user_deleted: true,
+          related_data_cleaned: true
+        }
+      });
+
+    } catch (err) {
+      // Rollback transaction jika ada error
+      await connection.rollback();
+      console.error("Transaction error during user deletion:", err);
+      
+      // Jika masih ada foreign key constraint error setelah pembersihan
+      if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+        // Coba dapatkan informasi tentang constraint yang gagal
+        const constraintMatch = err.sqlMessage.match(/FOREIGN KEY \(`(.+?)`\) REFERENCES `(.+?)`/);
+        const tableName = constraintMatch ? constraintMatch[2] : 'unknown';
+        
+        return res.status(409).json({ 
+          error: `Cannot delete user. There are still references to this user in the ${tableName} table.`,
+          code: "FOREIGN_KEY_CONSTRAINT",
+          details: process.env.NODE_ENV === "development" ? err.sqlMessage : undefined,
+          suggestion: "Please check the database structure or use soft delete instead"
+        });
+      }
+      
+      throw err;
+    } finally {
+      // Selalu release connection kembali ke pool
+      if (connection) {
+        connection.release();
+      }
+    }
+
   } catch (err) {
     console.error("Error deleting user:", err);
-    res.status(500).json({ error: "Internal server error" });
+    
+    res.status(500).json({ 
+      error: "Failed to delete user",
+      code: "DELETE_FAILED",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined
+    });
   }
 };
 
