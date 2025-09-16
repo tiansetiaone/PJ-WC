@@ -547,12 +547,11 @@ const handleDeleteDeposit = async (depositId) => {
         {loadingDeposits ? (
           <p>Loading deposits...</p>
         ) : depositData.length === 0 ? (
-          <div className="card-content">
-            <img
-              src="https://via.placeholder.com/120x120.png?text=No+Data"
-              alt="No Deposit"
-              className="card-image"
-            />
+<div className="empty-state-depman">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                  alt="No results"
+                />
             <h4 className="empty-title">No Deposit Requests Yet</h4>
             <p className="empty-text">
               There are no deposit requests at the moment. Any new requests
@@ -729,12 +728,11 @@ const handleDeleteDeposit = async (depositId) => {
         {loadingCommissions ? (
   <p>Loading commission history...</p>
 ) : filteredCommissionData.length === 0 ? (
-  <div className="card-content">
-    <img
-      src="https://via.placeholder.com/120x120.png?text=No+Data"
-      alt="No Commission"
-      className="card-image"
-    />
+  <div className="empty-state-depman">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
+                  alt="No results"
+                />
     <h4 className="empty-title">No Converted Commission History Yet</h4>
     <p className="empty-text">
       You haven't converted any commissions yet. Once you do, your

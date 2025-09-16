@@ -240,7 +240,7 @@ form input:focus {
 }
 
 /* USDT Input Group */
-.usdt-input-group {
+.usdt-input-group-reg {
   display: flex;
   margin-bottom: 14px;
   width: 100%;
@@ -267,8 +267,8 @@ form input:focus {
 
 
 /* Fokus efek */
-.usdt-input-group:focus-within .usdt-network-select,
-.usdt-input-group:focus-within .usdt-address-input {
+.usdt-input-group-reg:focus-within .usdt-network-select,
+.usdt-input-group-reg:focus-within .usdt-address-input {
   border-color: #6366f1;
   outline: none;
 }
@@ -427,7 +427,7 @@ form input:focus {
 }
 
 @media (max-width: 480px) {
-    .usdt-input-group {
+    .usdt-input-group-reg {
         flex-direction: column;
     }
 
@@ -448,7 +448,7 @@ form input:focus {
 
 /* Responsive - Modified for desktop only */
 @media (max-width: 1024px) {
-    .usdt-input-group {
+    .usdt-input-group-reg {
         flex-direction: column;
     }
 

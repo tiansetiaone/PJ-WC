@@ -100,10 +100,12 @@ th, td {
 
 /* Status Badges */
 .status-badge-depoyus {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: green;
+    color: white;
 }
 
 .status-badge-depoyus.pending-transaction {
@@ -210,7 +212,7 @@ th, td {
   color: #004085;
 }
 
-.status-badge-depoyus.success {
+.status-badge-depoyus-success {
   background: #d4edda;
   color: #155724;
 }

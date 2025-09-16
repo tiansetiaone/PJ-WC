@@ -18,7 +18,7 @@ const [formData, setFormData] = useState({
     password: '',
     password_confirmation: '',
     whatsapp_number: '',
-    usdt_network: 'TRC20',
+    usdt_network_reg: 'TRC20',
     usdt_address: '',
     referral_code: ''   // <--- baru
 });
@@ -334,10 +334,10 @@ useEffect(() => {
                             </div>
                             
                             <div className="form-group-register-register">
-                                <div className="usdt-input-group">
+                                <div className="usdt-input-group-reg">
                                     <select 
-                                        name="usdt_network" 
-                                        value={formData.usdt_network} 
+                                        name="usdt_network_reg" 
+                                        value={formData.usdt_network_reg} 
                                         onChange={handleChange}
                                         className={`usdt-network-select ${formErrors.usdt_address ? 'input-error' : ''}`}
                                     >
@@ -348,7 +348,7 @@ useEffect(() => {
                                     <input 
                                         type="text" 
                                         name="usdt_address" 
-                                        placeholder={`USDT ${formData.usdt_network} Wallet Address (Optional)`} 
+                                        placeholder={`USDT ${formData.usdt_network_reg} Wallet Address (Optional)`} 
                                         value={formData.usdt_address} 
                                         onChange={handleChange} 
                                         className={`usdt-address-input ${formErrors.usdt_address ? 'input-error' : ''}`}

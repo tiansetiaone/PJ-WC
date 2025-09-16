@@ -82,6 +82,7 @@
   font-weight: bold;
   color: #333;
   margin-bottom: 5px;
+  align-items: center;
 }
 
 .empty-text {
@@ -90,6 +91,21 @@
   max-width: 400px;
 }
 
+.empty-state-depman {
+display: flex
+;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 30px 10px;
+}
+
+.empty-state-depman img {
+    width: 80px;
+    height: 80px;
+    opacity: 0.8;
+    margin-bottom: 15px;
+}
 /* ------------------ TABLE ------------------ */
 .data-table {
   width: 100%;
@@ -462,6 +478,16 @@
   display: inline-block;
 }
 
+.status-badge.rejected {
+  background: #8b2630;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  display: inline-block;
+}
+
 
 /* Tombol Delete */
 .action-btn-delete-deposit {
@@ -484,6 +510,7 @@
   gap: 5px;
   flex-wrap: nowrap;
 }
+
 
 
 /* Responsive Design for Modal */
@@ -676,6 +703,15 @@
   width: auto;
 }
 
+.status-badge.pending-transaction {
+    background: #f9f5c4;
+    color: #eba72c;
+}
+
+.status-badge.success {
+    background: #c4f9d7;
+    color: #389d53;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

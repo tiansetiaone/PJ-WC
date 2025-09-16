@@ -219,8 +219,8 @@ const renderStatusBadge = (statusRaw) => {
   if (status.includes("checking"))
     return <span className="status-badge-depoyus checking">🔍 Checking Deposit</span>;
 
-  if (status.includes("approved")) // Fokus hanya pada "approved"
-    return <span className="status-badge-depoyus success">✔ Deposit Success</span>;
+  // if (status.includes("approved")) // Fokus hanya pada "approved"
+  //   return <span className="status-badge-depoyus-success">✔ Deposit Success</span>;
 
   if (status.includes("rejected")) // Fokus hanya pada "rejected"
     return <span className="status-badge-depoyus failed">✖ Deposit Failed</span>;
